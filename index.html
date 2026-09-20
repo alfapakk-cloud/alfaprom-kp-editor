@@ -3,219 +3,173 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>АЛЬФАПРОМ — редактор КП</title>
-
-<!-- PDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
-<!-- DOCX -->
-<script src="https://unpkg.com/html-docx-js/dist/html-docx.js"></script>
+<title>Конструктор КП — АЛЬФАПРОМ</title>
 
 <style>
 :root{
   --orange:#ff8100;
-  --orange-dark:#e66f00;
-  --red:#d92727;
-  --green:#159447;
-  --dark:#222;
-  --muted:#777;
-  --line:#ddd;
-  --bg:#f2f3f5;
-  --white:#fff;
+  --orange-dark:#ff8100;
+  --text:#202124;
+  --muted:#6b7280;
+  --border:#d9dce1;
+  --bg:#f4f5f7;
+  --green:#168a45;
+  --red:#d93025;
 }
 
-*{
-  box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
-html,
-body{
+html,body{
   margin:0;
   padding:0;
-  min-height:100%;
-  font-family:Arial,Helvetica,sans-serif;
-  color:var(--dark);
+  width:100%;
+  height:100%;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  color:var(--text);
   background:var(--bg);
 }
 
-body{
-  min-height:100vh;
+button,
+input,
+textarea,
+select{
+  font:inherit;
 }
 
-/* =========================================================
-   TOP APP BAR
-========================================================= */
+button{
+  cursor:pointer;
+}
+
+.app{
+  width:100%;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+/* =========================
+   TOP TOOLBAR
+========================= */
 
 .topbar{
-  position:sticky;
-  top:0;
-  z-index:1000;
-
-  height:64px;
-
+  height:62px;
+  flex:none;
   display:flex;
   align-items:center;
   justify-content:space-between;
-
-  padding:0 22px;
-
+  padding:0 18px;
   background:#fff;
-
-  border-bottom:4px solid var(--orange);
-
-  box-shadow:0 2px 8px rgba(0,0,0,.08);
+  border-bottom:2px solid var(--orange);
 }
 
-.brand{
-  display:flex;
-  align-items:center;
-  gap:10px;
-
-  color:var(--orange);
-
-  font-size:20px;
-  font-weight:800;
-}
-
-.brand-mark{
-  width:34px;
-  height:34px;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-
-  border-radius:7px;
-
-  background:var(--orange);
-  color:#fff;
-
-  font-size:21px;
-  font-weight:900;
+.topbar-title{
+  font-size:18px;
+  font-weight:700;
 }
 
 .toolbar{
   display:flex;
-  align-items:center;
   gap:8px;
 }
 
-.toolbar button{
-  border:0;
-  border-radius:7px;
-
+.btn{
+  border:1px solid #d3d6da;
+  background:#fff;
+  border-radius:8px;
   padding:9px 14px;
-
-  cursor:pointer;
-
-  font:inherit;
-  font-size:13px;
-  font-weight:700;
+  font-weight:600;
+  transition:.15s;
 }
 
-.btn-orange{
+.btn:hover{
+  border-color:var(--orange);
+}
+
+.btn-primary{
   background:var(--orange);
+  border-color:var(--orange);
   color:#fff;
 }
 
-.btn-dark{
-  background:#222;
-  color:#fff;
+.btn-primary:hover{
+  background:var(--orange);
+  border-color:var(--orange);
 }
 
-.btn-light{
-  background:#f2f2f2;
-  color:#333;
+.btn-danger{
+  color:#b42318;
 }
 
-.toolbar button:hover{
-  opacity:.88;
-}
-
-/* =========================================================
-   MAIN LAYOUT
-========================================================= */
+/* =========================
+   MAIN 50/50
+========================= */
 
 .layout{
-  width:100%;
-  min-height:calc(100vh - 64px);
-
+  flex:1;
+  min-height:0;
   display:grid;
   grid-template-columns:50% 50%;
 }
 
-/* =========================================================
+/* =========================
    EDITOR
-========================================================= */
+========================= */
 
-.editor-panel{
+.editor{
   min-width:0;
+  overflow:auto;
+  padding:20px;
+  background:#f7f8fa;
+  border-right:1px solid #ddd;
+}
 
-  padding:22px;
-
+.editor-section{
   background:#fff;
-
-  border-right:1px solid var(--line);
-
-  overflow-y:auto;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:18px;
+  margin-bottom:16px;
 }
 
-.editor-title{
-  margin:0 0 20px;
-
-  font-size:24px;
-  line-height:1.2;
-}
-
-.section{
-  margin-bottom:24px;
-  padding-bottom:22px;
-
-  border-bottom:1px solid #eee;
-}
-
-.section:last-child{
-  border-bottom:0;
-}
-
-.section h2{
-  margin:0 0 15px;
-
+.editor-section h2{
+  margin:0 0 16px;
   font-size:18px;
+}
+
+.editor-section h3{
+  margin:0 0 14px;
+  font-size:16px;
 }
 
 .field{
   margin-bottom:14px;
 }
 
-.field label{
-  display:block;
-
-  margin-bottom:6px;
-
-  font-size:13px;
-  font-weight:700;
-
-  color:#444;
+.field:last-child{
+  margin-bottom:0;
 }
 
-input,
+.field label{
+  display:block;
+  margin-bottom:6px;
+  font-size:13px;
+  font-weight:700;
+  color:#40444a;
+}
+
+input[type="text"],
+input[type="tel"],
+input[type="number"],
+input[type="url"],
 textarea,
 select{
   width:100%;
-
+  border:1px solid #cfd3d8;
+  border-radius:8px;
   padding:10px 11px;
-
-  border:1px solid #ccc;
-  border-radius:7px;
-
   background:#fff;
-
-  color:#222;
-
-  font:inherit;
-
+  color:var(--text);
   outline:none;
 }
 
@@ -223,4489 +177,2407 @@ input:focus,
 textarea:focus,
 select:focus{
   border-color:var(--orange);
-
-  box-shadow:
-    0 0 0 2px rgba(255,129,0,.12);
 }
 
 textarea{
   min-height:90px;
   resize:vertical;
+  line-height:1.45;
 }
 
 .specs-textarea{
-  min-height:175px;
-
-  line-height:1.5;
+  min-height:170px;
 }
 
-.hint{
-  margin-top:5px;
-
-  color:#888;
-
-  font-size:11px;
-  line-height:1.4;
-}
-
-/* =========================================================
-   EQUIPMENT EDITOR
-========================================================= */
-
-.equipment-editor{
-  margin-bottom:16px;
-  padding:16px;
-
-  border:1px solid #ddd;
-  border-radius:10px;
-
-  background:#fafafa;
-}
-
-.equipment-editor-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-
-  margin-bottom:14px;
-}
-
-.equipment-editor-head strong{
-  font-size:15px;
-}
-
-.remove-equipment{
-  width:30px;
-  height:30px;
-
-  border:0;
-  border-radius:6px;
-
-  background:#eee;
-
-  color:#777;
-
-  cursor:pointer;
-
-  font-weight:700;
-}
-
-.remove-equipment:hover{
-  background:#ddd;
-}
-
-.add-equipment{
-  width:100%;
-
-  padding:11px;
-
-  border:1px dashed var(--orange);
-  border-radius:8px;
-
-  background:#fff;
-
-  color:var(--orange);
-
-  cursor:pointer;
-
-  font-weight:700;
-}
-
-.price-grid{
-  display:grid;
-  grid-template-columns:1fr 125px;
-  gap:9px;
-}
-
-.status-switch{
+.two-cols{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:6px;
+  gap:12px;
 }
 
-.status-option{
-  padding:9px 7px;
+.three-cols{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:12px;
+}
 
-  border:1px solid #ccc;
-  border-radius:7px;
+.status-buttons{
+  display:flex;
+  gap:8px;
+}
 
+.status-button{
+  flex:1;
+  border:1px solid #d3d6da;
   background:#fff;
-
-  cursor:pointer;
-
-  font-size:13px;
-  font-weight:700;
+  border-radius:8px;
+  padding:9px;
+  font-weight:600;
 }
 
-.status-option.active.stock{
-  border-color:#9bd4b1;
-  background:#edf9f1;
+.status-button.active{
+  border-color:var(--orange);
+  box-shadow:0 0 0 1px var(--orange) inset;
+}
+
+.status-button[data-status="available"].active{
   color:var(--green);
 }
 
-.status-option.active.order{
-  border-color:#f2c28e;
-  background:#fff4e7;
-  color:#bd6b00;
+.status-button[data-status="order"].active{
+  color:#b96a00;
 }
 
-/* =========================================================
-   PHOTO EDITOR
-========================================================= */
+/* =========================
+   EQUIPMENT PHOTO
+========================= */
+
+.photo-editor{
+  margin-bottom:16px;
+}
 
 .photo-drop{
-  padding:17px;
-
-  border:2px dashed #ccc;
-  border-radius:9px;
-
-  background:#fff;
-
-  color:#777;
-
+  width:100%;
+  height:210px;
+  border:2px dashed #cfd3d8;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   text-align:center;
-
-  cursor:pointer;
-
+  background:#fafafa;
+  overflow:hidden;
+  position:relative;
   transition:.15s;
 }
 
-.photo-drop:hover,
-.photo-drop.dragover{
+.photo-drop:hover{
   border-color:var(--orange);
-
-  background:#fffaf5;
-
-  color:var(--orange);
 }
 
-.photo-input{
+.photo-drop.has-image{
+  border-style:solid;
+  border-color:#d7d9dc;
+  background:#fff;
+}
+
+.photo-drop img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  padding:8px;
+  display:block;
+}
+
+.photo-placeholder{
+  color:#73777d;
+  font-size:13px;
+  line-height:1.5;
+  padding:20px;
+}
+
+.photo-actions{
+  margin-top:8px;
+  display:flex;
+  gap:8px;
+}
+
+.small-btn{
+  border:1px solid #d3d6da;
+  background:#fff;
+  border-radius:7px;
+  padding:7px 10px;
+  font-size:12px;
+}
+
+.small-btn:hover{
+  border-color:var(--orange);
+}
+
+.file-input{
   display:none;
 }
 
-.photo-list{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:8px;
-
-  margin-top:10px;
-}
-
-.photo-item{
-  position:relative;
-
-  aspect-ratio:1/1;
-
-  overflow:hidden;
-
-  border-radius:7px;
-
-  background:#eee;
-}
-
-.photo-item img{
-  width:100%;
-  height:100%;
-
-  object-fit:cover;
-}
-
-.photo-delete{
-  position:absolute;
-  top:5px;
-  right:5px;
-
-  width:24px;
-  height:24px;
-
-  border:0;
-  border-radius:50%;
-
-  background:rgba(0,0,0,.65);
-
-  color:#fff;
-
-  cursor:pointer;
-
-  font-size:14px;
-}
-
-/* =========================================================
-   GENERAL SETTINGS
-========================================================= */
-
-.manager-section{
-  margin-top:5px;
-}
-
-/* =========================================================
+/* =========================
    PREVIEW AREA
-========================================================= */
+========================= */
 
-.preview-wrap{
+.preview-side{
   min-width:0;
-
-  padding:22px;
-
-  background:#dfe1e4;
-
-  overflow:auto;
-}
-
-/*
-  ВАЖНО:
-  preview-stage масштабируется так,
-  чтобы весь лист А4 помещался по ширине.
-*/
-
-.preview-stage{
+  min-height:0;
   display:flex;
-  justify-content:center;
-
-  width:100%;
+  flex-direction:column;
+  background:#e8eaed;
 }
 
-.preview-page{
+.preview-title{
   flex:none;
-
-  width:210mm;
-  min-height:297mm;
-
-  background:#fff;
-
-  box-shadow:0 2px 18px rgba(0,0,0,.15);
-
-  overflow:hidden;
-}
-
-/* =========================================================
-   КП HEADER
-========================================================= */
-
-.preview-header{
-  position:relative;
-
-  padding:20px 24px 15px;
-
-  background:#fff;
-
-  border-bottom:4px solid var(--orange);
-}
-
-.preview-header-main{
+  height:48px;
   display:flex;
   align-items:center;
-  justify-content:space-between;
-
-  gap:20px;
+  padding:0 18px;
+  background:#fff;
+  border-bottom:1px solid #d7d9dc;
+  font-size:16px;
+  font-weight:700;
 }
 
-.preview-logo{
+.preview-scroll{
+  flex:1;
+  min-height:0;
+  overflow:auto;
+  padding:24px;
+}
+
+.preview-pages{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:24px;
+}
+
+/* =========================
+   A4 PAGE
+========================= */
+
+.kp-page{
+  width:210mm;
+  min-height:297mm;
+  height:297mm;
+  background:#fff;
+  position:relative;
+  box-shadow:0 3px 15px rgba(0,0,0,.14);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  flex:none;
+}
+
+.kp-content{
+  flex:1;
+  min-height:0;
+  padding:15mm 15mm 10mm;
+  overflow:hidden;
+}
+
+.kp-header{
+  height:31mm;
+  display:flex;
+  align-items:center;
+  border-bottom:2px solid var(--orange);
+  margin-bottom:8mm;
+}
+
+.brand{
   display:flex;
   align-items:center;
   gap:10px;
 }
 
-.preview-logo-mark{
-  width:44px;
-  height:44px;
-
+.brand-mark{
+  width:34px;
+  height:34px;
+  background:var(--orange);
+  color:#fff;
+  border-radius:5px;
   display:flex;
   align-items:center;
   justify-content:center;
-
-  border-radius:9px;
-
-  background:var(--orange);
-
-  color:#fff;
-
-  font-size:27px;
-  font-weight:900;
+  font-size:23px;
+  font-weight:800;
 }
 
-.preview-logo-name{
+.brand-name{
   color:var(--orange);
-
-  font-size:25px;
-  font-weight:900;
-  letter-spacing:-.5px;
-}
-
-.preview-contacts{
-  color:#444;
-
-  font-size:10px;
-  line-height:1.45;
-
-  text-align:right;
-}
-
-.preview-contacts strong{
-  color:#222;
-
-  font-size:11px;
-}
-
-.preview-header-links{
-  display:flex;
-  justify-content:flex-end;
-  gap:15px;
-
-  margin-top:10px;
-
-  color:#666;
-
-  font-size:9px;
-}
-
-/* =========================================================
-   КП CONTENT
-========================================================= */
-
-.preview-content{
-  padding:24px 30px 0;
+  font-size:23px;
+  font-weight:800;
+  letter-spacing:.3px;
 }
 
 .kp-title{
-  margin:0 0 25px;
-
-  font-size:28px;
-  line-height:1.15;
+  font-size:23px;
+  font-weight:800;
+  margin-bottom:6mm;
 }
 
-/* =========================================================
-   PRODUCT
-========================================================= */
-
-.product{
-  margin-bottom:30px;
-
-  page-break-inside:avoid;
-  break-inside:avoid;
-}
-
-.product-name{
-  margin:0 0 13px;
-
-  font-size:21px;
+.kp-product-name{
+  font-size:20px;
+  font-weight:750;
   line-height:1.2;
+  margin-bottom:5mm;
 }
 
-/* =========================================================
-   PRODUCT PHOTOS
-   СРАЗУ ПОСЛЕ НАЗВАНИЯ
-========================================================= */
-
-.product-photos{
-  display:grid;
-
-  grid-template-columns:repeat(3,1fr);
-
-  gap:10px;
-
-  margin:0 0 17px;
-}
+/* =========================
+   PRODUCT PHOTO
+========================= */
 
 .product-photo-frame{
   width:100%;
-
-  aspect-ratio:1/1;
-
+  height:66mm;
+  border:1px solid #e0e2e5;
+  border-radius:7px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   overflow:hidden;
-
-  border-radius:6px;
-
-  background:#f1f1f1;
+  background:#fff;
+  margin-bottom:5mm;
 }
 
 .product-photo-frame img{
   width:100%;
   height:100%;
-
+  object-fit:contain;
   display:block;
-
-  object-fit:cover;
+  padding:3mm;
 }
 
-/* =========================================================
+/* =========================
    DESCRIPTION
-========================================================= */
+========================= */
 
-.product-description{
-  margin-bottom:8px;
-
-  font-size:12px;
+.kp-description{
+  font-size:12.5px;
   line-height:1.55;
+  white-space:pre-wrap;
+  margin-bottom:4mm;
 }
 
-.product-note{
-  margin-bottom:14px;
-
+.kp-note{
+  font-size:11.5px;
   color:#666;
-
-  font-size:11px;
   line-height:1.45;
+  white-space:pre-wrap;
+  margin-bottom:4mm;
 }
 
-/* =========================================================
-   PRICE
-========================================================= */
+/* =========================
+   PRICES
+========================= */
 
 .price-block{
-  margin:15px 0;
+  margin:3mm 0 5mm;
 }
 
-.price-normal{
-  color:#111;
-
-  font-size:18px;
+.price-line{
+  font-size:17px;
   font-weight:800;
-
-  line-height:1.35;
+  margin-bottom:2mm;
 }
 
-.price-discount{
-  margin-top:3px;
-
+.price-line.discount{
   color:var(--red);
-
-  font-size:21px;
-  font-weight:900;
-
-  line-height:1.35;
 }
 
-.price-status{
-  margin-top:7px;
-
-  font-size:12px;
+.availability{
+  font-size:13px;
   font-weight:800;
+  margin-bottom:2mm;
 }
 
-.price-status.stock{
+.availability.available{
   color:var(--green);
 }
 
-.price-status.order{
-  color:#bd6b00;
+.availability.order{
+  color:#b96a00;
 }
 
 .price-comment{
-  margin-top:5px;
-
-  color:#777;
-
-  font-size:10px;
+  font-size:11px;
+  color:#666;
+  line-height:1.4;
+  margin-bottom:5mm;
 }
 
-/* =========================================================
-   SPECS
-========================================================= */
+/* =========================
+   SPECS TABLE
+========================= */
 
-.spec-table{
+.specs-table{
   width:100%;
-
-  margin-top:12px;
-
   border-collapse:collapse;
-
-  font-size:10px;
+  font-size:10.5px;
+  margin-top:3mm;
 }
 
-.spec-table th,
-.spec-table td{
-  padding:7px 8px;
-
-  border:1px solid #ddd;
-
+.specs-table th,
+.specs-table td{
+  border:1px solid #d9dce0;
+  padding:5px 7px;
+  text-align:left;
   vertical-align:top;
 }
 
-.spec-table th.spec-head{
+.specs-table th{
   background:var(--orange);
-
   color:#fff;
-
-  text-align:left;
-
-  font-size:11px;
   font-weight:800;
 }
 
-.spec-table td:first-child{
+.specs-table td:first-child{
   width:40%;
-
-  background:#fafafa;
-
-  font-weight:700;
+  font-weight:650;
 }
 
-/* =========================================================
+/* =========================
    VIDEO
-========================================================= */
-
-.video-wrap{
-  margin-top:15px;
-}
+========================= */
 
 .video-button{
   display:inline-block;
-
-  padding:9px 14px;
-
+  margin-top:5mm;
+  padding:8px 12px;
   border-radius:6px;
-
-  background:#222;
-
+  background:var(--orange);
   color:#fff;
-
   text-decoration:none;
-
-  font-size:10px;
+  font-size:11px;
   font-weight:700;
 }
 
-/* =========================================================
-   ADVANTAGES
-========================================================= */
+/* =========================
+   WHY US
+========================= */
 
-.advantages-preview{
-  margin:25px 0 0;
-
-  padding:21px 0 23px;
-
-  border-top:1px solid #eee;
-
-  page-break-inside:avoid;
-  break-inside:avoid;
+.advantages{
+  margin-top:auto;
+  padding-top:7mm;
 }
 
 .advantages-title{
-  margin-bottom:18px;
-
-  color:#222;
-
-  font-size:17px;
+  font-size:18px;
   font-weight:800;
-
-  text-align:center;
+  margin-bottom:5mm;
 }
 
 .advantages-grid{
   display:grid;
-
   grid-template-columns:repeat(6,1fr);
-
-  column-gap:8px;
-  row-gap:18px;
+  gap:4mm;
 }
 
-.advantage-card{
+.advantage{
   grid-column:span 2;
-
-  padding:3px 8px;
-
-  color:#222;
-
-  font-size:16px;
-  line-height:1.25;
-
-  font-weight:700;
-
-  text-align:center;
-}
-
-.advantage-card:nth-child(4){
-  grid-column:2 / span 2;
-}
-
-.advantage-card:nth-child(5){
-  grid-column:4 / span 2;
-}
-
-.advantage-icon{
-  width:27px;
-  height:27px;
-
+  min-height:25mm;
+  border:1px solid #e1e3e6;
+  border-radius:7px;
+  padding:4mm;
   display:flex;
   align-items:center;
   justify-content:center;
-
-  margin:0 auto 8px;
-
-  border-radius:50%;
-
-  background:var(--orange);
-
-  color:#fff;
-
-  font-size:11px;
-  font-weight:800;
+  text-align:center;
+  font-size:16px;
+  font-weight:700;
+  line-height:1.25;
 }
 
-/* =========================================================
+.advantage:nth-child(4){
+  grid-column:2 / span 2;
+}
+
+.advantage:nth-child(5){
+  grid-column:4 / span 2;
+}
+
+/* =========================
    FOOTER
-========================================================= */
+========================= */
 
-.preview-footer{
-  margin-top:0;
-
-  padding:17px 30px 18px;
-
+.kp-footer{
+  flex:none;
+  height:25mm;
   background:var(--orange);
-
   color:#fff;
-
-  page-break-inside:avoid;
-  break-inside:avoid;
-}
-
-.footer-main{
   display:flex;
-
-  align-items:flex-start;
+  align-items:center;
   justify-content:space-between;
-
-  gap:20px;
+  gap:10mm;
+  padding:5mm 15mm;
 }
 
-.footer-company{
-  font-size:15px;
-  font-weight:900;
+.footer-left{
+  font-size:12px;
+  font-weight:700;
+  line-height:1.4;
 }
 
-.footer-text{
-  max-width:440px;
-
-  margin-top:5px;
-
-  font-size:9px;
+.footer-right{
+  text-align:right;
+  font-size:12px;
   line-height:1.45;
 }
 
 .footer-manager{
-  text-align:right;
-
-  font-size:10px;
-  line-height:1.5;
+  font-weight:800;
 }
 
-.footer-manager strong{
-  font-size:12px;
-}
-
-.footer-bottom{
-  margin-top:10px;
-  padding-top:8px;
-
-  border-top:1px solid rgba(255,255,255,.4);
-
-  font-size:8px;
-
-  opacity:.9;
-}
-
-/* =========================================================
+/* =========================
    EMPTY
-========================================================= */
+========================= */
 
-.empty{
-  padding:20px;
-
-  color:#888;
-
-  font-size:12px;
-
+.empty-state{
+  color:#777;
   text-align:center;
+  padding:40px 20px;
 }
 
-/* =========================================================
-   MOBILE EDITOR
-========================================================= */
+/* =========================
+   RESPONSIVE
+========================= */
 
-@media(max-width:1000px){
-
+@media(max-width:900px){
   .layout{
     grid-template-columns:1fr;
   }
 
-  .editor-panel{
+  .editor{
     border-right:0;
-    border-bottom:1px solid var(--line);
   }
 
-  .preview-wrap{
-    min-height:700px;
-  }
-}
-
-@media(max-width:600px){
-
-  .topbar{
-    height:auto;
-    min-height:60px;
-
-    padding:9px 12px;
-
-    gap:10px;
+  .preview-side{
+    min-height:800px;
   }
 
-  .brand{
-    font-size:15px;
-  }
-
-  .toolbar{
-    gap:4px;
-  }
-
-  .toolbar button{
-    padding:8px 8px;
-
-    font-size:10px;
-  }
-
-  .editor-panel{
-    padding:14px;
-  }
-
-  .price-grid{
+  .two-cols,
+  .three-cols{
     grid-template-columns:1fr;
   }
-
-  .photo-list{
-    grid-template-columns:repeat(3,1fr);
-  }
-}
-
-/* =========================================================
-   PRINT SUPPORT FOR PDF LIBRARY
-========================================================= */
-
-.pdf-export-mode{
-  box-shadow:none !important;
-}
-
-.pdf-export-mode .preview-page{
-  box-shadow:none !important;
 }
 </style>
 </head>
 
 <body>
 
-<!-- =========================================================
-     TOP BAR
-========================================================= -->
+<div class="app">
 
-<header class="topbar">
+  <header class="topbar">
+    <div class="topbar-title">Конструктор коммерческого предложения</div>
 
-  <div class="brand">
-
-    <div class="brand-mark">А</div>
-
-    <div>
-      АЛЬФАПРОМ · Редактор КП
-    </div>
-
-  </div>
-
-  <div class="toolbar">
-
-    <button
-      class="btn-light"
-      onclick="resetProposal()"
-    >
-      Сбросить
-    </button>
-
-    <button
-      class="btn-orange"
-      onclick="downloadPDF()"
-    >
-      Скачать PDF
-    </button>
-
-    <button
-      class="btn-dark"
-      onclick="downloadDOCX()"
-    >
-      Скачать DOCX
-    </button>
-
-  </div>
-
-</header>
-
-
-<div class="layout">
-
-  <!-- =======================================================
-       EDITOR
-  ======================================================== -->
-
-  <aside class="editor-panel">
-
-    <h1 class="editor-title">
-      Настройки КП
-    </h1>
-
-
-    <!-- =====================================================
-         EQUIPMENT — FIRST
-    ====================================================== -->
-
-    <div class="section">
-
-      <h2>
-        Оборудование
-      </h2>
-
-      <div id="equipmentEditor"></div>
-
-      <button
-        class="add-equipment"
-        type="button"
-        onclick="addEquipment()"
-      >
-        + Добавить оборудование
+    <div class="toolbar">
+      <button class="btn btn-primary" id="downloadPdfBtn">
+        Скачать PDF
       </button>
 
+      <button class="btn btn-primary" id="downloadDocxBtn">
+        Скачать DOCX
+      </button>
+
+      <button class="btn btn-danger" id="resetBtn">
+        Сбросить
+      </button>
     </div>
+  </header>
 
+  <main class="layout">
 
-    <!-- =====================================================
-         MANAGER — LAST
-    ====================================================== -->
+    <!-- ================= EDITOR ================= -->
 
-    <div class="section manager-section">
+    <section class="editor" id="editor">
 
-      <h2>
-        Менеджер и оформление
-      </h2>
+      <div class="editor-section">
+        <h2>Оборудование</h2>
 
-      <div class="field">
+        <div class="field">
+          <label>Название оборудования</label>
+          <input
+            type="text"
+            id="productName"
+            placeholder="Например: Вакуумный упаковщик DZ-900"
+          >
+        </div>
 
-        <label>
-          Название коммерческого предложения
-        </label>
+        <div class="photo-editor">
+          <label class="field">
+            <span style="display:block;margin-bottom:6px;font-size:13px;font-weight:700;color:#40444a;">
+              Фотография оборудования
+            </span>
 
-        <input
-          id="kpTitle"
-          type="text"
-        >
+            <div class="photo-drop" id="photoDrop">
+              <div class="photo-placeholder">
+                Нажмите сюда или перетащите фотографию<br>
+                <small>Фото автоматически подгоняется под стандартный размер без обрезки</small>
+              </div>
+            </div>
 
+            <input
+              type="file"
+              id="photoInput"
+              class="file-input"
+              accept="image/*"
+            >
+
+            <div class="photo-actions">
+              <button class="small-btn" id="choosePhotoBtn">
+                Выбрать фото
+              </button>
+
+              <button class="small-btn" id="removePhotoBtn">
+                Удалить фото
+              </button>
+            </div>
+          </label>
+        </div>
+
+        <div class="field">
+          <label>Описание</label>
+          <textarea
+            id="description"
+            placeholder="Описание оборудования..."
+          ></textarea>
+        </div>
+
+        <div class="field">
+          <label>Дополнительная информация</label>
+          <textarea
+            id="note"
+            placeholder="Примечание..."
+          ></textarea>
+        </div>
+
+        <div class="two-cols">
+
+          <div class="field">
+            <label>Цена</label>
+            <input
+              type="number"
+              id="price"
+              min="0"
+              step="0.01"
+              placeholder="0"
+            >
+          </div>
+
+          <div class="field">
+            <label>Валюта</label>
+            <select id="currency">
+              <option value="RUB">₽ RUB</option>
+              <option value="USD">$ USD</option>
+              <option value="EUR">€ EUR</option>
+            </select>
+          </div>
+
+        </div>
+
+        <div class="field">
+          <label>Цена со скидкой</label>
+          <input
+            type="number"
+            id="discountPrice"
+            min="0"
+            step="0.01"
+            placeholder="Если скидки нет — оставьте пустым"
+          >
+        </div>
+
+        <div class="field">
+          <label>Наличие</label>
+
+          <div class="status-buttons">
+            <button
+              class="status-button"
+              data-status="available"
+              id="statusAvailable"
+            >
+              В наличии
+            </button>
+
+            <button
+              class="status-button"
+              data-status="order"
+              id="statusOrder"
+            >
+              Под заказ
+            </button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Комментарий к цене</label>
+          <input
+            type="text"
+            id="priceComment"
+            placeholder="Например: Цена указана с НДС"
+          >
+        </div>
+
+        <div class="field">
+          <label>Характеристики</label>
+          <textarea
+            class="specs-textarea"
+            id="specsText"
+            placeholder="Вставьте характеристики одним блоком.
+
+Например:
+Производительность: до 6 циклов/мин
+Длина планки: 800 мм
+Ширина планки: 600 мм
+Мощность: 3 кВт
+Напряжение: 380 В"
+          ></textarea>
+        </div>
+
+        <div class="field">
+          <label>Видео оборудования</label>
+          <input
+            type="url"
+            id="videoUrl"
+            placeholder="https://..."
+          >
+        </div>
       </div>
 
 
-      <div class="field">
+      <!-- ================= MANAGER ================= -->
 
-        <label>
-          Имя менеджера
-        </label>
+      <div class="editor-section">
+        <h2>Информация о менеджере</h2>
 
-        <input
-          id="managerName"
-          type="text"
-          placeholder="Например: Иван Иванов"
-        >
+        <div class="two-cols">
 
+          <div class="field">
+            <label>Имя менеджера</label>
+            <input
+              type="text"
+              id="managerName"
+              placeholder="Имя менеджера"
+            >
+          </div>
+
+          <div class="field">
+            <label>Телефон</label>
+            <input
+              type="tel"
+              id="managerPhone"
+              placeholder="+7 (___) ___-__-__"
+            >
+          </div>
+
+        </div>
       </div>
 
+    </section>
 
-      <div class="field">
 
-        <label>
-          Телефон менеджера
-        </label>
+    <!-- ================= PREVIEW ================= -->
 
-        <input
-          id="managerPhone"
-          type="text"
-          placeholder="+7 900 000-00-00"
-        >
+    <section class="preview-side">
 
+      <div class="preview-title">
+        Предварительный просмотр
       </div>
 
-
-      <div class="field">
-
-        <label>
-          Видео для КП
-        </label>
-
-        <input
-          id="globalVideo"
-          type="text"
-          placeholder="https://..."
-        >
-
+      <div class="preview-scroll">
+        <div class="preview-pages" id="previewPages"></div>
       </div>
 
-
-      <div class="field">
-
-        <label>
-          Текст в подвале
-        </label>
-
-        <textarea
-          id="footerText"
-        ></textarea>
-
-      </div>
-
-    </div>
-
-  </aside>
-
-
-  <!-- =======================================================
-       PREVIEW
-  ======================================================== -->
-
-  <main class="preview-wrap">
-
-    <div class="preview-stage">
-
-      <div
-        class="preview-page"
-        id="preview"
-      ></div>
-
-    </div>
+    </section>
 
   </main>
 
 </div>
 
 
+<!-- PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<!-- REAL DOCX GENERATOR -->
+<script src="https://unpkg.com/docx@9.5.1/build/index.umd.js"></script>
+
+
 <script>
+/* ============================================================
+   ALFAPROM КП EDITOR
+============================================================ */
 
-/* =========================================================
-   CONFIG
-========================================================= */
-
-const STORAGE_KEY =
-  'alfaprom_kp_editor_v3';
-
-const OLD_STORAGE_KEYS = [
-  'alfaprom_kp_editor_v2',
-  'alfaprom_kp_editor_v1'
+const STORAGE_KEY = "alfaprom_kp_editor_v4";
+const OLD_KEYS = [
+  "alfaprom_kp_editor_v3",
+  "alfaprom_kp_editor_v2",
+  "alfaprom_kp_editor_v1"
 ];
 
-const DB_NAME =
-  'alfaprom_kp_editor_images';
-
+const DB_NAME = "alfaprom_kp_editor_images";
 const DB_VERSION = 1;
+const STORE_NAME = "photos";
 
-const PHOTO_STORE =
-  'photos';
+const DEFAULT_ADVANTAGES = [
+  "На рынке с 2017 г.",
+  "Нам доверяют крупные федеральные заказчики",
+  "Не продаем «железо», а решаем задачу под ключ",
+  "ОСЗ (Оперативная Служба Заботы) - реагирование сервиса в течении 5 минут!",
+  "ГЛЦ (Гарантия Лучшей Цены)"
+];
 
-let state = null;
+const state = {
+  productName: "",
+  description: "",
+  note: "",
+  price: "",
+  discountPrice: "",
+  currency: "RUB",
+  status: "available",
+  priceComment: "",
+  specsText: "",
+  videoUrl: "",
+  managerName: "",
+  managerPhone: "",
+  photoId: "",
+  advantages: DEFAULT_ADVANTAGES.slice()
+};
 
 let db = null;
 
-const objectUrlCache =
-  new Map();
 
-
-/* =========================================================
-   DEFAULT STATE
-========================================================= */
-
-function getDefaultState(){
-
-  return {
-
-    kpTitle:
-      'Коммерческое предложение',
-
-    managerName:
-      '',
-
-    managerPhone:
-      '',
-
-    globalVideo:
-      '',
-
-    footerText:
-      'Будем рады подобрать оптимальное решение под вашу задачу.',
-
-    /*
-      Преимущества фиксированы.
-      В редакторе их больше нет.
-    */
-
-    advantages: [
-
-      'На рынке с 2017 г.',
-
-      'Нам доверяют крупные федеральные заказчики',
-
-      'Не продаем «железо», а решаем задачу под ключ',
-
-      'ОСЗ (Оперативная Служба Заботы) - реагирование сервиса в течении 5 минут!',
-
-      'ГЛЦ (Гарантия Лучшей Цены)'
-
-    ],
-
-    equipment: [
-
-      {
-
-        name:
-          'Пельменный аппарат Foodatlas JGL120-5B',
-
-        description:
-          'Профессиональный автоматический аппарат для производства пельменей.',
-
-        note:
-          '',
-
-        price:
-          '200890',
-
-        discountPrice:
-          '',
-
-        currency:
-          'RUB',
-
-        availability:
-          'stock',
-
-        priceComment:
-          '',
-
-        specsText:
-`Производительность: до 120 кг/ч
-Вес: 160 кг
-Габариты: 990 × 470 × 1150 мм
-Мощность: 1,5 кВт`,
-
-        photos:
-          []
-
-      }
-
-    ]
-
-  };
-
-}
-
-
-/* =========================================================
+/* ============================================================
    INDEXED DB
-========================================================= */
+============================================================ */
 
-function openImageDB(){
-
+function openDB(){
   return new Promise((resolve,reject)=>{
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-    const request =
-      indexedDB.open(
-        DB_NAME,
-        DB_VERSION
-      );
+    request.onupgradeneeded = function(e){
+      const database = e.target.result;
 
-    request.onupgradeneeded =
-      function(event){
+      if(!database.objectStoreNames.contains(STORE_NAME)){
+        database.createObjectStore(STORE_NAME);
+      }
+    };
 
-        const database =
-          event.target.result;
+    request.onsuccess = function(){
+      db = request.result;
+      resolve(db);
+    };
 
-        if(
-          !database.objectStoreNames.contains(
-            PHOTO_STORE
-          )
-        ){
-
-          database.createObjectStore(
-            PHOTO_STORE,
-            {
-              keyPath:'id'
-            }
-          );
-
-        }
-
-      };
-
-    request.onsuccess =
-      function(event){
-
-        db =
-          event.target.result;
-
-        resolve(db);
-
-      };
-
-    request.onerror =
-      function(){
-
-        reject(request.error);
-
-      };
-
+    request.onerror = function(){
+      reject(request.error);
+    };
   });
-
 }
 
 
-function photoPut(id,blob){
-
-  if(!db){
-    return Promise.resolve();
-  }
-
+function savePhoto(blob){
   return new Promise((resolve,reject)=>{
+    const id = "photo_" + Date.now() + "_" + Math.random().toString(36).slice(2);
 
-    const transaction =
-      db.transaction(
-        PHOTO_STORE,
-        'readwrite'
-      );
+    const transaction = db.transaction(STORE_NAME,"readwrite");
+    transaction.objectStore(STORE_NAME).put(blob,id);
 
-    const store =
-      transaction.objectStore(
-        PHOTO_STORE
-      );
+    transaction.oncomplete = ()=>{
+      resolve(id);
+    };
 
-    store.put({
-      id:id,
-      blob:blob
-    });
-
-    transaction.oncomplete =
-      ()=>resolve();
-
-    transaction.onerror =
-      ()=>reject(transaction.error);
-
+    transaction.onerror = ()=>{
+      reject(transaction.error);
+    };
   });
-
 }
 
 
-function photoGet(id){
-
-  if(!db){
-    return Promise.resolve(null);
-  }
-
+function getPhoto(id){
   return new Promise((resolve,reject)=>{
-
-    const transaction =
-      db.transaction(
-        PHOTO_STORE,
-        'readonly'
-      );
-
-    const store =
-      transaction.objectStore(
-        PHOTO_STORE
-      );
-
-    const request =
-      store.get(id);
-
-    request.onsuccess =
-      ()=>{
-        resolve(
-          request.result || null
-        );
-      };
-
-    request.onerror =
-      ()=>{
-        reject(request.error);
-      };
-
-  });
-
-}
-
-
-function photoDelete(id){
-
-  if(!db){
-    return Promise.resolve();
-  }
-
-  return new Promise((resolve,reject)=>{
-
-    const transaction =
-      db.transaction(
-        PHOTO_STORE,
-        'readwrite'
-      );
-
-    const store =
-      transaction.objectStore(
-        PHOTO_STORE
-      );
-
-    store.delete(id);
-
-    transaction.oncomplete =
-      ()=>resolve();
-
-    transaction.onerror =
-      ()=>reject(transaction.error);
-
-  });
-
-}
-
-
-function photoClear(){
-
-  if(!db){
-    return Promise.resolve();
-  }
-
-  return new Promise((resolve,reject)=>{
-
-    const transaction =
-      db.transaction(
-        PHOTO_STORE,
-        'readwrite'
-      );
-
-    const store =
-      transaction.objectStore(
-        PHOTO_STORE
-      );
-
-    store.clear();
-
-    transaction.oncomplete =
-      ()=>resolve();
-
-    transaction.onerror =
-      ()=>reject(transaction.error);
-
-  });
-
-}
-
-
-/* =========================================================
-   PHOTO IDS
-========================================================= */
-
-function createPhotoId(){
-
-  if(
-    window.crypto &&
-    crypto.randomUUID
-  ){
-
-    return crypto.randomUUID();
-
-  }
-
-  return (
-    'photo_' +
-    Date.now() +
-    '_' +
-    Math.random()
-      .toString(36)
-      .slice(2)
-  );
-
-}
-
-
-/* =========================================================
-   IMAGE HELPERS
-========================================================= */
-
-function dataURLToBlob(dataURL){
-
-  const parts =
-    dataURL.split(',');
-
-  const match =
-    parts[0].match(
-      /:(.*?);/
-    );
-
-  const mime =
-    match
-      ? match[1]
-      : 'image/jpeg';
-
-  const binary =
-    atob(parts[1]);
-
-  const bytes =
-    new Uint8Array(
-      binary.length
-    );
-
-  for(
-    let i=0;
-    i<binary.length;
-    i++
-  ){
-
-    bytes[i] =
-      binary.charCodeAt(i);
-
-  }
-
-  return new Blob(
-    [bytes],
-    {
-      type:mime
+    if(!id){
+      resolve(null);
+      return;
     }
-  );
 
+    const transaction = db.transaction(STORE_NAME,"readonly");
+    const request = transaction.objectStore(STORE_NAME).get(id);
+
+    request.onsuccess = ()=>{
+      resolve(request.result || null);
+    };
+
+    request.onerror = ()=>{
+      reject(request.error);
+    };
+  });
 }
 
 
-async function getPhotoURL(id){
+function deletePhoto(id){
+  return new Promise((resolve,reject)=>{
+    if(!id){
+      resolve();
+      return;
+    }
 
-  if(!id){
-    return '';
-  }
+    const transaction = db.transaction(STORE_NAME,"readwrite");
+    transaction.objectStore(STORE_NAME).delete(id);
 
-  if(
-    objectUrlCache.has(id)
-  ){
-
-    return objectUrlCache.get(id);
-
-  }
-
-  const item =
-    await photoGet(id);
-
-  if(!item){
-    return '';
-  }
-
-  const url =
-    URL.createObjectURL(
-      item.blob
-    );
-
-  objectUrlCache.set(
-    id,
-    url
-  );
-
-  return url;
-
+    transaction.oncomplete = ()=>resolve();
+    transaction.onerror = ()=>reject(transaction.error);
+  });
 }
 
 
-function revokeAllObjectURLs(){
-
-  for(
-    const url of objectUrlCache.values()
-  ){
-
-    URL.revokeObjectURL(
-      url
-    );
-
-  }
-
-  objectUrlCache.clear();
-
-}
-
-
-/* =========================================================
+/* ============================================================
    STATE
-========================================================= */
-
-function saveState(){
-
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(state)
-  );
-
-}
-
+============================================================ */
 
 function loadState(){
 
-  let saved =
-    localStorage.getItem(
-      STORAGE_KEY
-    );
+  let saved = null;
 
-  /*
-    Если новая версия ещё не существует,
-    пробуем старые версии.
-  */
+  try{
+    saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+  }catch(e){}
 
   if(!saved){
 
-    for(
-      const key of OLD_STORAGE_KEYS
-    ){
+    for(const key of OLD_KEYS){
+      try{
+        const old = JSON.parse(localStorage.getItem(key));
 
-      const old =
-        localStorage.getItem(key);
-
-      if(old){
-
-        saved = old;
-
-        break;
-
-      }
-
+        if(old){
+          saved = old;
+          break;
+        }
+      }catch(e){}
     }
 
   }
 
+  if(saved){
 
-  if(!saved){
+    Object.keys(state).forEach(key=>{
+      if(saved[key] !== undefined){
+        state[key] = saved[key];
+      }
+    });
 
-    state =
-      getDefaultState();
-
-    return;
-
-  }
-
-
-  try{
-
-    state =
-      JSON.parse(saved);
-
-  }catch{
-
-    state =
-      getDefaultState();
+    if(!Array.isArray(state.advantages)){
+      state.advantages = DEFAULT_ADVANTAGES.slice();
+    }
 
   }
-
-  normalizeState();
 
 }
 
 
-function normalizeState(){
+function saveState(){
 
-  if(
-    !state ||
-    typeof state !== 'object'
-  ){
+  const clean = {...state};
 
-    state =
-      getDefaultState();
-
-    return;
-
-  }
-
-
-  if(
-    !Array.isArray(
-      state.equipment
-    )
-  ){
-
-    state.equipment = [];
-
-  }
-
-
-  /*
-    Преимущества теперь всегда берутся
-    из шаблона и не редактируются.
-  */
-
-  state.advantages =
-    getDefaultState().advantages;
-
-
-  if(
-    state.kpTitle === undefined
-  ){
-    state.kpTitle = '';
-  }
-
-  if(
-    state.managerName === undefined
-  ){
-    state.managerName = '';
-  }
-
-  if(
-    state.managerPhone === undefined
-  ){
-    state.managerPhone = '';
-  }
-
-  if(
-    state.globalVideo === undefined
-  ){
-    state.globalVideo = '';
-  }
-
-  if(
-    state.footerText === undefined
-  ){
-    state.footerText = '';
-  }
-
-
-  state.equipment.forEach(
-    equipment=>{
-
-      if(
-        !Array.isArray(
-          equipment.photos
-        )
-      ){
-
-        equipment.photos = [];
-
-      }
-
-
-      if(
-        equipment.discountPrice === undefined
-      ){
-
-        equipment.discountPrice = '';
-
-      }
-
-
-      if(
-        equipment.currency === undefined
-      ){
-
-        equipment.currency = 'RUB';
-
-      }
-
-
-      if(
-        equipment.availability === undefined
-      ){
-
-        equipment.availability = 'stock';
-
-      }
-
-
-      if(
-        equipment.priceComment === undefined
-      ){
-
-        equipment.priceComment = '';
-
-      }
-
-
-      if(
-        equipment.specsText === undefined
-      ){
-
-        if(
-          Array.isArray(
-            equipment.specs
-          )
-        ){
-
-          equipment.specsText =
-            equipment.specs
-              .map(spec=>{
-
-                if(
-                  typeof spec === 'string'
-                ){
-
-                  return spec;
-
-                }
-
-                if(
-                  spec &&
-                  spec.name
-                ){
-
-                  return (
-                    spec.name +
-                    ': ' +
-                    (spec.value || '')
-                  );
-
-                }
-
-                return '';
-
-              })
-              .filter(Boolean)
-              .join('\n');
-
-        }else{
-
-          equipment.specsText = '';
-
-        }
-
-      }
-
-    }
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(clean)
   );
 
 }
 
 
-/* =========================================================
-   MIGRATE OLD BASE64 PHOTOS
-========================================================= */
+/* ============================================================
+   HELPERS
+============================================================ */
 
-async function migrateOldPhotos(){
-
-  let changed =
-    false;
-
-
-  for(
-    const equipment of state.equipment || []
-  ){
-
-    if(
-      !Array.isArray(
-        equipment.photos
-      )
-    ){
-
-      continue;
-
-    }
-
-
-    const newPhotos = [];
-
-
-    for(
-      const photo of equipment.photos
-    ){
-
-      /*
-        Старый формат:
-        Base64 внутри localStorage.
-      */
-
-      if(
-        typeof photo === 'string' &&
-        photo.startsWith('data:')
-      ){
-
-        const id =
-          createPhotoId();
-
-        const blob =
-          dataURLToBlob(photo);
-
-        await photoPut(
-          id,
-          blob
-        );
-
-        newPhotos.push(id);
-
-        changed = true;
-
-      }else{
-
-        newPhotos.push(photo);
-
-      }
-
-    }
-
-
-    equipment.photos =
-      newPhotos;
-
-  }
-
-
-  if(changed){
-
-    saveState();
-
-  }
-
+function escapeHtml(value){
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
 }
 
 
-/* =========================================================
-   FORMATTERS
-========================================================= */
+function formatNumber(value){
+
+  if(value === "" || value === null || value === undefined){
+    return "";
+  }
+
+  const number = Number(value);
+
+  if(Number.isNaN(number)){
+    return escapeHtml(value);
+  }
+
+  return new Intl.NumberFormat("ru-RU",{
+    maximumFractionDigits:2
+  }).format(number);
+}
+
 
 function currencySymbol(currency){
 
-  if(currency === 'USD'){
-    return '$';
-  }
+  switch(currency){
+    case "USD":
+      return "$";
 
-  if(currency === 'EUR'){
-    return '€';
-  }
+    case "EUR":
+      return "€";
 
-  return '₽';
+    default:
+      return "₽";
+  }
 
 }
 
 
-function formatPrice(value){
+function formatPrice(value,currency){
 
-  if(
-    value === undefined ||
-    value === null
-  ){
-
-    return '';
-
+  if(value === "" || value === null || value === undefined){
+    return "";
   }
 
-  const clean =
-    String(value)
-      .replace(/\s/g,'')
-      .replace(',','.');
-
-
-  const number =
-    Number(clean);
-
-
-  if(
-    !Number.isFinite(number)
-  ){
-
-    return String(value);
-
-  }
-
-
-  return new Intl.NumberFormat(
-    'ru-RU',
-    {
-      maximumFractionDigits:2
-    }
-  ).format(number);
-
+  return `${formatNumber(value)} ${currencySymbol(currency)}`;
 }
 
 
-/* =========================================================
-   SPECS PARSER
-========================================================= */
+function safeFileName(name){
+
+  let result = String(name || "Коммерческое предложение")
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g," ")
+    .replace(/\s+/g," ")
+    .trim();
+
+  if(!result){
+    result = "Коммерческое предложение";
+  }
+
+  return `${result}, предложение от АЛЬФАПРОМ`;
+}
+
 
 function parseSpecs(text){
 
-  if(!text){
-    return [];
-  }
+  const rows = [];
 
-
-  return text
+  String(text || "")
     .split(/\r?\n/)
-    .map(
-      line=>line.trim()
-    )
+    .map(line=>line.trim())
     .filter(Boolean)
-    .map(
-      line=>{
+    .forEach(line=>{
 
-        let match =
-          line.match(
-            /^(.+?)\s*:\s*(.+)$/
-          );
+      const colon = line.indexOf(":");
 
+      if(colon > -1){
 
-        if(!match){
+        const name = line.slice(0,colon).trim();
+        const value = line.slice(colon + 1).trim();
 
-          match =
-            line.match(
-              /^(.+?)\s+[—-]\s+(.+)$/
-            );
-
+        if(name || value){
+          rows.push([name,value]);
         }
 
+      }else{
 
-        if(!match){
-
-          match =
-            line.match(
-              /^(.+?)\t+(.+)$/
-            );
-
-        }
-
-
-        if(match){
-
-          return {
-
-            name:
-              match[1].trim(),
-
-            value:
-              match[2].trim()
-
-          };
-
-        }
-
-
-        return {
-
-          name:'',
-
-          value:line
-
-        };
+        rows.push([line,""]);
 
       }
+
+    });
+
+  return rows;
+}
+
+
+/* ============================================================
+   FORM <-> STATE
+============================================================ */
+
+const fields = {
+  productName: document.getElementById("productName"),
+  description: document.getElementById("description"),
+  note: document.getElementById("note"),
+  price: document.getElementById("price"),
+  discountPrice: document.getElementById("discountPrice"),
+  currency: document.getElementById("currency"),
+  priceComment: document.getElementById("priceComment"),
+  specsText: document.getElementById("specsText"),
+  videoUrl: document.getElementById("videoUrl"),
+  managerName: document.getElementById("managerName"),
+  managerPhone: document.getElementById("managerPhone")
+};
+
+
+function fillForm(){
+
+  Object.keys(fields).forEach(key=>{
+    fields[key].value = state[key] ?? "";
+  });
+
+  updateStatusButtons();
+}
+
+
+function readForm(){
+
+  Object.keys(fields).forEach(key=>{
+    state[key] = fields[key].value;
+  });
+
+  saveState();
+}
+
+
+function updateStatusButtons(){
+
+  document.querySelectorAll(".status-button").forEach(button=>{
+    button.classList.toggle(
+      "active",
+      button.dataset.status === state.status
     );
+  });
 
 }
 
 
-/* =========================================================
-   EDITOR
-========================================================= */
+/* ============================================================
+   PHOTO
+============================================================ */
 
-function renderEditor(){
+const photoDrop = document.getElementById("photoDrop");
+const photoInput = document.getElementById("photoInput");
+const choosePhotoBtn = document.getElementById("choosePhotoBtn");
+const removePhotoBtn = document.getElementById("removePhotoBtn");
 
-  document.getElementById(
-    'kpTitle'
-  ).value =
-    state.kpTitle || '';
 
+async function renderEditorPhoto(){
 
-  document.getElementById(
-    'managerName'
-  ).value =
-    state.managerName || '';
+  if(!state.photoId){
 
+    photoDrop.classList.remove("has-image");
 
-  document.getElementById(
-    'managerPhone'
-  ).value =
-    state.managerPhone || '';
+    photoDrop.innerHTML = `
+      <div class="photo-placeholder">
+        Нажмите сюда или перетащите фотографию<br>
+        <small>Фото автоматически подгоняется под стандартный размер без обрезки</small>
+      </div>
+    `;
 
-
-  document.getElementById(
-    'globalVideo'
-  ).value =
-    state.globalVideo || '';
-
-
-  document.getElementById(
-    'footerText'
-  ).value =
-    state.footerText || '';
-
-
-  renderEquipmentEditor();
-
-}
-
-
-function renderEquipmentEditor(){
-
-  const container =
-    document.getElementById(
-      'equipmentEditor'
-    );
-
-  container.innerHTML = '';
-
-
-  if(
-    state.equipment.length === 0
-  ){
-
-    container.innerHTML =
-      '<div class="empty">Оборудование пока не добавлено.</div>';
-
-    return;
-
-  }
-
-
-  state.equipment.forEach(
-    (equipment,index)=>{
-
-      const card =
-        document.createElement(
-          'div'
-        );
-
-      card.className =
-        'equipment-editor';
-
-
-      card.innerHTML = `
-
-        <div class="equipment-editor-head">
-
-          <strong>
-            Оборудование ${index + 1}
-          </strong>
-
-          <button
-            class="remove-equipment"
-            type="button"
-            onclick="removeEquipment(${index})"
-          >
-            ×
-          </button>
-
-        </div>
-
-
-        <!-- NAME -->
-
-        <div class="field">
-
-          <label>
-            Название оборудования
-          </label>
-
-          <input
-            type="text"
-            value="${escapeAttribute(equipment.name || '')}"
-            oninput="updateEquipment(${index},'name',this.value)"
-          >
-
-        </div>
-
-
-        <!-- PHOTOS -->
-
-        <div class="field">
-
-          <label>
-            Фотографии
-          </label>
-
-          <div
-            class="photo-drop"
-            ondragover="handleDragOver(event)"
-            ondragleave="handleDragLeave(event)"
-            ondrop="handlePhotoDrop(event,${index})"
-            onclick="document.getElementById('photoInput_${index}').click()"
-          >
-
-            Нажмите или перетащите сюда фотографии
-
-          </div>
-
-          <input
-            id="photoInput_${index}"
-            class="photo-input"
-            type="file"
-            accept="image/*"
-            multiple
-            onchange="handlePhotoInput(event,${index})"
-          >
-
-          <div
-            class="photo-list"
-            id="photoList_${index}"
-          ></div>
-
-        </div>
-
-
-        <!-- DESCRIPTION -->
-
-        <div class="field">
-
-          <label>
-            Описание
-          </label>
-
-          <textarea
-            oninput="updateEquipment(${index},'description',this.value)"
-          >${escapeHTML(equipment.description || '')}</textarea>
-
-        </div>
-
-
-        <!-- NOTE -->
-
-        <div class="field">
-
-          <label>
-            Примечание
-          </label>
-
-          <textarea
-            style="min-height:60px"
-            oninput="updateEquipment(${index},'note',this.value)"
-          >${escapeHTML(equipment.note || '')}</textarea>
-
-        </div>
-
-
-        <!-- PRICE -->
-
-        <div class="field">
-
-          <label>
-            Цена
-          </label>
-
-          <div class="price-grid">
-
-            <input
-              type="text"
-              inputmode="decimal"
-              placeholder="Обычная цена"
-              value="${escapeAttribute(equipment.price || '')}"
-              oninput="updateEquipment(${index},'price',this.value)"
-            >
-
-            <select
-              onchange="updateEquipment(${index},'currency',this.value)"
-            >
-
-              <option
-                value="RUB"
-                ${equipment.currency === 'RUB' ? 'selected':''}
-              >
-                ₽ RUB
-              </option>
-
-              <option
-                value="USD"
-                ${equipment.currency === 'USD' ? 'selected':''}
-              >
-                $ USD
-              </option>
-
-              <option
-                value="EUR"
-                ${equipment.currency === 'EUR' ? 'selected':''}
-              >
-                € EUR
-              </option>
-
-            </select>
-
-          </div>
-
-        </div>
-
-
-        <!-- DISCOUNT -->
-
-        <div class="field">
-
-          <label>
-            Цена со скидкой
-          </label>
-
-          <input
-            type="text"
-            inputmode="decimal"
-            placeholder="Если скидки нет — оставить пустым"
-            value="${escapeAttribute(equipment.discountPrice || '')}"
-            oninput="updateEquipment(${index},'discountPrice',this.value)"
-          >
-
-        </div>
-
-
-        <!-- AVAILABILITY -->
-
-        <div class="field">
-
-          <label>
-            Наличие
-          </label>
-
-          <div class="status-switch">
-
-            <button
-              type="button"
-              class="status-option stock ${
-                equipment.availability === 'stock'
-                  ? 'active'
-                  : ''
-              }"
-              onclick="setAvailability(${index},'stock')"
-            >
-              В наличии
-            </button>
-
-            <button
-              type="button"
-              class="status-option order ${
-                equipment.availability === 'order'
-                  ? 'active'
-                  : ''
-              }"
-              onclick="setAvailability(${index},'order')"
-            >
-              Под заказ
-            </button>
-
-          </div>
-
-        </div>
-
-
-        <!-- PRICE COMMENT -->
-
-        <div class="field">
-
-          <label>
-            Комментарий к цене
-          </label>
-
-          <input
-            type="text"
-            placeholder="Например: цена с НДС"
-            value="${escapeAttribute(equipment.priceComment || '')}"
-            oninput="updateEquipment(${index},'priceComment',this.value)"
-          >
-
-        </div>
-
-
-        <!-- SPECS -->
-
-        <div class="field">
-
-          <label>
-            Характеристики
-          </label>
-
-          <textarea
-            class="specs-textarea"
-            placeholder="Вставьте все характеристики одним блоком
-
-Например:
-Производительность: до 120 кг/ч
-Вес: 160 кг
-Мощность: 1,5 кВт"
-            oninput="updateEquipment(${index},'specsText',this.value)"
-          >${escapeHTML(equipment.specsText || '')}</textarea>
-
-          <div class="hint">
-            Каждая характеристика — с новой строки.
-            Для таблицы используйте формат «Название: значение».
-          </div>
-
-        </div>
-
-      `;
-
-
-      container.appendChild(
-        card
-      );
-
-
-      renderPhotoList(
-        index
-      );
-
-    }
-  );
-
-}
-
-
-/* =========================================================
-   MAIN FIELDS
-========================================================= */
-
-function updateMainField(
-  field,
-  value
-){
-
-  state[field] =
-    value;
-
-  saveState();
-
-  renderPreview();
-
-}
-
-
-document
-  .getElementById('kpTitle')
-  .addEventListener(
-    'input',
-    event=>{
-      updateMainField(
-        'kpTitle',
-        event.target.value
-      );
-    }
-  );
-
-
-document
-  .getElementById('managerName')
-  .addEventListener(
-    'input',
-    event=>{
-      updateMainField(
-        'managerName',
-        event.target.value
-      );
-    }
-  );
-
-
-document
-  .getElementById('managerPhone')
-  .addEventListener(
-    'input',
-    event=>{
-      updateMainField(
-        'managerPhone',
-        event.target.value
-      );
-    }
-  );
-
-
-document
-  .getElementById('globalVideo')
-  .addEventListener(
-    'input',
-    event=>{
-      updateMainField(
-        'globalVideo',
-        event.target.value
-      );
-    }
-  );
-
-
-document
-  .getElementById('footerText')
-  .addEventListener(
-    'input',
-    event=>{
-      updateMainField(
-        'footerText',
-        event.target.value
-      );
-    }
-  );
-
-
-/* =========================================================
-   EQUIPMENT EVENTS
-========================================================= */
-
-function updateEquipment(
-  index,
-  field,
-  value
-){
-
-  if(
-    !state.equipment[index]
-  ){
     return;
   }
 
+  const blob = await getPhoto(state.photoId);
 
-  state.equipment[index][field] =
-    value;
-
-
-  saveState();
-
-  renderPreview();
-
-}
-
-
-function setAvailability(
-  index,
-  value
-){
-
-  if(
-    !state.equipment[index]
-  ){
+  if(!blob){
+    state.photoId = "";
+    saveState();
+    await renderEditorPhoto();
     return;
   }
 
+  const url = URL.createObjectURL(blob);
 
-  state.equipment[index].availability =
-    value;
+  photoDrop.classList.add("has-image");
 
-
-  saveState();
-
-  renderEquipmentEditor();
-
-  renderPreview();
+  photoDrop.innerHTML = `
+    <img src="${url}" alt="Фото оборудования">
+  `;
 
 }
 
 
-/* =========================================================
-   ADD EQUIPMENT
-========================================================= */
+async function handlePhoto(file){
 
-function addEquipment(){
+  if(!file || !file.type.startsWith("image/")){
+    return;
+  }
 
-  state.equipment.push({
+  if(state.photoId){
+    try{
+      await deletePhoto(state.photoId);
+    }catch(e){}
+  }
 
-    name:
-      'Новое оборудование',
+  const id = await savePhoto(file);
 
-    description:
-      '',
+  state.photoId = id;
 
-    note:
-      '',
+  saveState();
 
-    price:
-      '',
+  await renderEditorPhoto();
 
-    discountPrice:
-      '',
+  renderPreview();
+}
 
-    currency:
-      'RUB',
 
-    availability:
-      'stock',
+choosePhotoBtn.addEventListener("click",()=>{
+  photoInput.click();
+});
 
-    priceComment:
-      '',
 
-    specsText:
-      '',
+photoDrop.addEventListener("click",()=>{
+  photoInput.click();
+});
 
-    photos:
-      []
+
+photoInput.addEventListener("change",async e=>{
+  const file = e.target.files[0];
+
+  if(file){
+    await handlePhoto(file);
+  }
+
+  photoInput.value = "";
+});
+
+
+photoDrop.addEventListener("dragover",e=>{
+  e.preventDefault();
+  photoDrop.style.borderColor = "var(--orange)";
+});
+
+
+photoDrop.addEventListener("dragleave",()=>{
+  photoDrop.style.borderColor = "";
+});
+
+
+photoDrop.addEventListener("drop",async e=>{
+  e.preventDefault();
+  photoDrop.style.borderColor = "";
+
+  const file = e.dataTransfer.files[0];
+
+  if(file){
+    await handlePhoto(file);
+  }
+});
+
+
+removePhotoBtn.addEventListener("click",async e=>{
+  e.preventDefault();
+
+  if(state.photoId){
+    await deletePhoto(state.photoId);
+  }
+
+  state.photoId = "";
+
+  saveState();
+
+  await renderEditorPhoto();
+  renderPreview();
+});
+
+
+/* ============================================================
+   PREVIEW
+============================================================ */
+
+async function getPhotoDataUrl(){
+
+  const blob = await getPhoto(state.photoId);
+
+  if(!blob){
+    return "";
+  }
+
+  return new Promise((resolve,reject)=>{
+
+    const reader = new FileReader();
+
+    reader.onload = ()=>{
+      resolve(reader.result);
+    };
+
+    reader.onerror = ()=>{
+      reject(reader.error);
+    };
+
+    reader.readAsDataURL(blob);
 
   });
 
-
-  saveState();
-
-  renderEditor();
-
-  renderPreview();
-
 }
 
 
-/* =========================================================
-   REMOVE EQUIPMENT
-========================================================= */
+function createSpecsTable(){
 
-async function removeEquipment(
-  index
-){
+  const rows = parseSpecs(state.specsText);
 
-  const equipment =
-    state.equipment[index];
-
-  if(!equipment){
-    return;
+  if(!rows.length){
+    return "";
   }
 
+  return `
+    <table class="specs-table">
+      <thead>
+        <tr>
+          <th colspan="2">Характеристики</th>
+        </tr>
+      </thead>
 
-  for(
-    const id of equipment.photos || []
-  ){
+      <tbody>
 
-    if(
-      typeof id === 'string' &&
-      !id.startsWith('data:')
-    ){
+        ${rows.map(row=>`
+          <tr>
+            <td>${escapeHtml(row[0])}</td>
+            <td>${escapeHtml(row[1])}</td>
+          </tr>
+        `).join("")}
 
-      try{
-
-        await photoDelete(id);
-
-      }catch{}
-
-    }
-
-  }
+      </tbody>
+    </table>
+  `;
+}
 
 
-  state.equipment.splice(
-    index,
-    1
+function createPageHtml(photoDataUrl){
+
+  const hasPhoto = Boolean(photoDataUrl);
+  const hasDescription = Boolean(state.description.trim());
+  const hasNote = Boolean(state.note.trim());
+  const hasVideo = Boolean(state.videoUrl.trim());
+
+  const price = formatPrice(
+    state.price,
+    state.currency
   );
 
-
-  saveState();
-
-  renderEditor();
-
-  renderPreview();
-
-}
-
-
-/* =========================================================
-   PHOTO INPUT
-========================================================= */
-
-function handleDragOver(event){
-
-  event.preventDefault();
-
-  event.currentTarget
-    .classList
-    .add('dragover');
-
-}
-
-
-function handleDragLeave(event){
-
-  event.currentTarget
-    .classList
-    .remove('dragover');
-
-}
-
-
-function handlePhotoDrop(
-  event,
-  index
-){
-
-  event.preventDefault();
-
-  event.currentTarget
-    .classList
-    .remove('dragover');
-
-
-  const files =
-    [...event.dataTransfer.files]
-      .filter(
-        file=>
-          file.type.startsWith('image/')
-      );
-
-
-  addPhotos(
-    files,
-    index
+  const discount = formatPrice(
+    state.discountPrice,
+    state.currency
   );
 
+  const statusText =
+    state.status === "order"
+      ? "Под заказ"
+      : "В наличии";
+
+  const statusClass =
+    state.status === "order"
+      ? "order"
+      : "available";
+
+  return `
+    <div class="kp-page">
+
+      <div class="kp-content">
+
+        <div class="kp-header">
+
+          <div class="brand">
+
+            <div class="brand-mark">А</div>
+
+            <div class="brand-name">
+              АЛЬФАПРОМ
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="kp-title">
+          Коммерческое предложение
+        </div>
+
+        <div class="kp-product-name">
+          ${escapeHtml(
+            state.productName ||
+            "Название оборудования"
+          )}
+        </div>
+
+        ${
+          hasPhoto
+          ?
+          `
+            <div class="product-photo-frame">
+              <img
+                src="${photoDataUrl}"
+                alt="Оборудование"
+              >
+            </div>
+          `
+          :
+          ""
+        }
+
+        ${
+          hasDescription
+          ?
+          `
+            <div class="kp-description">
+              ${escapeHtml(state.description)}
+            </div>
+          `
+          :
+          ""
+        }
+
+        ${
+          hasNote
+          ?
+          `
+            <div class="kp-note">
+              ${escapeHtml(state.note)}
+            </div>
+          `
+          :
+          ""
+        }
+
+        ${
+          price || discount
+          ?
+          `
+            <div class="price-block">
+
+              ${
+                price
+                ?
+                `
+                  <div class="price-line">
+                    Цена: ${price}
+                  </div>
+                `
+                :
+                ""
+              }
+
+              ${
+                discount
+                ?
+                `
+                  <div class="price-line discount">
+                    Цена со скидкой: ${discount}
+                  </div>
+                `
+                :
+                ""
+              }
+
+            </div>
+          `
+          :
+          ""
+        }
+
+        <div class="availability ${statusClass}">
+          ${statusText}
+        </div>
+
+        ${
+          state.priceComment.trim()
+          ?
+          `
+            <div class="price-comment">
+              ${escapeHtml(state.priceComment)}
+            </div>
+          `
+          :
+          ""
+        }
+
+        ${createSpecsTable()}
+
+        ${
+          hasVideo
+          ?
+          `
+            <a
+              class="video-button"
+              href="${escapeHtml(state.videoUrl)}"
+              target="_blank"
+            >
+              Смотреть видео оборудования
+            </a>
+          `
+          :
+          ""
+        }
+
+        <div class="advantages">
+
+          <div class="advantages-title">
+            Почему мы?
+          </div>
+
+          <div class="advantages-grid">
+
+            ${state.advantages.map(item=>`
+              <div class="advantage">
+                ${escapeHtml(item)}
+              </div>
+            `).join("")}
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="kp-footer">
+
+        <div class="footer-left">
+          АЛЬФАПРОМ<br>
+          Оборудование для пищевого производства и упаковки
+        </div>
+
+        <div class="footer-right">
+
+          ${
+            state.managerName.trim()
+            ?
+            `
+              <div class="footer-manager">
+                ${escapeHtml(state.managerName)}
+              </div>
+            `
+            :
+            ""
+          }
+
+          ${
+            state.managerPhone.trim()
+            ?
+            `
+              <div>
+                ${escapeHtml(state.managerPhone)}
+              </div>
+            `
+            :
+            ""
+          }
+
+          <div>
+            alfaprom.org
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  `;
 }
 
-
-function handlePhotoInput(
-  event,
-  index
-){
-
-  const files =
-    [...event.target.files];
-
-
-  addPhotos(
-    files,
-    index
-  );
-
-
-  event.target.value =
-    '';
-
-}
-
-
-async function addPhotos(
-  files,
-  index
-){
-
-  if(
-    !state.equipment[index]
-  ){
-    return;
-  }
-
-
-  for(
-    const file of files
-  ){
-
-    if(
-      !file.type.startsWith('image/')
-    ){
-      continue;
-    }
-
-
-    const id =
-      createPhotoId();
-
-
-    await photoPut(
-      id,
-      file
-    );
-
-
-    state.equipment[index]
-      .photos
-      .push(id);
-
-  }
-
-
-  saveState();
-
-  renderEquipmentEditor();
-
-  renderPreview();
-
-}
-
-
-/* =========================================================
-   DELETE PHOTO
-========================================================= */
-
-async function deletePhoto(
-  equipmentIndex,
-  photoIndex
-){
-
-  const equipment =
-    state.equipment[
-      equipmentIndex
-    ];
-
-
-  if(!equipment){
-    return;
-  }
-
-
-  const id =
-    equipment.photos[
-      photoIndex
-    ];
-
-
-  if(id){
-
-    try{
-
-      await photoDelete(id);
-
-    }catch{}
-
-  }
-
-
-  if(
-    objectUrlCache.has(id)
-  ){
-
-    URL.revokeObjectURL(
-      objectUrlCache.get(id)
-    );
-
-    objectUrlCache.delete(id);
-
-  }
-
-
-  equipment.photos.splice(
-    photoIndex,
-    1
-  );
-
-
-  saveState();
-
-  renderEquipmentEditor();
-
-  renderPreview();
-
-}
-
-
-/* =========================================================
-   PHOTO LIST
-========================================================= */
-
-async function renderPhotoList(
-  index
-){
-
-  const container =
-    document.getElementById(
-      `photoList_${index}`
-    );
-
-
-  if(!container){
-    return;
-  }
-
-
-  container.innerHTML =
-    '';
-
-
-  const photos =
-    state.equipment[index]
-      ?.photos || [];
-
-
-  for(
-    let photoIndex=0;
-    photoIndex<photos.length;
-    photoIndex++
-  ){
-
-    const id =
-      photos[photoIndex];
-
-
-    const url =
-      await getPhotoURL(id);
-
-
-    if(!url){
-      continue;
-    }
-
-
-    const item =
-      document.createElement(
-        'div'
-      );
-
-
-    item.className =
-      'photo-item';
-
-
-    item.innerHTML = `
-
-      <img
-        src="${url}"
-        alt=""
-      >
-
-      <button
-        class="photo-delete"
-        type="button"
-        onclick="deletePhoto(${index},${photoIndex})"
-      >
-        ×
-      </button>
-
-    `;
-
-
-    container.appendChild(
-      item
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   PREVIEW
-========================================================= */
 
 async function renderPreview(){
 
-  const preview =
-    document.getElementById(
-      'preview'
-    );
+  const container = document.getElementById("previewPages");
 
+  const photoDataUrl = await getPhotoDataUrl();
 
-  if(!preview){
-    return;
-  }
+  /*
+    Для текущего конструктора одна КП с одним оборудованием.
+    Страница A4 формируется как полноценный лист.
+    Если контента станет больше, логика страниц может быть расширена
+    без изменения редактора.
+  */
 
-
-  const managerName =
-    state.managerName ||
-    'Ваш менеджер';
-
-
-  const managerPhone =
-    state.managerPhone ||
-    'Телефон менеджера';
-
-
-  const title =
-    state.kpTitle ||
-    'Коммерческое предложение';
-
-
-  let html = `
-
-    <div class="preview-header">
-
-      <div class="preview-header-main">
-
-        <div class="preview-logo">
-
-          <div class="preview-logo-mark">
-            А
-          </div>
-
-          <div class="preview-logo-name">
-            АЛЬФАПРОМ
-          </div>
-
-        </div>
-
-
-        <div class="preview-contacts">
-
-          <strong>
-            АЛЬФАПРОМ
-          </strong>
-
-          <br>
-
-          alfaprom.org
-
-          <br>
-
-          8 (800) 200-29-23
-
-          <br>
-
-          <strong>
-            ${escapeHTML(managerName)}
-          </strong>
-
-          <br>
-
-          ${escapeHTML(managerPhone)}
-
-        </div>
-
-      </div>
-
-
-      <div class="preview-header-links">
-
-        <span>
-          Оборудование
-        </span>
-
-        <span>
-          Сервис
-        </span>
-
-        <span>
-          Комплексные решения
-        </span>
-
-      </div>
-
-    </div>
-
-
-    <div class="preview-content">
-
-      <h1 class="kp-title">
-        ${escapeHTML(title)}
-      </h1>
-
-  `;
-
-
-  /* =======================================================
-     EQUIPMENT
-  ======================================================== */
-
-  if(
-    state.equipment.length === 0
-  ){
-
-    html += `
-
-      <div class="empty">
-        Добавьте оборудование
-        в настройках слева.
-      </div>
-
-    `;
-
-  }else{
-
-
-    for(
-      const equipment of state.equipment
-    ){
-
-      html += `
-
-        <section class="product">
-
-          <h2 class="product-name">
-            ${escapeHTML(
-              equipment.name ||
-              'Оборудование'
-            )}
-          </h2>
-
-      `;
-
-
-      /* =====================================================
-         PHOTOS — IMMEDIATELY AFTER NAME
-      ====================================================== */
-
-      if(
-        equipment.photos &&
-        equipment.photos.length
-      ){
-
-        html += `
-
-          <div class="product-photos">
-
-        `;
-
-
-        for(
-          const id of equipment.photos
-        ){
-
-          const url =
-            await getPhotoURL(id);
-
-
-          if(url){
-
-            html += `
-
-              <div class="product-photo-frame">
-
-                <img
-                  src="${url}"
-                  alt="${escapeAttribute(
-                    equipment.name || ''
-                  )}"
-                >
-
-              </div>
-
-            `;
-
-          }
-
-        }
-
-
-        html += `
-
-          </div>
-
-        `;
-
-      }
-
-
-      /* =====================================================
-         DESCRIPTION
-      ====================================================== */
-
-      if(
-        equipment.description
-      ){
-
-        html += `
-
-          <div class="product-description">
-
-            ${nl2br(
-              escapeHTML(
-                equipment.description
-              )
-            )}
-
-          </div>
-
-        `;
-
-      }
-
-
-      /* =====================================================
-         NOTE
-      ====================================================== */
-
-      if(
-        equipment.note
-      ){
-
-        html += `
-
-          <div class="product-note">
-
-            ${nl2br(
-              escapeHTML(
-                equipment.note
-              )
-            )}
-
-          </div>
-
-        `;
-
-      }
-
-
-      /* =====================================================
-         PRICE
-      ====================================================== */
-
-      const symbol =
-        currencySymbol(
-          equipment.currency
-        );
-
-
-      if(
-        equipment.price ||
-        equipment.discountPrice
-      ){
-
-        html += `
-
-          <div class="price-block">
-
-        `;
-
-
-        if(
-          equipment.price
-        ){
-
-          html += `
-
-            <div class="price-normal">
-
-              Цена:
-              ${formatPrice(
-                equipment.price
-              )}
-              ${symbol}
-
-            </div>
-
-          `;
-
-        }
-
-
-        if(
-          equipment.discountPrice
-        ){
-
-          html += `
-
-            <div class="price-discount">
-
-              Цена со скидкой:
-              ${formatPrice(
-                equipment.discountPrice
-              )}
-              ${symbol}
-
-            </div>
-
-          `;
-
-        }
-
-
-        if(
-          equipment.availability ===
-          'order'
-        ){
-
-          html += `
-
-            <div class="price-status order">
-              Под заказ
-            </div>
-
-          `;
-
-        }else{
-
-          html += `
-
-            <div class="price-status stock">
-              В наличии
-            </div>
-
-          `;
-
-        }
-
-
-        if(
-          equipment.priceComment
-        ){
-
-          html += `
-
-            <div class="price-comment">
-
-              ${escapeHTML(
-                equipment.priceComment
-              )}
-
-            </div>
-
-          `;
-
-        }
-
-
-        html += `
-
-          </div>
-
-        `;
-
-      }
-
-
-      /* =====================================================
-         CHARACTERISTICS
-      ====================================================== */
-
-      const specs =
-        parseSpecs(
-          equipment.specsText || ''
-        );
-
-
-      if(
-        specs.length
-      ){
-
-        html += `
-
-          <table class="spec-table">
-
-            <thead>
-
-              <tr>
-
-                <th
-                  class="spec-head"
-                  colspan="2"
-                >
-                  Характеристики
-                </th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-        `;
-
-
-        specs.forEach(
-          spec=>{
-
-            if(
-              spec.name
-            ){
-
-              html += `
-
-                <tr>
-
-                  <td>
-                    ${escapeHTML(
-                      spec.name
-                    )}
-                  </td>
-
-                  <td>
-                    ${escapeHTML(
-                      spec.value
-                    )}
-                  </td>
-
-                </tr>
-
-              `;
-
-            }else{
-
-              html += `
-
-                <tr>
-
-                  <td colspan="2">
-                    ${escapeHTML(
-                      spec.value
-                    )}
-                  </td>
-
-                </tr>
-
-              `;
-
-            }
-
-          }
-        );
-
-
-        html += `
-
-            </tbody>
-
-          </table>
-
-        `;
-
-      }
-
-
-      /* =====================================================
-         VIDEO
-      ====================================================== */
-
-      const video =
-        equipment.video ||
-        state.globalVideo;
-
-
-      if(video){
-
-        html += `
-
-          <div class="video-wrap">
-
-            <a
-              class="video-button"
-              href="${escapeAttribute(video)}"
-              target="_blank"
-              rel="noopener"
-            >
-              ▶ Смотреть видео
-            </a>
-
-          </div>
-
-        `;
-
-      }
-
-
-      html += `
-
-        </section>
-
-      `;
-
-    }
-
-  }
-
-
-  /* =======================================================
-     ADVANTAGES
-  ======================================================== */
-
-  html += `
-
-      <section class="advantages-preview">
-
-        <div class="advantages-title">
-          Почему мы?
-        </div>
-
-        <div class="advantages-grid">
-
-  `;
-
-
-  state.advantages
-    .filter(Boolean)
-    .forEach(
-      (advantage,index)=>{
-
-        html += `
-
-          <div class="advantage-card">
-
-            <div class="advantage-icon">
-              ${index + 1}
-            </div>
-
-            ${escapeHTML(
-              advantage
-            )}
-
-          </div>
-
-        `;
-
-      }
-    );
-
-
-  html += `
-
-        </div>
-
-      </section>
-
-    </div>
-
-  `;
-
-
-  /* =======================================================
-     FOOTER
-  ======================================================== */
-
-  html += `
-
-    <footer class="preview-footer">
-
-      <div class="footer-main">
-
-        <div>
-
-          <div class="footer-company">
-            АЛЬФАПРОМ
-          </div>
-
-          <div class="footer-text">
-
-            ${nl2br(
-              escapeHTML(
-                state.footerText || ''
-              )
-            )}
-
-          </div>
-
-        </div>
-
-
-        <div class="footer-manager">
-
-          <strong>
-            ${escapeHTML(managerName)}
-          </strong>
-
-          <br>
-
-          ${escapeHTML(managerPhone)}
-
-        </div>
-
-      </div>
-
-
-      <div class="footer-bottom">
-
-        alfaprom.org · Оборудование, сервис и
-        комплексные решения для пищевого производства
-
-      </div>
-
-    </footer>
-
-  `;
-
-
-  preview.innerHTML =
-    html;
-
-
-  fitPreviewToScreen();
+  container.innerHTML = createPageHtml(photoDataUrl);
 
 }
 
 
-/* =========================================================
-   FIT WHOLE A4 PAGE
-========================================================= */
+/* ============================================================
+   EVENTS
+============================================================ */
 
-function fitPreviewToScreen(){
+Object.keys(fields).forEach(key=>{
 
-  const wrap =
-    document.querySelector(
-      '.preview-wrap'
-    );
+  fields[key].addEventListener("input",()=>{
+    readForm();
+    renderPreview();
+  });
 
-  const page =
-    document.querySelector(
-      '.preview-page'
-    );
+  fields[key].addEventListener("change",()=>{
+    readForm();
+    renderPreview();
+  });
 
+});
 
-  if(
-    !wrap ||
-    !page
-  ){
-    return;
-  }
 
+document.querySelectorAll(".status-button").forEach(button=>{
 
-  /*
-    Реальный размер страницы:
-    210mm ≈ 793.7px при 96 DPI.
-  */
+  button.addEventListener("click",()=>{
 
-  const pageWidth =
-    page.offsetWidth;
+    state.status = button.dataset.status;
 
+    saveState();
+    updateStatusButtons();
+    renderPreview();
 
-  const availableWidth =
-    wrap.clientWidth - 30;
+  });
 
+});
 
-  let scale =
-    availableWidth /
-    pageWidth;
 
-
-  /*
-    Не увеличиваем страницу
-    больше 100%.
-  */
-
-  scale =
-    Math.min(
-      scale,
-      1
-    );
-
-
-  /*
-    Для очень маленьких экранов
-    всё равно оставляем возможность
-    прокрутки.
-  */
-
-  if(scale < .55){
-    scale = .55;
-  }
-
-
-  page.style.transform =
-    `scale(${scale})`;
-
-  page.style.transformOrigin =
-    'top center';
-
-
-  /*
-    Компенсируем визуальную высоту
-    масштабированной страницы.
-  */
-
-  const realHeight =
-    page.offsetHeight;
-
-  const visualHeight =
-    realHeight * scale;
-
-
-  page.parentElement.style.height =
-    visualHeight + 'px';
-
-}
-
-
-window.addEventListener(
-  'resize',
-  fitPreviewToScreen
-);
-
-
-/* =========================================================
-   PDF EXPORT
-========================================================= */
-
-async function downloadPDF(){
-
-  if(
-    typeof html2pdf ===
-    'undefined'
-  ){
-
-    alert(
-      'Не загрузился модуль PDF. Проверьте интернет-соединение и попробуйте ещё раз.'
-    );
-
-    return;
-
-  }
-
-
-  const page =
-    document.getElementById(
-      'preview'
-    );
-
-
-  if(!page){
-    return;
-  }
-
-
-  /*
-    Клонируем страницу,
-    чтобы экспорт не менял
-    отображение редактора.
-  */
-
-  const clone =
-    page.cloneNode(true);
-
-
-  clone.classList.add(
-    'pdf-export-mode'
-  );
-
-
-  clone.style.transform =
-    'none';
-
-  clone.style.margin =
-    '0';
-
-  clone.style.boxShadow =
-    'none';
-
-
-  /*
-    Фиксируем размер А4.
-  */
-
-  clone.style.width =
-    '210mm';
-
-  clone.style.minHeight =
-    '297mm';
-
-
-  const container =
-    document.createElement(
-      'div'
-    );
-
-
-  container.style.position =
-    'fixed';
-
-  container.style.left =
-    '-100000px';
-
-  container.style.top =
-    '0';
-
-  container.style.width =
-    '210mm';
-
-  container.style.background =
-    '#fff';
-
-  container.appendChild(
-    clone
-  );
-
-  document.body.appendChild(
-    container
-  );
-
-
-  /*
-    Ждём изображения.
-  */
-
-  await waitForImages(
-    clone
-  );
-
-
-  const filename =
-    safeFilename(
-      state.kpTitle ||
-      'Коммерческое предложение'
-    );
-
-
-  const options = {
-
-    margin:0,
-
-    filename:
-      filename + '.pdf',
-
-    image:{
-      type:'jpeg',
-      quality:.98
-    },
-
-    html2canvas:{
-      scale:2,
-      useCORS:true,
-      backgroundColor:'#ffffff',
-
-      logging:false
-    },
-
-    jsPDF:{
-      unit:'mm',
-      format:'a4',
-      orientation:'portrait'
-    },
-
-    pagebreak:{
-      mode:[
-        'css',
-        'legacy'
-      ]
-    }
-
-  };
-
-
-  try{
-
-    await html2pdf()
-      .set(options)
-      .from(clone)
-      .save();
-
-  }catch(error){
-
-    console.error(
-      'PDF export error:',
-      error
-    );
-
-    alert(
-      'Не удалось сформировать PDF.'
-    );
-
-  }finally{
-
-    container.remove();
-
-  }
-
-}
-
-
-/* =========================================================
-   DOCX EXPORT
-========================================================= */
-
-async function downloadDOCX(){
-
-  if(
-    typeof htmlDocx ===
-    'undefined'
-  ){
-
-    alert(
-      'Не загрузился модуль DOCX. Проверьте интернет-соединение и попробуйте ещё раз.'
-    );
-
-    return;
-
-  }
-
-
-  const page =
-    document.getElementById(
-      'preview'
-    );
-
-
-  if(!page){
-    return;
-  }
-
-
-  /*
-    Клонируем предпросмотр.
-  */
-
-  const clone =
-    page.cloneNode(true);
-
-
-  clone.style.transform =
-    'none';
-
-  clone.style.boxShadow =
-    'none';
-
-
-  /*
-    DOCX не умеет использовать
-    blob:-ссылки на изображения.
-    Поэтому заменяем их на Base64.
-  */
-
-  const images =
-    [
-      ...clone.querySelectorAll(
-        'img'
-      )
-    ];
-
-
-  for(
-    const image of images
-  ){
-
-    const src =
-      image.getAttribute(
-        'src'
-      );
-
-
-    if(
-      !src ||
-      !src.startsWith('blob:')
-    ){
-
-      continue;
-
-    }
-
-
-    const id =
-      findPhotoIdByObjectURL(
-        src
-      );
-
-
-    if(!id){
-      continue;
-    }
-
-
-    const item =
-      await photoGet(id);
-
-
-    if(!item){
-      continue;
-    }
-
-
-    const dataURL =
-      await blobToDataURL(
-        item.blob
-      );
-
-
-    image.setAttribute(
-      'src',
-      dataURL
-    );
-
-  }
-
-
-  /*
-    html-docx-js получает
-    полноценный HTML и преобразует
-    его в настоящий DOCX.
-  */
-
-  const css =
-    getExportCSS();
-
-
-  const html = `
-
-<!DOCTYPE html>
-
-<html lang="ru">
-
-<head>
-
-<meta charset="UTF-8">
-
-<style>
-
-${css}
-
-</style>
-
-</head>
-
-<body>
-
-${clone.outerHTML}
-
-</body>
-
-</html>
-
-  `;
-
-
-  try{
-
-    const blob =
-      htmlDocx.asBlob(
-        html
-      );
-
-
-    const filename =
-      safeFilename(
-        state.kpTitle ||
-        'Коммерческое предложение'
-      );
-
-
-    downloadBlob(
-      blob,
-      filename + '.docx'
-    );
-
-  }catch(error){
-
-    console.error(
-      'DOCX export error:',
-      error
-    );
-
-    alert(
-      'Не удалось сформировать DOCX.'
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   EXPORT CSS
-========================================================= */
-
-function getExportCSS(){
-
-  return `
-
-    @page{
-      size:A4;
-      margin:0;
-    }
-
-    body{
-      margin:0;
-      padding:0;
-
-      background:#fff;
-
-      font-family:Arial,Helvetica,sans-serif;
-
-      color:#222;
-    }
-
-    .preview-page{
-      width:210mm;
-      min-height:297mm;
-
-      margin:0;
-      padding:0;
-
-      background:#fff;
-    }
-
-    .preview-header{
-      padding:20px 24px 15px;
-
-      background:#fff;
-
-      border-bottom:4px solid #ff8100;
-    }
-
-    .preview-header-main{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-    }
-
-    .preview-logo{
-      display:flex;
-      align-items:center;
-    }
-
-    .preview-logo-mark{
-      width:44px;
-      height:44px;
-
-      background:#ff8100;
-
-      color:#fff;
-
-      text-align:center;
-      line-height:44px;
-
-      font-weight:900;
-      font-size:27px;
-    }
-
-    .preview-logo-name{
-      margin-left:10px;
-
-      color:#ff8100;
-
-      font-size:25px;
-      font-weight:900;
-    }
-
-    .preview-contacts{
-      font-size:10px;
-
-      text-align:right;
-      color:#444;
-    }
-
-    .preview-header-links{
-      margin-top:10px;
-
-      font-size:9px;
-
-      color:#666;
-
-      text-align:right;
-    }
-
-    .preview-content{
-      padding:24px 30px 0;
-    }
-
-    .kp-title{
-      margin:0 0 25px;
-
-      font-size:28px;
-      font-weight:700;
-    }
-
-    .product{
-      margin-bottom:30px;
-    }
-
-    .product-name{
-      margin:0 0 13px;
-
-      font-size:21px;
-      font-weight:700;
-    }
-
-    .product-photos{
-      display:flex;
-
-      margin-bottom:17px;
-    }
-
-    .product-photo-frame{
-      width:55mm;
-      height:55mm;
-
-      margin-right:10px;
-
-      overflow:hidden;
-
-      background:#f1f1f1;
-    }
-
-    .product-photo-frame img{
-      width:100%;
-      height:100%;
-
-      object-fit:cover;
-    }
-
-    .product-description{
-      margin-bottom:8px;
-
-      font-size:12px;
-      line-height:1.55;
-    }
-
-    .product-note{
-      margin-bottom:14px;
-
-      font-size:11px;
-      color:#666;
-    }
-
-    .price-block{
-      margin:15px 0;
-    }
-
-    .price-normal{
-      font-size:18px;
-      font-weight:800;
-    }
-
-    .price-discount{
-      font-size:21px;
-      font-weight:900;
-
-      color:#d92727;
-    }
-
-    .price-status{
-      margin-top:7px;
-
-      font-size:12px;
-      font-weight:800;
-    }
-
-    .price-status.stock{
-      color:#159447;
-    }
-
-    .price-status.order{
-      color:#bd6b00;
-    }
-
-    .price-comment{
-      margin-top:5px;
-
-      font-size:10px;
-      color:#777;
-    }
-
-    .spec-table{
-      width:100%;
-
-      border-collapse:collapse;
-
-      font-size:10px;
-    }
-
-    .spec-table th,
-    .spec-table td{
-      border:1px solid #ddd;
-
-      padding:7px 8px;
-    }
-
-    .spec-table th.spec-head{
-      background:#ff8100;
-
-      color:#fff;
-
-      text-align:left;
-    }
-
-    .spec-table td:first-child{
-      background:#fafafa;
-
-      font-weight:700;
-    }
-
-    .advantages-preview{
-      margin-top:25px;
-
-      padding:21px 0 23px;
-
-      border-top:1px solid #eee;
-    }
-
-    .advantages-title{
-      margin-bottom:18px;
-
-      font-size:17px;
-      font-weight:800;
-
-      text-align:center;
-    }
-
-    .advantages-grid{
-      display:flex;
-
-      flex-wrap:wrap;
-
-      justify-content:center;
-    }
-
-    .advantage-card{
-      width:33%;
-
-      padding:8px;
-
-      font-size:16px;
-      line-height:1.25;
-
-      font-weight:700;
-
-      text-align:center;
-    }
-
-    .advantage-icon{
-      width:27px;
-      height:27px;
-
-      margin:0 auto 8px;
-
-      border-radius:50%;
-
-      background:#ff8100;
-
-      color:#fff;
-
-      text-align:center;
-      line-height:27px;
-
-      font-size:11px;
-    }
-
-    .preview-footer{
-      margin-top:0;
-
-      padding:17px 30px 18px;
-
-      background:#ff8100;
-
-      color:#fff;
-    }
-
-    .footer-main{
-      display:flex;
-
-      justify-content:space-between;
-    }
-
-    .footer-company{
-      font-size:15px;
-      font-weight:900;
-    }
-
-    .footer-text{
-      margin-top:5px;
-
-      font-size:9px;
-    }
-
-    .footer-manager{
-      font-size:10px;
-
-      text-align:right;
-    }
-
-    .footer-bottom{
-      margin-top:10px;
-      padding-top:8px;
-
-      border-top:1px solid rgba(255,255,255,.4);
-
-      font-size:8px;
-    }
-
-  `;
-
-}
-
-
-/* =========================================================
-   EXPORT HELPERS
-========================================================= */
-
-function findPhotoIdByObjectURL(
-  url
-){
-
-  for(
-    const [
-      id,
-      cachedURL
-    ] of objectUrlCache.entries()
-  ){
-
-    if(
-      cachedURL === url
-    ){
-
-      return id;
-
-    }
-
-  }
-
-  return null;
-
-}
-
-
-function blobToDataURL(
-  blob
-){
-
-  return new Promise(
-    (resolve,reject)=>{
-
-      const reader =
-        new FileReader();
-
-
-      reader.onloadend =
-        ()=>{
-          resolve(
-            reader.result
-          );
-        };
-
-
-      reader.onerror =
-        reject;
-
-
-      reader.readAsDataURL(
-        blob
-      );
-
-    }
-  );
-
-}
-
-
-function downloadBlob(
-  blob,
-  filename
-){
-
-  const url =
-    URL.createObjectURL(
-      blob
-    );
-
-
-  const link =
-    document.createElement(
-      'a'
-    );
-
-
-  link.href =
-    url;
-
-  link.download =
-    filename;
-
-
-  document.body.appendChild(
-    link
-  );
-
-
-  link.click();
-
-  link.remove();
-
-
-  setTimeout(
-    ()=>{
-      URL.revokeObjectURL(
-        url
-      );
-    },
-    1500
-  );
-
-}
-
-
-function waitForImages(
-  container
-){
-
-  const images =
-    [
-      ...container.querySelectorAll(
-        'img'
-      )
-    ];
-
-
-  return Promise.all(
-    images.map(
-      image=>
-        new Promise(
-          resolve=>{
-
-            if(
-              image.complete
-            ){
-
-              resolve();
-
-              return;
-
-            }
-
-
-            image.onload =
-              resolve;
-
-            image.onerror =
-              resolve;
-
-          }
-        )
-    )
-  );
-
-}
-
-
-/* =========================================================
+/* ============================================================
    RESET
-========================================================= */
+============================================================ */
 
-async function resetProposal(){
+document.getElementById("resetBtn").addEventListener("click",async()=>{
 
-  const confirmed =
-    confirm(
-      'Сбросить текущее коммерческое предложение и удалить фотографии?'
-    );
-
+  const confirmed = confirm(
+    "Сбросить текущее коммерческое предложение?"
+  );
 
   if(!confirmed){
     return;
   }
 
+  if(state.photoId){
+    try{
+      await deletePhoto(state.photoId);
+    }catch(e){}
+  }
+
+  Object.assign(state,{
+    productName:"",
+    description:"",
+    note:"",
+    price:"",
+    discountPrice:"",
+    currency:"RUB",
+    status:"available",
+    priceComment:"",
+    specsText:"",
+    videoUrl:"",
+    managerName:"",
+    managerPhone:"",
+    photoId:"",
+    advantages:DEFAULT_ADVANTAGES.slice()
+  });
+
+  saveState();
+  fillForm();
+  await renderEditorPhoto();
+  renderPreview();
+
+});
+
+
+/* ============================================================
+   PDF
+============================================================ */
+
+async function downloadPDF(){
+
+  const button = document.getElementById("downloadPdfBtn");
+
+  button.disabled = true;
+  button.textContent = "Формирование PDF...";
 
   try{
 
-    await photoClear();
+    const photoDataUrl = await getPhotoDataUrl();
 
-  }catch{}
+    const wrapper = document.createElement("div");
 
+    wrapper.style.position = "fixed";
+    wrapper.style.left = "-100000px";
+    wrapper.style.top = "0";
+    wrapper.style.width = "210mm";
+    wrapper.style.background = "#fff";
 
-  revokeAllObjectURLs();
+    wrapper.innerHTML = createPageHtml(photoDataUrl);
 
+    document.body.appendChild(wrapper);
 
-  localStorage.removeItem(
-    STORAGE_KEY
-  );
+    const filename =
+      safeFileName(state.productName) +
+      ".pdf";
 
+    await html2pdf()
+      .set({
+        margin:0,
+        filename:filename,
+        image:{
+          type:"jpeg",
+          quality:0.98
+        },
+        html2canvas:{
+          scale:2,
+          useCORS:true,
+          backgroundColor:"#ffffff"
+        },
+        jsPDF:{
+          unit:"mm",
+          format:"a4",
+          orientation:"portrait"
+        },
+        pagebreak:{
+          mode:["css","legacy"]
+        }
+      })
+      .from(wrapper.querySelector(".kp-page"))
+      .save();
 
-  OLD_STORAGE_KEYS.forEach(
-    key=>{
-      localStorage.removeItem(
-        key
-      );
-    }
-  );
+    wrapper.remove();
 
+  }catch(error){
 
-  state =
-    getDefaultState();
+    console.error(error);
 
-
-  saveState();
-
-  renderEditor();
-
-  renderPreview();
-
-}
-
-
-/* =========================================================
-   ESCAPE
-========================================================= */
-
-function escapeHTML(
-  value
-){
-
-  return String(
-    value ?? ''
-  )
-    .replace(
-      /&/g,
-      '&amp;'
-    )
-    .replace(
-      /</g,
-      '&lt;'
-    )
-    .replace(
-      />/g,
-      '&gt;'
-    )
-    .replace(
-      /"/g,
-      '&quot;'
-    )
-    .replace(
-      /'/g,
-      '&#039;'
+    alert(
+      "Не удалось сформировать PDF.\n\n" +
+      (error.message || error)
     );
 
+  }finally{
+
+    button.disabled = false;
+    button.textContent = "Скачать PDF";
+
+  }
+
 }
 
 
-function escapeAttribute(
-  value
-){
+/* ============================================================
+   DOCX HELPERS
+============================================================ */
 
-  return escapeHTML(
-    value
+function dataUrlToUint8Array(dataUrl){
+
+  const base64 = dataUrl.split(",")[1];
+
+  const binary = atob(base64);
+
+  const bytes = new Uint8Array(binary.length);
+
+  for(let i=0;i<binary.length;i++){
+    bytes[i] = binary.charCodeAt(i);
+  }
+
+  return bytes;
+}
+
+
+async function blobToUint8Array(blob){
+
+  const buffer = await blob.arrayBuffer();
+
+  return new Uint8Array(buffer);
+
+}
+
+
+function docxText(text,options={}){
+
+  return new docx.TextRun({
+    text:String(text || ""),
+    ...options
+  });
+
+}
+
+
+function docxParagraph(text,options={}){
+
+  return new docx.Paragraph({
+    children:[
+      docxText(text,options.text || {})
+    ],
+    ...options
+  });
+
+}
+
+
+function createDocxSpecs(){
+
+  const rows = parseSpecs(state.specsText);
+
+  if(!rows.length){
+    return [];
+  }
+
+  const tableRows = [
+
+    new docx.TableRow({
+      children:[
+        new docx.TableCell({
+          columnSpan:2,
+          shading:{
+            fill:"FF8100"
+          },
+          children:[
+            new docx.Paragraph({
+              children:[
+                new docx.TextRun({
+                  text:"Характеристики",
+                  bold:true,
+                  color:"FFFFFF",
+                  size:20
+                })
+              ]
+            })
+          ]
+        })
+      ]
+    })
+
+  ];
+
+  rows.forEach(row=>{
+
+    tableRows.push(
+
+      new docx.TableRow({
+        children:[
+
+          new docx.TableCell({
+            width:{
+              size:40,
+              type:docx.WidthType.PERCENTAGE
+            },
+            children:[
+              new docx.Paragraph({
+                children:[
+                  new docx.TextRun({
+                    text:row[0],
+                    bold:true,
+                    size:18
+                  })
+                ]
+              })
+            ]
+          }),
+
+          new docx.TableCell({
+            width:{
+              size:60,
+              type:docx.WidthType.PERCENTAGE
+            },
+            children:[
+              new docx.Paragraph({
+                children:[
+                  new docx.TextRun({
+                    text:row[1],
+                    size:18
+                  })
+                ]
+              })
+            ]
+          })
+
+        ]
+      })
+
+    );
+
+  });
+
+  return [
+    new docx.Table({
+      width:{
+        size:100,
+        type:docx.WidthType.PERCENTAGE
+      },
+      rows:tableRows,
+      borders:{
+        top:{
+          style:docx.BorderStyle.SINGLE,
+          size:4,
+          color:"D9DCE0"
+        },
+        bottom:{
+          style:docx.BorderStyle.SINGLE,
+          size:4,
+          color:"D9DCE0"
+        },
+        left:{
+          style:docx.BorderStyle.SINGLE,
+          size:4,
+          color:"D9DCE0"
+        },
+        right:{
+          style:docx.BorderStyle.SINGLE,
+          size:4,
+          color:"D9DCE0"
+        },
+        insideHorizontal:{
+          style:docx.BorderStyle.SINGLE,
+          size:4,
+          color:"D9DCE0"
+        },
+        insideVertical:{
+          style:docx.BorderStyle.SINGLE,
+          size:4,
+          color:"D9DCE0"
+        }
+      }
+    })
+  ];
+
+}
+
+
+async function createDocx(){
+
+  const photoBlob = await getPhoto(state.photoId);
+
+  let photoBytes = null;
+
+  if(photoBlob){
+    photoBytes = await blobToUint8Array(photoBlob);
+  }
+
+  const children = [];
+
+
+  /* ================= HEADER ================= */
+
+  children.push(
+
+    new docx.Paragraph({
+      border:{
+        bottom:{
+          color:"FF8100",
+          space:8,
+          style:docx.BorderStyle.SINGLE,
+          size:12
+        }
+      },
+      spacing:{
+        after:300
+      },
+      children:[
+        new docx.TextRun({
+          text:"АЛЬФАПРОМ",
+          bold:true,
+          color:"FF8100",
+          size:32
+        })
+      ]
+    })
+
   );
 
-}
 
+  /* ================= TITLE ================= */
 
-function nl2br(
-  value
-){
+  children.push(
 
-  return String(
-    value || ''
-  )
-  .replace(
-    /\n/g,
-    '<br>'
+    new docx.Paragraph({
+      spacing:{
+        after:150
+      },
+      children:[
+        new docx.TextRun({
+          text:"Коммерческое предложение",
+          bold:true,
+          size:32
+        })
+      ]
+    })
+
   );
 
-}
 
+  children.push(
 
-function safeFilename(
-  value
-){
+    new docx.Paragraph({
+      spacing:{
+        after:250
+      },
+      children:[
+        new docx.TextRun({
+          text:state.productName || "Название оборудования",
+          bold:true,
+          size:28
+        })
+      ]
+    })
 
-  return String(
-    value ||
-    'Коммерческое предложение'
-  )
-  .replace(
-    /[<>:"/\\|?*]+/g,
-    ' '
-  )
-  .replace(
-    /\s+/g,
-    ' '
-  )
-  .trim()
-  .slice(
-    0,
-    100
   );
 
+
+  /* ================= PHOTO ================= */
+
+  if(photoBytes){
+
+    children.push(
+
+      new docx.Paragraph({
+        alignment:docx.AlignmentType.CENTER,
+        spacing:{
+          after:250
+        },
+        children:[
+
+          new docx.ImageRun({
+            data:photoBytes,
+            transformation:{
+              width:450,
+              height:300
+            },
+            type:photoBlob.type === "image/png"
+              ? "png"
+              : "jpg"
+          })
+
+        ]
+      })
+
+    );
+
+  }
+
+
+  /* ================= DESCRIPTION ================= */
+
+  if(state.description.trim()){
+
+    children.push(
+
+      new docx.Paragraph({
+        spacing:{
+          after:150
+        },
+        children:[
+          new docx.TextRun({
+            text:state.description,
+            size:21
+          })
+        ]
+      })
+
+    );
+
+  }
+
+
+  /* ================= NOTE ================= */
+
+  if(state.note.trim()){
+
+    children.push(
+
+      new docx.Paragraph({
+        spacing:{
+          after:150
+        },
+        children:[
+          new docx.TextRun({
+            text:state.note,
+            italics:true,
+            color:"666666",
+            size:19
+          })
+        ]
+      })
+
+    );
+
+  }
+
+
+  /* ================= PRICES ================= */
+
+  if(state.price || state.discountPrice){
+
+    if(state.price){
+
+      children.push(
+
+        new docx.Paragraph({
+          spacing:{
+            before:150,
+            after:80
+          },
+          children:[
+            new docx.TextRun({
+              text:`Цена: ${formatPrice(state.price,state.currency)}`,
+              bold:true,
+              size:26
+            })
+          ]
+        })
+
+      );
+
+    }
+
+    if(state.discountPrice){
+
+      children.push(
+
+        new docx.Paragraph({
+          spacing:{
+            after:100
+          },
+          children:[
+            new docx.TextRun({
+              text:`Цена со скидкой: ${formatPrice(
+                state.discountPrice,
+                state.currency
+              )}`,
+              bold:true,
+              color:"D93025",
+              size:26
+            })
+          ]
+        })
+
+      );
+
+    }
+
+  }
+
+
+  /* ================= STATUS ================= */
+
+  children.push(
+
+    new docx.Paragraph({
+      spacing:{
+        after:80
+      },
+      children:[
+        new docx.TextRun({
+          text:
+            state.status === "order"
+              ? "Под заказ"
+              : "В наличии",
+          bold:true,
+          color:
+            state.status === "order"
+              ? "B96A00"
+              : "168A45",
+          size:21
+        })
+      ]
+    })
+
+  );
+
+
+  /* ================= COMMENT ================= */
+
+  if(state.priceComment.trim()){
+
+    children.push(
+
+      new docx.Paragraph({
+        spacing:{
+          after:180
+        },
+        children:[
+          new docx.TextRun({
+            text:state.priceComment,
+            color:"666666",
+            size:18
+          })
+        ]
+      })
+
+    );
+
+  }
+
+
+  /* ================= SPECS ================= */
+
+  children.push(
+    ...createDocxSpecs()
+  );
+
+
+  /* ================= VIDEO ================= */
+
+  if(state.videoUrl.trim()){
+
+    children.push(
+
+      new docx.Paragraph({
+        spacing:{
+          before:200,
+          after:200
+        },
+        children:[
+          new docx.ExternalHyperlink({
+            link:state.videoUrl,
+            children:[
+              new docx.TextRun({
+                text:"Смотреть видео оборудования",
+                bold:true,
+                color:"FFFFFF",
+                shading:{
+                  fill:"FF8100"
+                },
+                size:19
+              })
+            ]
+          })
+        ]
+      })
+
+    );
+
+  }
+
+
+  /* ================= WHY US ================= */
+
+  children.push(
+
+    new docx.Paragraph({
+      spacing:{
+        before:300,
+        after:180
+      },
+      children:[
+        new docx.TextRun({
+          text:"Почему мы?",
+          bold:true,
+          size:28
+        })
+      ]
+    })
+
+  );
+
+
+  state.advantages.forEach(item=>{
+
+    children.push(
+
+      new docx.Paragraph({
+        bullet:{
+          level:0
+        },
+        spacing:{
+          after:100
+        },
+        children:[
+          new docx.TextRun({
+            text:item,
+            bold:true,
+            size:22
+          })
+        ]
+      })
+
+    );
+
+  });
+
+
+  /* ================= MANAGER ================= */
+
+  children.push(
+
+    new docx.Paragraph({
+      spacing:{
+        before:300,
+        after:100
+      },
+      children:[
+        new docx.TextRun({
+          text:"Контактное лицо",
+          bold:true,
+          size:21
+        })
+      ]
+    })
+
+  );
+
+
+  if(state.managerName.trim()){
+
+    children.push(
+
+      new docx.Paragraph({
+        spacing:{
+          after:50
+        },
+        children:[
+          new docx.TextRun({
+            text:state.managerName,
+            bold:true,
+            size:20
+          })
+        ]
+      })
+
+    );
+
+  }
+
+
+  if(state.managerPhone.trim()){
+
+    children.push(
+
+      new docx.Paragraph({
+        spacing:{
+          after:250
+        },
+        children:[
+          new docx.TextRun({
+            text:state.managerPhone,
+            size:20
+          })
+        ]
+      })
+
+    );
+
+  }
+
+
+  /* ================= FOOTER ================= */
+
+  const footer = new docx.Footer({
+
+    children:[
+
+      new docx.Paragraph({
+        border:{
+          top:{
+            color:"FF8100",
+            space:4,
+            style:docx.BorderStyle.SINGLE,
+            size:10
+          }
+        },
+        spacing:{
+          before:120
+        },
+        children:[
+
+          new docx.TextRun({
+            text:
+              "АЛЬФАПРОМ  |  Оборудование для пищевого производства и упаковки  |  alfaprom.org",
+            bold:true,
+            color:"FF8100",
+            size:17
+          })
+
+        ]
+      })
+
+    ]
+
+  });
+
+
+  /* ================= DOCUMENT ================= */
+
+  const document = new docx.Document({
+
+    sections:[{
+
+      properties:{
+
+        page:{
+          margin:{
+            top:800,
+            right:900,
+            bottom:900,
+            left:900
+          }
+        }
+
+      },
+
+      headers:[],
+
+      footers:[
+        footer
+      ],
+
+      children:children
+
+    }]
+
+  });
+
+
+  return docx.Packer.toBlob(document);
+
 }
 
 
-/* =========================================================
+/* ============================================================
+   DOWNLOAD DOCX
+============================================================ */
+
+async function downloadDOCX(){
+
+  const button = document.getElementById("downloadDocxBtn");
+
+  button.disabled = true;
+  button.textContent = "Формирование DOCX...";
+
+  try{
+
+    const blob = await createDocx();
+
+    const filename =
+      safeFileName(state.productName) +
+      ".docx";
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = filename;
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    setTimeout(()=>{
+      URL.revokeObjectURL(url);
+    },1000);
+
+  }catch(error){
+
+    console.error(error);
+
+    alert(
+      "Не удалось сформировать DOCX.\n\n" +
+      (error.message || error)
+    );
+
+  }finally{
+
+    button.disabled = false;
+    button.textContent = "Скачать DOCX";
+
+  }
+
+}
+
+
+/* ============================================================
+   DOWNLOAD EVENTS
+============================================================ */
+
+document
+  .getElementById("downloadPdfBtn")
+  .addEventListener("click",downloadPDF);
+
+document
+  .getElementById("downloadDocxBtn")
+  .addEventListener("click",downloadDOCX);
+
+
+/* ============================================================
    INIT
-========================================================= */
+============================================================ */
 
 async function init(){
 
   try{
-
-    await openImageDB();
-
+    await openDB();
   }catch(error){
-
-    console.error(
-      'IndexedDB error:',
-      error
-    );
-
+    console.error("IndexedDB error:",error);
   }
-
 
   loadState();
-
-
-  /*
-    Перенос старых фотографий
-    из Base64 в IndexedDB.
-  */
-
-  if(db){
-
-    try{
-
-      await migrateOldPhotos();
-
-    }catch(error){
-
-      console.error(
-        'Photo migration error:',
-        error
-      );
-
-    }
-
-  }
-
-
-  renderEditor();
-
+  fillForm();
+  await renderEditorPhoto();
   await renderPreview();
 
 }
-
-
-window.addEventListener(
-  'beforeunload',
-  ()=>{
-    saveState();
-  }
-);
 
 
 init();
