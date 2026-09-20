@@ -283,23 +283,24 @@ textarea{
 ============================================================ */
 
 .photo-editor{
-  margin-bottom:16px;
+  margin-bottom:14px;
 }
 
 .photo-editor-grid{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
+  display:flex;
+  flex-wrap:wrap;
+  align-items:flex-start;
   gap:12px;
 }
 
 .photo-editor-item{
+  flex:0 0 auto;
   min-width:0;
 }
 
 .photo-drop{
-  width:100%;
-  aspect-ratio:1 / 1;
-  min-height:0;
+  width:260px;
+  height:260px;
   border:2px dashed #cfd3d8;
   border-radius:10px;
   display:flex;
@@ -309,7 +310,7 @@ textarea{
   background:#fafafa;
   overflow:hidden;
   position:relative;
-  transition:.15s;
+  transition:border-color .15s,background .15s;
   cursor:pointer;
 }
 
@@ -353,6 +354,38 @@ textarea{
 
 .photo-item-remove:hover{
   border-color:#b42318;
+}
+
+.photo-size-label{
+  margin-top:5px;
+  text-align:center;
+  font-size:11px;
+  color:#777;
+}
+
+.photo-resize-handle{
+  position:absolute;
+  right:5px;
+  bottom:5px;
+  width:24px;
+  height:24px;
+  border-radius:6px;
+  background:rgba(255,129,0,.96);
+  border:2px solid #fff;
+  box-shadow:0 1px 5px rgba(0,0,0,.28);
+  cursor:nwse-resize;
+  z-index:5;
+}
+
+.photo-resize-handle::after{
+  content:"";
+  position:absolute;
+  right:4px;
+  bottom:4px;
+  width:7px;
+  height:7px;
+  border-right:2px solid #fff;
+  border-bottom:2px solid #fff;
 }
 
 .photo-actions{
@@ -446,16 +479,16 @@ textarea{
 .kp-content{
   flex:1;
   min-height:0;
-  padding:15mm 15mm 10mm;
+  padding:10mm 15mm 9mm;
   overflow:hidden;
 }
 
 .kp-header{
-  height:31mm;
+  height:24mm;
   display:flex;
   align-items:center;
   border-bottom:2px solid var(--orange);
-  margin-bottom:8mm;
+  margin-bottom:4mm;
 }
 
 .brand{
@@ -485,16 +518,16 @@ textarea{
 }
 
 .kp-title{
-  font-size:23px;
+  font-size:22px;
   font-weight:800;
-  margin-bottom:6mm;
+  margin-bottom:3mm;
 }
 
 .kp-product-name{
-  font-size:20px;
+  font-size:19px;
   font-weight:750;
   line-height:1.2;
-  margin-bottom:5mm;
+  margin-bottom:3mm;
 }
 
 /* ============================================================
@@ -503,15 +536,15 @@ textarea{
 
 .product-photo-grid{
   width:100%;
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:5mm;
-  margin-bottom:5mm;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:flex-start;
+  gap:4mm;
+  margin-bottom:4mm;
 }
 
 .product-photo-frame{
-  width:100%;
-  aspect-ratio:1 / 1;
+  flex:0 0 auto;
   border:1px solid #e0e2e5;
   border-radius:7px;
   display:flex;
@@ -526,7 +559,7 @@ textarea{
   height:100%;
   object-fit:contain;
   display:block;
-  padding:3mm;
+  padding:2.5mm;
 }
 
 /* ============================================================
@@ -535,17 +568,17 @@ textarea{
 
 .kp-description{
   font-size:12.5px;
-  line-height:1.55;
+  line-height:1.5;
   white-space:pre-wrap;
-  margin-bottom:4mm;
+  margin-bottom:3mm;
 }
 
 .kp-note{
   font-size:11.5px;
   color:#666;
-  line-height:1.45;
+  line-height:1.4;
   white-space:pre-wrap;
-  margin-bottom:4mm;
+  margin-bottom:3mm;
 }
 
 /* ============================================================
@@ -556,7 +589,7 @@ textarea{
   width:100%;
   border-collapse:collapse;
   font-size:10.5px;
-  margin:3mm 0 4mm;
+  margin:2mm 0 3mm;
 }
 
 .specs-table th,
@@ -584,7 +617,7 @@ textarea{
 
 .video-button{
   display:inline-block;
-  margin:1mm 0 5mm;
+  margin:1mm 0 3mm;
   padding:8px 12px;
   border-radius:6px;
   background:var(--orange);
@@ -599,13 +632,13 @@ textarea{
 ============================================================ */
 
 .price-block{
-  margin:3mm 0 4mm;
+  margin:2mm 0 3mm;
 }
 
 .price-line{
   font-size:17px;
   font-weight:800;
-  margin-bottom:2mm;
+  margin-bottom:1.5mm;
 }
 
 .price-line.discount{
@@ -630,7 +663,7 @@ textarea{
   font-size:11px;
   color:#666;
   line-height:1.4;
-  margin-bottom:4mm;
+  margin-bottom:3mm;
 }
 
 /* ============================================================
@@ -639,7 +672,7 @@ textarea{
 
 .advantages{
   margin-top:auto;
-  padding-top:5mm;
+  padding-top:4mm;
 }
 
 .advantages-title{
@@ -901,10 +934,19 @@ const OLD_KEYS = [
 
 const DB_NAME = "alfaprom_kp_editor_images";
 
-const DB_VERSION = 2;
+/*
+  Версия 3.
+  При переходе со старой версии база фотографий
+  пересоздаётся. Старые фото пользователю не нужны.
+*/
+const DB_VERSION = 3;
 
 const STORE_NAME = "photos";
 
+const DEFAULT_PHOTO_SIZE_MM = 58;
+const MIN_PHOTO_SIZE_MM = 40;
+const MAX_PHOTO_SIZE_MM = 82;
+const MM_TO_PX = 3.7795275591;
 
 const DEFAULT_ADVANTAGES = [
 
@@ -956,7 +998,14 @@ function createProduct(){
 
     videoUrl:"",
 
-    photoIds:[]
+    photoIds:[],
+
+    /*
+      Размер каждой фотографии хранится отдельно.
+      Ключ = photoId.
+      Значение = размер рамки в мм.
+    */
+    photoSizes:{}
 
   };
 
@@ -996,10 +1045,36 @@ function openDB(){
         DB_VERSION
       );
 
+
     request.onupgradeneeded = function(e){
 
       const database =
         e.target.result;
+
+      const oldVersion =
+        e.oldVersion || 0;
+
+
+      /*
+        Старые версии базы содержали несовместимую
+        структуру ключей.
+
+        Поскольку старые фотографии нам не нужны,
+        при переходе на новую версию полностью
+        пересоздаём хранилище.
+      */
+
+      if(
+        oldVersion < 3 &&
+        database.objectStoreNames.contains(STORE_NAME)
+      ){
+
+        database.deleteObjectStore(
+          STORE_NAME
+        );
+
+      }
+
 
       if(
         !database.objectStoreNames.contains(
@@ -1272,6 +1347,10 @@ async function savePhoto(blob){
     await ensureDB();
 
 
+  const photoId =
+    createPhotoId();
+
+
   return new Promise((resolve,reject)=>{
 
     try{
@@ -1289,45 +1368,11 @@ async function savePhoto(blob){
         );
 
 
-      /*
-        Поддерживаем оба варианта IndexedDB:
-
-        1. обычный store без keyPath;
-        2. store с inline keyPath.
-
-        Поэтому ошибка:
-        "The object store uses in-line keys and the key parameter was provided"
-        больше не возникает.
-      */
-
-      let request;
-
-
-      if(store.keyPath === null){
-
-        request =
-          store.put(
-            blob,
-            createPhotoId()
-          );
-
-      }else{
-
-        const record = {
-
-          id:createPhotoId(),
-
-          blob:blob
-
-        };
-
-
-        request =
-          store.put(
-            record
-          );
-
-      }
+      const request =
+        store.put(
+          blob,
+          photoId
+        );
 
 
       request.onerror = ()=>{
@@ -1341,29 +1386,9 @@ async function savePhoto(blob){
 
       transaction.oncomplete = ()=>{
 
-        if(store.keyPath === null){
-
-          /*
-            Для обычного store ID нам нужен
-            заранее созданный ключ.
-          */
-
-          resolve(
-            request.result
-          );
-
-        }else{
-
-          /*
-            Для inline store ключ находится
-            в сохранённом объекте.
-          */
-
-          resolve(
-            request.result
-          );
-
-        }
+        resolve(
+          photoId
+        );
 
       };
 
@@ -1423,27 +1448,9 @@ async function getPhoto(id){
 
       request.onsuccess = ()=>{
 
-        let result =
-          request.result || null;
-
-
-        /*
-          Если store с inline keyPath,
-          фотография хранится как {id, blob}.
-        */
-
-        if(
-          result &&
-          result.blob instanceof Blob
-        ){
-
-          result =
-            result.blob;
-
-        }
-
-
-        resolve(result);
+        resolve(
+          request.result || null
+        );
 
       };
 
@@ -1524,6 +1531,85 @@ async function deletePhoto(id){
 
 
 /* ============================================================
+   PHOTO SIZE HELPERS
+============================================================ */
+
+function ensurePhotoSizes(product){
+
+  if(
+    !product.photoSizes ||
+    typeof product.photoSizes !== "object" ||
+    Array.isArray(product.photoSizes)
+  ){
+
+    product.photoSizes = {};
+
+  }
+
+}
+
+
+function getPhotoSize(product,photoId){
+
+  ensurePhotoSizes(product);
+
+
+  let size =
+    Number(
+      product.photoSizes[photoId]
+    );
+
+
+  if(
+    !Number.isFinite(size)
+  ){
+
+    size =
+      DEFAULT_PHOTO_SIZE_MM;
+
+  }
+
+
+  return Math.max(
+    MIN_PHOTO_SIZE_MM,
+    Math.min(
+      MAX_PHOTO_SIZE_MM,
+      Math.round(size)
+    )
+  );
+
+}
+
+
+function setPhotoSize(
+  product,
+  photoId,
+  size
+){
+
+  ensurePhotoSizes(product);
+
+
+  const normalized =
+    Math.max(
+      MIN_PHOTO_SIZE_MM,
+      Math.min(
+        MAX_PHOTO_SIZE_MM,
+        Math.round(size)
+      )
+    );
+
+
+  product.photoSizes[photoId] =
+    normalized;
+
+
+  return normalized;
+
+}
+
+
+/* ============================================================
    STATE LOAD / SAVE
 ============================================================ */
 
@@ -1581,24 +1667,32 @@ function loadState(){
   if(Array.isArray(saved.products)){
 
     state.products =
-      saved.products.map(product=>({
+      saved.products.map(product=>{
 
-        ...createProduct(),
+        const normalized = {
 
-        ...product,
+          ...createProduct(),
 
-        /*
-          Старый формат photoId больше
-          не используем. Старые фотографии
-          пользователю не нужны.
-        */
+          ...product,
 
-        photoIds:
-          Array.isArray(product.photoIds)
-            ? product.photoIds
-            : []
+          photoIds:
+            Array.isArray(product.photoIds)
+              ? product.photoIds
+              : [],
 
-      }));
+          photoSizes:
+            product.photoSizes &&
+            typeof product.photoSizes === "object" &&
+            !Array.isArray(product.photoSizes)
+              ? product.photoSizes
+              : {}
+
+        };
+
+
+        return normalized;
+
+      });
 
   }
 
@@ -1927,6 +2021,9 @@ function renderProductsEditor(){
         product.photoIds = [];
 
       }
+
+
+      ensurePhotoSizes(product);
 
 
       const card =
@@ -2271,9 +2368,12 @@ async function renderEditorPhotos(product){
   }
 
 
+  ensurePhotoSizes(product);
+
+
   /*
     Если фотографий нет — показываем
-    один аккуратный квадрат-загрузчик.
+    один аккуратный загрузчик.
   */
 
   if(!product.photoIds.length){
@@ -2336,6 +2436,20 @@ async function renderEditorPhotos(product){
       product.photoIds[index];
 
 
+    const photoSize =
+      getPhotoSize(
+        product,
+        photoId
+      );
+
+
+    const editorSizePx =
+      Math.round(
+        photoSize *
+        MM_TO_PX
+      );
+
+
     const item =
       document.createElement(
         "div"
@@ -2346,17 +2460,30 @@ async function renderEditorPhotos(product){
       "photo-editor-item";
 
 
+    item.style.width =
+      `${editorSizePx}px`;
+
+
     item.innerHTML = `
 
       <div
         class="photo-drop"
         data-photo-drop="${product.id}-${index}"
+        style="
+          width:${editorSizePx}px;
+          height:${editorSizePx}px;
+        "
       >
 
         <div class="photo-placeholder">
           Загрузка...
         </div>
 
+      </div>
+
+
+      <div class="photo-size-label">
+        Размер в КП: ${photoSize} × ${photoSize} мм
       </div>
 
 
@@ -2402,6 +2529,8 @@ async function renderEditorPhotos(product){
           );
 
 
+        delete product.photoSizes[photoId];
+
         saveState();
 
         item.remove();
@@ -2429,6 +2558,11 @@ async function renderEditorPhotos(product){
           alt="Фото оборудования"
         >
 
+        <div
+          class="photo-resize-handle"
+          title="Потяните, чтобы изменить размер"
+        ></div>
+
       `;
 
 
@@ -2443,6 +2577,22 @@ async function renderEditorPhotos(product){
         );
 
       };
+
+
+      /*
+        Важно:
+        клик по самому фото открывать
+        файловый диалог больше не должен.
+        Изменение размера происходит
+        только за оранжевый угол.
+      */
+
+      bindPhotoResize(
+        product,
+        photoId,
+        item,
+        drop
+      );
 
     }catch(error){
 
@@ -2498,6 +2648,9 @@ async function renderEditorPhotos(product){
         );
 
 
+        delete product.photoSizes[photoId];
+
+
         saveState();
 
         renderProductsEditor();
@@ -2511,6 +2664,203 @@ async function renderEditorPhotos(product){
 
 }
 
+
+/* ============================================================
+   PHOTO RESIZE
+============================================================ */
+
+function bindPhotoResize(
+  product,
+  photoId,
+  item,
+  drop
+){
+
+  const handle =
+    drop.querySelector(
+      ".photo-resize-handle"
+    );
+
+
+  if(!handle){
+
+    return;
+
+  }
+
+
+  let resizing = false;
+  let startX = 0;
+  let startY = 0;
+  let startSize = DEFAULT_PHOTO_SIZE_MM;
+
+
+  function applySize(size){
+
+    const normalized =
+      setPhotoSize(
+        product,
+        photoId,
+        size
+      );
+
+
+    const px =
+      Math.round(
+        normalized *
+        MM_TO_PX
+      );
+
+
+    drop.style.width =
+      `${px}px`;
+
+    drop.style.height =
+      `${px}px`;
+
+    item.style.width =
+      `${px}px`;
+
+
+    const label =
+      item.querySelector(
+        ".photo-size-label"
+      );
+
+
+    if(label){
+
+      label.textContent =
+        `Размер в КП: ${normalized} × ${normalized} мм`;
+
+    }
+
+  }
+
+
+  function onPointerMove(e){
+
+    if(!resizing){
+
+      return;
+
+    }
+
+
+    const dx =
+      e.clientX -
+      startX;
+
+
+    const dy =
+      e.clientY -
+      startY;
+
+
+    /*
+      Используем среднее движение по X/Y,
+      чтобы квадрат увеличивался равномерно.
+    */
+
+    const averageDelta =
+      (dx + dy) / 2;
+
+
+    const sizeDelta =
+      averageDelta /
+      MM_TO_PX;
+
+
+    applySize(
+      startSize +
+      sizeDelta
+    );
+
+  }
+
+
+  function stopResize(){
+
+    if(!resizing){
+
+      return;
+
+    }
+
+
+    resizing = false;
+
+    document.body.style.userSelect =
+      "";
+
+
+    window.removeEventListener(
+      "pointermove",
+      onPointerMove
+    );
+
+
+    window.removeEventListener(
+      "pointerup",
+      stopResize
+    );
+
+
+    saveState();
+
+    renderPreview();
+
+  }
+
+
+  handle.addEventListener(
+    "pointerdown",
+    e=>{
+
+      e.preventDefault();
+
+      e.stopPropagation();
+
+
+      resizing = true;
+
+      startX =
+        e.clientX;
+
+      startY =
+        e.clientY;
+
+      startSize =
+        getPhotoSize(
+          product,
+          photoId
+        );
+
+
+      document.body.style.userSelect =
+        "none";
+
+
+      window.addEventListener(
+        "pointermove",
+        onPointerMove
+      );
+
+
+      window.addEventListener(
+        "pointerup",
+        stopResize
+      );
+
+    }
+  );
+
+}
+
+
+/* ============================================================
+   NEW PHOTO DROP
+============================================================ */
 
 function bindNewPhotoDrop(
   product,
@@ -2873,16 +3223,13 @@ async function handlePhotos(
   }
 
 
+  ensurePhotoSizes(product);
+
+
   const newPhotoIds = [];
 
 
   try{
-
-    /*
-      Обрабатываем каждую фотографию
-      отдельно и сохраняем только
-      успешно созданные версии.
-    */
 
     for(
       const file
@@ -2905,6 +3252,15 @@ async function handlePhotos(
         newPhotoId
       );
 
+
+      /*
+        Каждому новому фото сразу
+        назначаем компактный размер.
+      */
+
+      product.photoSizes[newPhotoId] =
+        DEFAULT_PHOTO_SIZE_MM;
+
     }
 
 
@@ -2926,12 +3282,6 @@ async function handlePhotos(
       error
     );
 
-
-    /*
-      Если при загрузке нескольких фото
-      произошла ошибка, удаляем те,
-      которые уже успели сохраниться.
-    */
 
     for(
       const photoId
@@ -3058,9 +3408,13 @@ async function getProductPhotosData(
 
       if(dataUrl){
 
-        result.push(
-          dataUrl
-        );
+        result.push({
+
+          photoId:photoId,
+
+          dataUrl:dataUrl
+
+        });
 
       }
 
@@ -3148,13 +3502,13 @@ function createSpecsTable(
 
 function createProductPageHtml(
   product,
-  photoDataUrls,
+  photoData,
   index
 ){
 
   const hasPhoto =
-    Array.isArray(photoDataUrls) &&
-    photoDataUrls.length > 0;
+    Array.isArray(photoData) &&
+    photoData.length > 0;
 
 
   const hasDescription =
@@ -3246,19 +3600,36 @@ function createProductPageHtml(
 
             <div class="product-photo-grid">
 
-              ${photoDataUrls.map(
-                (photo,index)=>`
+              ${photoData.map(
+                (photo,index)=>{
 
-                  <div class="product-photo-frame">
+                  const size =
+                    getPhotoSize(
+                      product,
+                      photo.photoId
+                    );
 
-                    <img
-                      src="${photo}"
-                      alt="Оборудование ${index + 1}"
+
+                  return `
+
+                    <div
+                      class="product-photo-frame"
+                      style="
+                        width:${size}mm;
+                        height:${size}mm;
+                      "
                     >
 
-                  </div>
+                      <img
+                        src="${photo.dataUrl}"
+                        alt="Оборудование ${index + 1}"
+                      >
 
-                `
+                    </div>
+
+                  `;
+
+                }
               ).join("")}
 
             </div>
@@ -3640,7 +4011,7 @@ async function renderPreview(){
       state.products[index];
 
 
-    const photoDataUrls =
+    const photoData =
       await getProductPhotosData(
         product
       );
@@ -3669,7 +4040,7 @@ async function renderPreview(){
     page.innerHTML =
       createProductPageHtml(
         product,
-        photoDataUrls,
+        photoData,
         index
       );
 
@@ -3940,7 +4311,7 @@ async function downloadPDF(){
         state.products[index];
 
 
-      const photoDataUrls =
+      const photoData =
         await getProductPhotosData(
           product
         );
@@ -3955,7 +4326,7 @@ async function downloadPDF(){
       pageWrapper.innerHTML =
         createProductPageHtml(
           product,
-          photoDataUrls,
+          photoData,
           index
         );
 
@@ -4139,21 +4510,45 @@ function getImageDimensions(blob){
 
 function calculateDocxImageSize(
   width,
-  height
+  height,
+  selectedSizeMm
 ){
 
+  /*
+    В DOCX стараемся повторить размер,
+    выбранный пользователем в редакторе.
+
+    При этом оставляем разумные границы,
+    чтобы фотографии не ломали таблицу.
+  */
+
+  const requestedPx =
+    Math.round(
+      selectedSizeMm *
+      MM_TO_PX
+    );
+
+
   const maxWidth =
-    450;
+    310;
 
 
   const maxHeight =
-    320;
+    310;
+
+
+  const target =
+    Math.min(
+      requestedPx,
+      maxWidth,
+      maxHeight
+    );
 
 
   const ratio =
     Math.min(
-      maxWidth / width,
-      maxHeight / height,
+      target / width,
+      target / height,
       1
     );
 
@@ -4537,8 +4932,10 @@ async function createDocx(){
 
 
     /*
-      Фотографии в DOCX также идут
-      сеткой 2 × N.
+      Фотографии в DOCX.
+      Теперь вместе с blob сохраняем
+      photoId, чтобы использовать выбранный
+      пользователем размер.
     */
 
     const photoBlobs = [];
@@ -4565,9 +4962,13 @@ async function createDocx(){
 
           if(blob){
 
-            photoBlobs.push(
-              blob
-            );
+            photoBlobs.push({
+
+              photoId:photoId,
+
+              blob:blob
+
+            });
 
           }
 
@@ -4591,7 +4992,7 @@ async function createDocx(){
       photoIndex += 2
     ){
 
-      const rowBlobs =
+      const rowPhotos =
         photoBlobs.slice(
           photoIndex,
           photoIndex + 2
@@ -4602,11 +5003,15 @@ async function createDocx(){
 
 
       for(
-        const photoBlob
-        of rowBlobs
+        const photoItem
+        of rowPhotos
       ){
 
         try{
+
+          const photoBlob =
+            photoItem.blob;
+
 
           const bytes =
             await blobToUint8Array(
@@ -4620,10 +5025,18 @@ async function createDocx(){
             );
 
 
+          const selectedSize =
+            getPhotoSize(
+              product,
+              photoItem.photoId
+            );
+
+
           const imageSize =
             calculateDocxImageSize(
               dimensions.width,
-              dimensions.height
+              dimensions.height,
+              selectedSize
             );
 
 
@@ -4695,12 +5108,6 @@ async function createDocx(){
 
       }
 
-
-      /*
-        Если в последней строке только
-        одна фотография — оставляем вторую
-        ячейку пустой.
-      */
 
       while(cells.length < 2){
 
