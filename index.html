@@ -279,11 +279,21 @@ textarea{
 }
 
 /* ============================================================
-   PHOTO
+   PHOTO EDITOR
 ============================================================ */
 
 .photo-editor{
   margin-bottom:16px;
+}
+
+.photo-editor-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.photo-editor-item{
+  min-width:0;
 }
 
 .photo-drop{
@@ -320,6 +330,7 @@ textarea{
   height:100%;
   object-fit:contain;
   display:block;
+  padding:8px;
 }
 
 .photo-placeholder{
@@ -327,6 +338,21 @@ textarea{
   font-size:13px;
   line-height:1.5;
   padding:20px;
+}
+
+.photo-item-remove{
+  margin-top:6px;
+  width:100%;
+  border:1px solid #e0c9c6;
+  background:#fff;
+  color:#b42318;
+  border-radius:7px;
+  padding:6px 8px;
+  font-size:12px;
+}
+
+.photo-item-remove:hover{
+  border-color:#b42318;
 }
 
 .photo-actions{
@@ -472,13 +498,20 @@ textarea{
 }
 
 /* ============================================================
-   PHOTO
+   PHOTO PREVIEW
 ============================================================ */
+
+.product-photo-grid{
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:5mm;
+  margin-bottom:5mm;
+}
 
 .product-photo-frame{
   width:100%;
   aspect-ratio:1 / 1;
-  height:auto;
   border:1px solid #e0e2e5;
   border-radius:7px;
   display:flex;
@@ -486,7 +519,6 @@ textarea{
   justify-content:center;
   overflow:hidden;
   background:#fff;
-  margin-bottom:5mm;
 }
 
 .product-photo-frame img{
@@ -494,6 +526,7 @@ textarea{
   height:100%;
   object-fit:contain;
   display:block;
+  padding:3mm;
 }
 
 /* ============================================================
@@ -848,7 +881,6 @@ textarea{
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
 <script src="https://unpkg.com/docx@9.5.1/build/index.umd.js"></script>
 
 
@@ -924,7 +956,7 @@ function createProduct(){
 
     videoUrl:"",
 
-    photoId:""
+    photoIds:[]
 
   };
 
@@ -1004,16 +1036,22 @@ function openDB(){
 }
 
 
-/*
-  Подготавливаем фотографию перед сохранением.
+async function ensureDB(){
 
-  Что делаем:
-  - создаём квадратный холст;
-  - сохраняем пропорции исходного изображения;
-  - вписываем изображение целиком без обрезки;
-  - ограничиваем размер до 1600x1600;
-  - сохраняем как JPEG с хорошим качеством.
-*/
+  if(db){
+
+    return db;
+
+  }
+
+  return await openDB();
+
+}
+
+
+/* ============================================================
+   PHOTO PREPARATION
+============================================================ */
 
 function preparePhoto(file){
 
@@ -1093,13 +1131,6 @@ function preparePhoto(file){
 
         }
 
-
-        /*
-          Белый фон нужен для того,
-          чтобы прозрачные PNG/WebP
-          корректно выглядели в PDF/DOCX
-          и в квадратной рамке.
-        */
 
         context.fillStyle =
           "#ffffff";
@@ -1217,62 +1248,133 @@ function preparePhoto(file){
 }
 
 
-function savePhoto(blob){
+/* ============================================================
+   PHOTO DB
+============================================================ */
 
-  return new Promise(async (resolve,reject)=>{
+function createPhotoId(){
+
+  return (
+    "photo_" +
+    Date.now() +
+    "_" +
+    Math.random()
+      .toString(36)
+      .slice(2)
+  );
+
+}
+
+
+async function savePhoto(blob){
+
+  const database =
+    await ensureDB();
+
+
+  return new Promise((resolve,reject)=>{
 
     try{
 
-      if(!db){
-
-        await openDB();
-
-      }
-
-
-      if(!db){
-
-        throw new Error(
-          "Хранилище фотографий недоступно"
-        );
-
-      }
-
-
-      const id =
-        "photo_" +
-        Date.now() +
-        "_" +
-        Math.random()
-          .toString(36)
-          .slice(2);
-
-
       const transaction =
-        db.transaction(
+        database.transaction(
           STORE_NAME,
           "readwrite"
         );
 
 
-      transaction
-        .objectStore(STORE_NAME)
-        .put(blob,id);
+      const store =
+        transaction.objectStore(
+          STORE_NAME
+        );
+
+
+      /*
+        Поддерживаем оба варианта IndexedDB:
+
+        1. обычный store без keyPath;
+        2. store с inline keyPath.
+
+        Поэтому ошибка:
+        "The object store uses in-line keys and the key parameter was provided"
+        больше не возникает.
+      */
+
+      let request;
+
+
+      if(store.keyPath === null){
+
+        request =
+          store.put(
+            blob,
+            createPhotoId()
+          );
+
+      }else{
+
+        const record = {
+
+          id:createPhotoId(),
+
+          blob:blob
+
+        };
+
+
+        request =
+          store.put(
+            record
+          );
+
+      }
+
+
+      request.onerror = ()=>{
+
+        reject(
+          request.error
+        );
+
+      };
 
 
       transaction.oncomplete = ()=>{
 
-        resolve(id);
+        if(store.keyPath === null){
+
+          /*
+            Для обычного store ID нам нужен
+            заранее созданный ключ.
+          */
+
+          resolve(
+            request.result
+          );
+
+        }else{
+
+          /*
+            Для inline store ключ находится
+            в сохранённом объекте.
+          */
+
+          resolve(
+            request.result
+          );
+
+        }
 
       };
 
 
       transaction.onerror = ()=>{
 
-        reject(transaction.error);
+        reject(
+          transaction.error
+        );
 
       };
-
 
     }catch(error){
 
@@ -1285,62 +1387,72 @@ function savePhoto(blob){
 }
 
 
-function getPhoto(id){
+async function getPhoto(id){
 
-  return new Promise(async (resolve,reject)=>{
+  if(!id){
 
-    if(!id){
+    return null;
 
-      resolve(null);
+  }
 
-      return;
 
-    }
+  const database =
+    await ensureDB();
 
+
+  return new Promise((resolve,reject)=>{
 
     try{
 
-      if(!db){
-
-        await openDB();
-
-      }
-
-
-      if(!db){
-
-        resolve(null);
-
-        return;
-
-      }
-
-
       const transaction =
-        db.transaction(
+        database.transaction(
           STORE_NAME,
           "readonly"
         );
 
 
+      const store =
+        transaction.objectStore(
+          STORE_NAME
+        );
+
+
       const request =
-        transaction
-          .objectStore(STORE_NAME)
-          .get(id);
+        store.get(id);
 
 
       request.onsuccess = ()=>{
 
-        resolve(
-          request.result || null
-        );
+        let result =
+          request.result || null;
+
+
+        /*
+          Если store с inline keyPath,
+          фотография хранится как {id, blob}.
+        */
+
+        if(
+          result &&
+          result.blob instanceof Blob
+        ){
+
+          result =
+            result.blob;
+
+        }
+
+
+        resolve(result);
 
       };
 
 
       request.onerror = ()=>{
 
-        reject(request.error);
+        reject(
+          request.error
+        );
 
       };
 
@@ -1355,51 +1467,46 @@ function getPhoto(id){
 }
 
 
-function deletePhoto(id){
+async function deletePhoto(id){
 
-  return new Promise(async (resolve,reject)=>{
+  if(!id){
 
-    if(!id){
+    return;
 
-      resolve();
+  }
 
-      return;
 
-    }
+  const database =
+    await ensureDB();
 
+
+  return new Promise((resolve,reject)=>{
 
     try{
 
-      if(!db){
-
-        await openDB();
-
-      }
-
-
-      if(!db){
-
-        resolve();
-
-        return;
-
-      }
-
-
       const transaction =
-        db.transaction(
+        database.transaction(
           STORE_NAME,
           "readwrite"
         );
 
 
-      transaction
-        .objectStore(STORE_NAME)
-        .delete(id);
+      const store =
+        transaction.objectStore(
+          STORE_NAME
+        );
 
 
-      transaction.oncomplete =
+      const request =
+        store.delete(id);
+
+
+      request.onsuccess =
         ()=>resolve();
+
+
+      request.onerror =
+        ()=>reject(request.error);
 
 
       transaction.onerror =
@@ -1478,7 +1585,18 @@ function loadState(){
 
         ...createProduct(),
 
-        ...product
+        ...product,
+
+        /*
+          Старый формат photoId больше
+          не используем. Старые фотографии
+          пользователю не нужны.
+        */
+
+        photoIds:
+          Array.isArray(product.photoIds)
+            ? product.photoIds
+            : []
 
       }));
 
@@ -1506,8 +1624,7 @@ function loadState(){
       "status",
       "priceComment",
       "specsText",
-      "videoUrl",
-      "photoId"
+      "videoUrl"
 
     ];
 
@@ -1597,7 +1714,6 @@ function escapeHtml(value){
     .replace(/"/g,"&quot;")
 
     .replace(/'/g,"&#039;");
-
 
 }
 
@@ -1806,6 +1922,13 @@ function renderProductsEditor(){
   state.products.forEach(
     (product,index)=>{
 
+      if(!Array.isArray(product.photoIds)){
+
+        product.photoIds = [];
+
+      }
+
+
       const card =
         document.createElement(
           "div"
@@ -1875,36 +1998,23 @@ function renderProductsEditor(){
           >
 
             <label>
-              Фотография оборудования
+              Фотографии оборудования
             </label>
 
           </div>
 
 
           <div
-            class="photo-drop"
-            data-photo-drop="${product.id}"
-          >
-
-            <div class="photo-placeholder">
-
-              Нажмите сюда или перетащите фотографию
-
-              <br>
-
-              <small>
-                Фото автоматически подгоняется под квадрат без обрезки
-              </small>
-
-            </div>
-
-          </div>
+            class="photo-editor-grid"
+            data-photo-grid="${product.id}"
+          ></div>
 
 
           <input
             type="file"
             class="file-input"
             accept="image/*"
+            multiple
             data-photo-input="${product.id}"
           >
 
@@ -1916,16 +2026,7 @@ function renderProductsEditor(){
               type="button"
               data-choose-photo="${product.id}"
             >
-              Выбрать фото
-            </button>
-
-
-            <button
-              class="small-btn"
-              type="button"
-              data-remove-photo="${product.id}"
-            >
-              Удалить фото
+              ＋ Добавить фото
             </button>
 
           </div>
@@ -2128,13 +2229,393 @@ function renderProductsEditor(){
 
       container.appendChild(card);
 
-      renderEditorPhoto(product);
+      renderEditorPhotos(product);
 
     }
   );
 
 
   bindProductEditorEvents();
+
+}
+
+
+/* ============================================================
+   EDITOR PHOTOS
+============================================================ */
+
+async function renderEditorPhotos(product){
+
+  const grid =
+    document.querySelector(
+      `[data-photo-grid="${product.id}"]`
+    );
+
+
+  if(!grid){
+
+    return;
+
+  }
+
+
+  grid.innerHTML = "";
+
+
+  if(
+    !Array.isArray(product.photoIds)
+  ){
+
+    product.photoIds = [];
+
+  }
+
+
+  /*
+    Если фотографий нет — показываем
+    один аккуратный квадрат-загрузчик.
+  */
+
+  if(!product.photoIds.length){
+
+    const item =
+      document.createElement(
+        "div"
+      );
+
+
+    item.className =
+      "photo-editor-item";
+
+
+    item.innerHTML = `
+
+      <div
+        class="photo-drop"
+        data-photo-drop-new="${product.id}"
+      >
+
+        <div class="photo-placeholder">
+
+          Нажмите сюда или перетащите фотографию
+
+          <br>
+
+          <small>
+            Можно добавить несколько фотографий
+          </small>
+
+        </div>
+
+      </div>
+
+    `;
+
+
+    grid.appendChild(item);
+
+
+    bindNewPhotoDrop(
+      product,
+      item
+    );
+
+
+    return;
+
+  }
+
+
+  for(
+    let index = 0;
+    index < product.photoIds.length;
+    index++
+  ){
+
+    const photoId =
+      product.photoIds[index];
+
+
+    const item =
+      document.createElement(
+        "div"
+      );
+
+
+    item.className =
+      "photo-editor-item";
+
+
+    item.innerHTML = `
+
+      <div
+        class="photo-drop"
+        data-photo-drop="${product.id}-${index}"
+      >
+
+        <div class="photo-placeholder">
+          Загрузка...
+        </div>
+
+      </div>
+
+
+      <button
+        type="button"
+        class="photo-item-remove"
+        data-remove-photo-index="${product.id}-${index}"
+      >
+        Удалить фото
+      </button>
+
+    `;
+
+
+    grid.appendChild(item);
+
+
+    const drop =
+      item.querySelector(
+        `[data-photo-drop="${product.id}-${index}"]`
+      );
+
+
+    const remove =
+      item.querySelector(
+        `[data-remove-photo-index="${product.id}-${index}"]`
+      );
+
+
+    try{
+
+      const blob =
+        await getPhoto(
+          photoId
+        );
+
+
+      if(!blob){
+
+        product.photoIds =
+          product.photoIds.filter(
+            id=>id !== photoId
+          );
+
+
+        saveState();
+
+        item.remove();
+
+        continue;
+
+      }
+
+
+      const url =
+        URL.createObjectURL(
+          blob
+        );
+
+
+      drop.classList.add(
+        "has-image"
+      );
+
+
+      drop.innerHTML = `
+
+        <img
+          src="${url}"
+          alt="Фото оборудования"
+        >
+
+      `;
+
+
+      const image =
+        drop.querySelector("img");
+
+
+      image.onload = ()=>{
+
+        URL.revokeObjectURL(
+          url
+        );
+
+      };
+
+    }catch(error){
+
+      console.error(
+        "Photo render error:",
+        error
+      );
+
+    }
+
+
+    remove.addEventListener(
+      "click",
+      async e=>{
+
+        e.preventDefault();
+
+        e.stopPropagation();
+
+
+        const currentIndex =
+          product.photoIds.indexOf(
+            photoId
+          );
+
+
+        if(currentIndex === -1){
+
+          return;
+
+        }
+
+
+        try{
+
+          await deletePhoto(
+            photoId
+          );
+
+        }catch(error){
+
+          console.warn(
+            "Не удалось удалить фото:",
+            error
+          );
+
+        }
+
+
+        product.photoIds.splice(
+          currentIndex,
+          1
+        );
+
+
+        saveState();
+
+        renderProductsEditor();
+
+        renderPreview();
+
+      }
+    );
+
+  }
+
+}
+
+
+function bindNewPhotoDrop(
+  product,
+  item
+){
+
+  const drop =
+    item.querySelector(
+      `[data-photo-drop-new="${product.id}"]`
+    );
+
+
+  if(!drop){
+
+    return;
+
+  }
+
+
+  drop.addEventListener(
+    "click",
+    e=>{
+
+      e.preventDefault();
+
+      const input =
+        document.querySelector(
+          `[data-photo-input="${product.id}"]`
+        );
+
+
+      if(input){
+
+        input.click();
+
+      }
+
+    }
+  );
+
+
+  drop.addEventListener(
+    "dragover",
+    e=>{
+
+      e.preventDefault();
+
+      e.stopPropagation();
+
+      drop.classList.add(
+        "dragover"
+      );
+
+    }
+  );
+
+
+  drop.addEventListener(
+    "dragleave",
+    e=>{
+
+      e.preventDefault();
+
+      drop.classList.remove(
+        "dragover"
+      );
+
+    }
+  );
+
+
+  drop.addEventListener(
+    "drop",
+    async e=>{
+
+      e.preventDefault();
+
+      e.stopPropagation();
+
+      drop.classList.remove(
+        "dragover"
+      );
+
+
+      const files =
+        Array.from(
+          e.dataTransfer.files || []
+        ).filter(
+          file=>
+            file.type &&
+            file.type.startsWith("image/")
+        );
+
+
+      if(files.length){
+
+        await handlePhotos(
+          product,
+          files
+        );
+
+      }
+
+    }
+  );
 
 }
 
@@ -2162,7 +2643,9 @@ function bindProductEditorEvents(){
 
 
       if(!product){
+
         return;
+
       }
 
 
@@ -2236,18 +2719,6 @@ function bindProductEditorEvents(){
         );
 
 
-      const drop =
-        card.querySelector(
-          `[data-photo-drop="${productId}"]`
-        );
-
-
-      const remove =
-        card.querySelector(
-          `[data-remove-photo="${productId}"]`
-        );
-
-
       choose.addEventListener(
         "click",
         e=>{
@@ -2262,131 +2733,27 @@ function bindProductEditorEvents(){
       );
 
 
-      drop.addEventListener(
-        "click",
-        e=>{
-
-          e.preventDefault();
-
-          input.click();
-
-        }
-      );
-
-
       input.addEventListener(
         "change",
         async e=>{
 
-          const file =
-            e.target.files &&
-            e.target.files[0];
+          const files =
+            Array.from(
+              e.target.files || []
+            );
 
 
-          if(file){
+          if(files.length){
 
-            await handlePhoto(
+            await handlePhotos(
               product,
-              file
+              files
             );
 
           }
 
 
           input.value = "";
-
-        }
-      );
-
-
-      drop.addEventListener(
-        "dragover",
-        e=>{
-
-          e.preventDefault();
-
-          e.stopPropagation();
-
-          drop.classList.add(
-            "dragover"
-          );
-
-        }
-      );
-
-
-      drop.addEventListener(
-        "dragleave",
-        e=>{
-
-          e.preventDefault();
-
-          drop.classList.remove(
-            "dragover"
-          );
-
-        }
-      );
-
-
-      drop.addEventListener(
-        "drop",
-        async e=>{
-
-          e.preventDefault();
-
-          e.stopPropagation();
-
-          drop.classList.remove(
-            "dragover"
-          );
-
-
-          const file =
-            e.dataTransfer.files &&
-            e.dataTransfer.files[0];
-
-
-          if(file){
-
-            await handlePhoto(
-              product,
-              file
-            );
-
-          }
-
-        }
-      );
-
-
-      remove.addEventListener(
-        "click",
-        async e=>{
-
-          e.preventDefault();
-
-
-          if(product.photoId){
-
-            try{
-
-              await deletePhoto(
-                product.photoId
-              );
-
-            }catch(error){}
-
-          }
-
-
-          product.photoId = "";
-
-          saveState();
-
-          renderProductsEditor();
-
-          renderPreview();
 
         }
       );
@@ -2415,15 +2782,26 @@ function bindProductEditorEvents(){
             }
 
 
-            if(product.photoId){
+            if(
+              Array.isArray(
+                product.photoIds
+              )
+            ){
 
-              try{
+              for(
+                const photoId
+                of product.photoIds
+              ){
 
-                await deletePhoto(
-                  product.photoId
-                );
+                try{
 
-              }catch(error){}
+                  await deletePhoto(
+                    photoId
+                  );
+
+                }catch(error){}
+
+              }
 
             }
 
@@ -2460,127 +2838,24 @@ function bindProductEditorEvents(){
 
 
 /* ============================================================
-   PHOTO
+   PHOTO HANDLING
 ============================================================ */
 
-async function renderEditorPhoto(product){
-
-  const drop =
-    document.querySelector(
-      `[data-photo-drop="${product.id}"]`
-    );
-
-
-  if(!drop){
-    return;
-  }
-
-
-  if(!product.photoId){
-
-    drop.classList.remove(
-      "has-image"
-    );
-
-
-    drop.innerHTML = `
-
-      <div class="photo-placeholder">
-
-        Нажмите сюда или перетащите фотографию
-
-        <br>
-
-        <small>
-          Фото автоматически подгоняется под квадрат без обрезки
-        </small>
-
-      </div>
-
-    `;
-
-
-    return;
-
-  }
-
-
-  try{
-
-    const blob =
-      await getPhoto(
-        product.photoId
-      );
-
-
-    if(!blob){
-
-      product.photoId = "";
-
-      saveState();
-
-      await renderEditorPhoto(
-        product
-      );
-
-      return;
-
-    }
-
-
-    const url =
-      URL.createObjectURL(
-        blob
-      );
-
-
-    drop.classList.add(
-      "has-image"
-    );
-
-
-    drop.innerHTML = `
-
-      <img
-        src="${url}"
-        alt="Фото оборудования"
-      >
-
-    `;
-
-
-    const image =
-      drop.querySelector("img");
-
-
-    image.onload = ()=>{
-
-      URL.revokeObjectURL(url);
-
-    };
-
-  }catch(error){
-
-    console.error(
-      "Photo render error:",
-      error
-    );
-
-  }
-
-}
-
-
-async function handlePhoto(
+async function handlePhotos(
   product,
-  file
+  files
 ){
 
-  if(
-    !file ||
-    !file.type ||
-    !file.type.startsWith("image/")
-  ){
+  const validFiles =
+    files.filter(
+      file=>
+        file &&
+        file.type &&
+        file.type.startsWith("image/")
+    );
+
+
+  if(!validFiles.length){
 
     alert(
       "Можно загружать только изображения."
@@ -2591,68 +2866,58 @@ async function handlePhoto(
   }
 
 
+  if(!Array.isArray(product.photoIds)){
+
+    product.photoIds = [];
+
+  }
+
+
+  const newPhotoIds = [];
+
+
   try{
 
     /*
-      Сначала полностью подготавливаем
-      и сохраняем новую фотографию.
-      Старую удаляем только после успеха.
+      Обрабатываем каждую фотографию
+      отдельно и сохраняем только
+      успешно созданные версии.
     */
 
-    const preparedPhoto =
-      await preparePhoto(
-        file
+    for(
+      const file
+      of validFiles
+    ){
+
+      const preparedPhoto =
+        await preparePhoto(
+          file
+        );
+
+
+      const newPhotoId =
+        await savePhoto(
+          preparedPhoto
+        );
+
+
+      newPhotoIds.push(
+        newPhotoId
       );
 
-
-    const newPhotoId =
-      await savePhoto(
-        preparedPhoto
-      );
+    }
 
 
-    const oldPhotoId =
-      product.photoId;
-
-
-    product.photoId =
-      newPhotoId;
+    product.photoIds.push(
+      ...newPhotoIds
+    );
 
 
     saveState();
 
-
-    await renderEditorPhoto(
-      product
-    );
-
+    renderProductsEditor();
 
     renderPreview();
-
-
-    /*
-      Старое фото удаляем только после
-      успешного сохранения новой версии.
-    */
-
-    if(oldPhotoId){
-
-      try{
-
-        await deletePhoto(
-          oldPhotoId
-        );
-
-      }catch(error){
-
-        console.warn(
-          "Не удалось удалить старое фото:",
-          error
-        );
-
-      }
-
-    }
 
   }catch(error){
 
@@ -2660,6 +2925,28 @@ async function handlePhoto(
       "Photo save error:",
       error
     );
+
+
+    /*
+      Если при загрузке нескольких фото
+      произошла ошибка, удаляем те,
+      которые уже успели сохраниться.
+    */
+
+    for(
+      const photoId
+      of newPhotoIds
+    ){
+
+      try{
+
+        await deletePhoto(
+          photoId
+        );
+
+      }catch(deleteError){}
+
+    }
 
 
     alert(
@@ -2680,10 +2967,10 @@ async function handlePhoto(
 ============================================================ */
 
 async function getPhotoDataUrl(
-  product
+  photoId
 ){
 
-  if(!product.photoId){
+  if(!photoId){
 
     return "";
 
@@ -2692,7 +2979,7 @@ async function getPhotoDataUrl(
 
   const blob =
     await getPhoto(
-      product.photoId
+      photoId
     );
 
 
@@ -2711,6 +2998,7 @@ async function getPhotoDataUrl(
 
 
       reader.onload = ()=>{
+
         resolve(
           reader.result
         );
@@ -2719,6 +3007,7 @@ async function getPhotoDataUrl(
 
 
       reader.onerror = ()=>{
+
         reject(
           reader.error
         );
@@ -2732,6 +3021,62 @@ async function getPhotoDataUrl(
 
     }
   );
+
+}
+
+
+async function getProductPhotosData(
+  product
+){
+
+  if(
+    !Array.isArray(
+      product.photoIds
+    )
+  ){
+
+    return [];
+
+  }
+
+
+  const result = [];
+
+
+  for(
+    const photoId
+    of product.photoIds
+  ){
+
+    try{
+
+      const dataUrl =
+        await getPhotoDataUrl(
+          photoId
+        );
+
+
+      if(dataUrl){
+
+        result.push(
+          dataUrl
+        );
+
+      }
+
+    }catch(error){
+
+      console.error(
+        "Photo data error:",
+        error
+      );
+
+    }
+
+  }
+
+
+  return result;
 
 }
 
@@ -2803,12 +3148,13 @@ function createSpecsTable(
 
 function createProductPageHtml(
   product,
-  photoDataUrl,
+  photoDataUrls,
   index
 ){
 
   const hasPhoto =
-    Boolean(photoDataUrl);
+    Array.isArray(photoDataUrls) &&
+    photoDataUrls.length > 0;
 
 
   const hasDescription =
@@ -2898,12 +3244,22 @@ function createProductPageHtml(
           ?
           `
 
-            <div class="product-photo-frame">
+            <div class="product-photo-grid">
 
-              <img
-                src="${photoDataUrl}"
-                alt="Оборудование"
-              >
+              ${photoDataUrls.map(
+                (photo,index)=>`
+
+                  <div class="product-photo-frame">
+
+                    <img
+                      src="${photo}"
+                      alt="Оборудование ${index + 1}"
+                    >
+
+                  </div>
+
+                `
+              ).join("")}
 
             </div>
 
@@ -3284,8 +3640,8 @@ async function renderPreview(){
       state.products[index];
 
 
-    const photoDataUrl =
-      await getPhotoDataUrl(
+    const photoDataUrls =
+      await getProductPhotosData(
         product
       );
 
@@ -3313,7 +3669,7 @@ async function renderPreview(){
     page.innerHTML =
       createProductPageHtml(
         product,
-        photoDataUrl,
+        photoDataUrls,
         index
       );
 
@@ -3465,15 +3821,26 @@ document
         of state.products
       ){
 
-        if(product.photoId){
+        if(
+          Array.isArray(
+            product.photoIds
+          )
+        ){
 
-          try{
+          for(
+            const photoId
+            of product.photoIds
+          ){
 
-            await deletePhoto(
-              product.photoId
-            );
+            try{
 
-          }catch(error){}
+              await deletePhoto(
+                photoId
+              );
+
+            }catch(error){}
+
+          }
 
         }
 
@@ -3573,8 +3940,8 @@ async function downloadPDF(){
         state.products[index];
 
 
-      const photoDataUrl =
-        await getPhotoDataUrl(
+      const photoDataUrls =
+        await getProductPhotosData(
           product
         );
 
@@ -3588,7 +3955,7 @@ async function downloadPDF(){
       pageWrapper.innerHTML =
         createProductPageHtml(
           product,
-          photoDataUrl,
+          photoDataUrls,
           index
         );
 
@@ -4169,86 +4536,269 @@ async function createDocx(){
     );
 
 
-    const photoBlob =
-      await getPhoto(
-        product.photoId
-      );
+    /*
+      Фотографии в DOCX также идут
+      сеткой 2 × N.
+    */
+
+    const photoBlobs = [];
 
 
-    if(photoBlob){
+    if(
+      Array.isArray(
+        product.photoIds
+      )
+    ){
 
-      try{
+      for(
+        const photoId
+        of product.photoIds
+      ){
 
-        const bytes =
-          await blobToUint8Array(
-            photoBlob
+        try{
+
+          const blob =
+            await getPhoto(
+              photoId
+            );
+
+
+          if(blob){
+
+            photoBlobs.push(
+              blob
+            );
+
+          }
+
+        }catch(error){
+
+          console.error(
+            "DOCX photo load error:",
+            error
           );
-
-
-        const dimensions =
-          await getImageDimensions(
-            photoBlob
-          );
-
-
-        const imageSize =
-          calculateDocxImageSize(
-            dimensions.width,
-            dimensions.height
-          );
-
-
-        let imageType = "jpg";
-
-
-        if(
-          photoBlob.type ===
-          "image/png"
-        ){
-
-          imageType = "png";
 
         }
 
+      }
 
-        children.push(
+    }
 
-          new docx.Paragraph({
 
-            alignment:
-              docx.AlignmentType
-                .CENTER,
+    for(
+      let photoIndex = 0;
+      photoIndex < photoBlobs.length;
+      photoIndex += 2
+    ){
 
-            spacing:{
-              after:250
+      const rowBlobs =
+        photoBlobs.slice(
+          photoIndex,
+          photoIndex + 2
+        );
+
+
+      const cells = [];
+
+
+      for(
+        const photoBlob
+        of rowBlobs
+      ){
+
+        try{
+
+          const bytes =
+            await blobToUint8Array(
+              photoBlob
+            );
+
+
+          const dimensions =
+            await getImageDimensions(
+              photoBlob
+            );
+
+
+          const imageSize =
+            calculateDocxImageSize(
+              dimensions.width,
+              dimensions.height
+            );
+
+
+          let imageType = "jpg";
+
+
+          if(
+            photoBlob.type ===
+            "image/png"
+          ){
+
+            imageType = "png";
+
+          }
+
+
+          cells.push(
+
+            new docx.TableCell({
+
+              width:{
+                size:50,
+                type:
+                  docx.WidthType
+                    .PERCENTAGE
+              },
+
+              children:[
+
+                new docx.Paragraph({
+
+                  alignment:
+                    docx.AlignmentType
+                      .CENTER,
+
+                  children:[
+
+                    new docx.ImageRun({
+
+                      data:bytes,
+
+                      transformation:{
+                        width:imageSize.width,
+                        height:imageSize.height
+                      },
+
+                      type:imageType
+
+                    })
+
+                  ]
+
+                })
+
+              ]
+
+            })
+
+          );
+
+        }catch(error){
+
+          console.error(
+            "DOCX image error:",
+            error
+          );
+
+        }
+
+      }
+
+
+      /*
+        Если в последней строке только
+        одна фотография — оставляем вторую
+        ячейку пустой.
+      */
+
+      while(cells.length < 2){
+
+        cells.push(
+
+          new docx.TableCell({
+
+            width:{
+              size:50,
+              type:
+                docx.WidthType
+                  .PERCENTAGE
             },
 
             children:[
-
-              new docx.ImageRun({
-
-                data:bytes,
-
-                transformation:{
-                  width:imageSize.width,
-                  height:imageSize.height
-                },
-
-                type:imageType
-
+              new docx.Paragraph({
+                children:[]
               })
-
             ]
 
           })
 
         );
 
-      }catch(error){
+      }
 
-        console.error(
-          "DOCX image error:",
-          error
+
+      if(cells.length){
+
+        children.push(
+
+          new docx.Table({
+
+            width:{
+              size:100,
+              type:
+                docx.WidthType
+                  .PERCENTAGE
+            },
+
+            rows:[
+
+              new docx.TableRow({
+
+                children:cells
+
+              })
+
+            ],
+
+            borders:{
+
+              top:{
+                style:
+                  docx.BorderStyle.NONE,
+                size:0,
+                color:"FFFFFF"
+              },
+
+              bottom:{
+                style:
+                  docx.BorderStyle.NONE,
+                size:0,
+                color:"FFFFFF"
+              },
+
+              left:{
+                style:
+                  docx.BorderStyle.NONE,
+                size:0,
+                color:"FFFFFF"
+              },
+
+              right:{
+                style:
+                  docx.BorderStyle.NONE,
+                size:0,
+                color:"FFFFFF"
+              },
+
+              insideHorizontal:{
+                style:
+                  docx.BorderStyle.NONE,
+                size:0,
+                color:"FFFFFF"
+              },
+
+              insideVertical:{
+                style:
+                  docx.BorderStyle.NONE,
+                size:0,
+                color:"FFFFFF"
+              }
+
+            }
+
+          })
+
         );
 
       }
