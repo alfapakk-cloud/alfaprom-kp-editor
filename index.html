@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>АЛЬФАПРОМ — редактор КП</title>
+<style>
+:root{--orange:#ff8100;--dark:#222;--muted:#777;--line:#ddd;--bg:#f3f4f6}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--dark)}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+.app{min-height:100vh}
+.topbar{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.brand{font-weight:800;font-size:18px}.brand span{color:var(--orange)}
+.top-actions{display:flex;gap:8px}
+.btn{border:1px solid #ccc;background:#fff;border-radius:8px;padding:9px 13px}.btn:hover{background:#f7f7f7}
+.btn.primary{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:700}
+.layout{display:grid;grid-template-columns:390px 1fr;min-height:calc(100vh - 64px)}
+.panel{background:#fff;border-right:1px solid var(--line);padding:18px;overflow:auto}
+.panel h2{font-size:17px;margin:0 0 16px}
+.section{border-top:1px solid #eee;padding-top:15px;margin-top:15px}
+.label{display:block;font-size:12px;font-weight:700;color:#555;margin:0 0 6px}
+input,textarea{width:100%;border:1px solid #ccc;border-radius:7px;padding:9px;background:#fff}
+textarea{min-height:90px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.field{margin-bottom:10px}
+.card-editor{border:1px solid #ddd;border-radius:10px;padding:12px;margin-bottom:12px;background:#fafafa}
+.card-title{font-weight:700;margin-bottom:10px;display:flex;justify-content:space-between;gap:10px}
+.icon-btn{border:0;background:transparent;color:#888;font-size:18px}.icon-btn:hover{color:#c00}
+.spec{display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-bottom:6px}
+.spec input{padding:7px}
+.photo-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.photo-box{border:1px dashed #bbb;border-radius:8px;padding:6px;background:#fff}
+.photo-box img{display:block;width:100%;height:110px;object-fit:contain;background:#f5f5f5;border-radius:5px}
+.photo-box button{margin-top:5px;width:100%;font-size:12px}
+.drop{border:2px dashed #ccc;border-radius:9px;padding:18px;text-align:center;color:#777;background:#fff}
+.drop.drag{border-color:var(--orange);background:#fff8f0}
+.preview-wrap{padding:28px;overflow:auto}
+.preview{width:210mm;min-height:297mm;margin:0 auto;background:#fff;box-shadow:0 3px 18px #0001;padding:15mm 15mm 13mm;position:relative}
+.preview-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--orange);padding-bottom:8px;margin-bottom:12px}
+.logo{font-size:22px;font-weight:800}.logo span{color:var(--orange)}
+.header-links{text-align:right;font-size:8.5pt;line-height:1.45}
+.header-links a{color:#333;text-decoration:none}
+.kp-title{text-align:center;font-size:18pt;margin:8px 0 16px}
+.equipment{border:1px solid #ddd;border-radius:4px;padding:10px;margin-bottom:14px;break-inside:avoid}
+.equipment h3{font-size:15pt;margin:0 0 8px}
+.desc{font-size:10.5pt;line-height:1.45;white-space:pre-line}
+.note{font-size:9pt;margin:7px 0;color:#555;font-style:italic}
+.photos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.photos img{width:100%;height:75mm;object-fit:contain;background:#fafafa;border:1px solid #eee}
+.price{text-align:right;font-size:15pt;font-weight:800;margin:8px 0}
+.spec-table{width:100%;border-collapse:collapse;font-size:9.5pt;margin-top:7px}
+.spec-table th,.spec-table td{border:1px solid #ccc;padding:5px;text-align:left}
+.spec-table th{background:#f5f5f5;width:42%}
+.video{display:inline-block;margin-top:10px;padding:8px 12px;border-radius:6px;background:#222;color:#fff;text-decoration:none;font-size:10pt}
+.footer{margin-top:18px;border-top:1px solid #ddd;padding-top:10px;font-size:9.5pt;line-height:1.4}
+.footer strong{color:var(--orange)}
+.status{font-size:12px;color:#777;margin-top:8px}
+@media(max-width:1000px){.layout{grid-template-columns:1fr}.panel{border-right:0;border-bottom:1px solid #ddd}.preview-wrap{padding:15px}.preview{transform-origin:top left}}
+@media print{body{background:#fff}.topbar,.panel{display:none!important}.layout{display:block}.preview-wrap{padding:0}.preview{box-shadow:none;margin:0;width:210mm;min-height:297mm;padding:15mm 15mm 13mm}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="topbar">
+  <div class="brand">АЛЬФА<span>ПРОМ</span> · Редактор КП</div>
+  <div class="top-actions">
+    <button class="btn" id="resetBtn">Сбросить</button>
+    <button class="btn primary" id="printBtn">Печать / PDF</button>
+  </div>
+</header>
+
+<div class="layout">
+<aside class="panel">
+  <h2>Содержимое КП</h2>
+
+  <div class="field">
+    <label class="label">Название КП</label>
+    <input id="kpName" value="Коммерческое предложение">
+  </div>
+
+  <div class="section">
+    <div class="card-title">Оборудование</div>
+    <div id="editors"></div>
+    <button class="btn primary" id="addEquipment">+ Добавить оборудование</button>
+  </div>
+
+  <div class="section">
+    <div class="card-title">Общий блок</div>
+    <div class="field">
+      <label class="label">Ссылка на видео</label>
+      <input id="video" placeholder="https://youtube.com/...">
+    </div>
+    <div class="field">
+      <label class="label">Текст внизу КП</label>
+      <textarea id="footerText"></textarea>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="drop" id="globalDrop">
+      Перетащите сюда фотографии<br>или нажмите для выбора
+      <input id="globalFiles" type="file" accept="image/*" multiple hidden>
+    </div>
+    <div class="status" id="status">Черновик сохраняется автоматически.</div>
+  </div>
+</aside>
+
+<main class="preview-wrap">
+  <div class="preview" id="preview"></div>
+</main>
+</div>
+</div>
+
+<script>
+const KEY='alfaprom_kp_editor_v1';
+const defaultState={
+ kpName:'Коммерческое предложение',
+ video:'',
+ footerText:'Более подробно о процессе вакуумирования различных продуктов вы можете посмотреть на нашем YouTube Канале.\\n\\nТак же Вы можете приобрести оборудование стоимостью от 300 000 рублей в лизинг, в этом Вам всегда помогут наши партнеры.\\n\\nМы являемся мульти брендовым поставщиком, поэтому можем осуществить продажу практически любой марки оборудования! Мы осуществляем поставки по всей России и странам СНГ. Мы можем подобрать оборудование под любой бюджет и задачу.',
+ equipment:[{
+   name:'Пельменный аппарат Foodatlas JGL120-5B',
+   description:'Пельменный аппарат Foodatlas JGL120-5B используется на предприятиях общественного питания и торговли для производства замороженных мясных полуфабрикатов в составе пельменной линии. Модель оснащена двухступенчатым лопастным насосом, бункером, шнеком, тестовой трубкой и формовочным барабаном с тефлоновым покрытием. Все детали, контактирующие при работе оборудования с продуктами, выполнены из нержавеющей стали.',
+   note:'Внимание! На фото аналогичная модель другого размера.',
+   price:'200890',
+   specs:[['Вес','160 кг'],['Габариты','990x470x1150 мм'],['Мощность','1,5 кВт'],['Напряжение','380 В'],['Производительность','7200 шт./ч'],['Вес отдельного пельменя','от 16 до 18 гр']],
+   photos:[]
+ }]
+};
+
+let state=load();
+
+function load(){
+ try{return Object.assign({},defaultState,JSON.parse(localStorage.getItem(KEY)||'{}'))}
+ catch(e){return structuredClone(defaultState)}
+}
+function save(){
+ localStorage.setItem(KEY,JSON.stringify(state));
+ document.getElementById('status').textContent='Сохранено автоматически · '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+}
+function esc(s=''){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+
+function renderEditors(){
+ const root=document.getElementById('editors'); root.innerHTML='';
+ state.equipment.forEach((e,i)=>{
+  const card=document.createElement('div'); card.className='card-editor';
+  card.innerHTML=`
+   <div class="card-title"><span>Оборудование ${i+1}</span>${state.equipment.length>1?`<button class="icon-btn" data-remove="${i}" title="Удалить">×</button>`:''}</div>
+   <div class="field"><label class="label">Название</label><input data-e="${i}" data-k="name" value="${esc(e.name)}"></div>
+   <div class="field"><label class="label">Описание</label><textarea data-e="${i}" data-k="description">${esc(e.description)}</textarea></div>
+   <div class="field"><label class="label">Примечание</label><input data-e="${i}" data-k="note" value="${esc(e.note)}"></div>
+   <div class="field"><label class="label">Цена, ₽</label><input data-e="${i}" data-k="price" value="${esc(e.price)}"></div>
+   <label class="label">Характеристики</label>
+   <div id="specs-${i}"></div>
+   <button class="btn" data-addspec="${i}">+ Добавить характеристику</button>
+   <div style="height:10px"></div>
+   <label class="label">Фотографии</label>
+   <div class="photo-list" id="photos-${i}"></div>
+   <div class="drop" data-drop="${i}" style="margin-top:8px;padding:12px">Перетащить фото сюда или выбрать <input data-file="${i}" type="file" accept="image/*" multiple hidden></div>
+  `;
+  root.appendChild(card);
+  const sr=card.querySelector(`#specs-${i}`);
+  e.specs.forEach((s,j)=>{
+    const row=document.createElement('div'); row.className='spec';
+    row.innerHTML=`<input data-specname="${i}:${j}" value="${esc(s[0])}"><input data-specval="${i}:${j}" value="${esc(s[1])}"><button class="icon-btn" data-rmspec="${i}:${j}">×</button>`;
+    sr.appendChild(row);
+  });
+  const pr=card.querySelector(`#photos-${i}`);
+  e.photos.forEach((src,j)=>{
+    const p=document.createElement('div'); p.className='photo-box';
+    p.innerHTML=`<img src="${src}"><button class="btn" data-rmphoto="${i}:${j}">Удалить</button>`;
+    pr.appendChild(p);
+  });
+ });
+}
+
+function renderPreview(){
+ const p=document.getElementById('preview');
+ p.innerHTML=`
+ <div class="preview-header">
+   <div class="logo">АЛЬФА<span>ПРОМ</span></div>
+   <div class="header-links">https://alfaprom.org/<br>вакуум-упаковка.рф<br>https://elf4mm.ru/<br><strong>8 (800) 200-29-23</strong></div>
+ </div>
+ <div class="kp-title">${esc(state.kpName)}</div>
+ ${state.equipment.map(e=>`
+   <section class="equipment">
+    <h3>${esc(e.name)}</h3>
+    <div class="desc">${esc(e.description)}</div>
+    ${e.note?`<div class="note">${esc(e.note)}</div>`:''}
+    ${e.photos.length?`<div class="photos">${e.photos.map(x=>`<img src="${x}">`).join('')}</div>`:''}
+    ${e.price?`<div class="price">Цена: ${esc(Number(e.price||0).toLocaleString('ru-RU'))} ₽</div>`:''}
+    ${e.specs.length?`<table class="spec-table"><thead><tr><th colspan="2">Характеристики</th></tr></thead><tbody>${e.specs.map(s=>`<tr><th>${esc(s[0])}</th><td>${esc(s[1])}</td></tr>`).join('')}</tbody></table>`:''}
+   </section>
+ `).join('')}
+ ${state.video?`<a class="video" href="${esc(state.video)}">▶ Смотреть видео</a>`:''}
+ <div class="footer">${esc(state.footerText).replace(/\n/g,'<br>')}<br><br><strong>тел. 8 (800)-200-29-23</strong><br>e-mail: sale@alfaprom.org<br><br>С уважением,<br><strong>Команда АЛЬФАПРОМ — Пищевое и упаковочное оборудование</strong><br>Надёжно. Быстро. Удобно.</div>
+ `;
+}
+
+function rerender(){renderEditors();renderPreview();bindDynamic();}
+
+function bindDynamic(){
+ document.querySelectorAll('[data-e]').forEach(el=>el.addEventListener('input',()=>{
+   state.equipment[+el.dataset.e][el.dataset.k]=el.value; save(); renderPreview();
+ }));
+ document.querySelectorAll('[data-specname]').forEach(el=>el.addEventListener('input',()=>{
+   const [i,j]=el.dataset.specname.split(':').map(Number); state.equipment[i].specs[j][0]=el.value; save(); renderPreview();
+ }));
+ document.querySelectorAll('[data-specval]').forEach(el=>el.addEventListener('input',()=>{
+   const [i,j]=el.dataset.specval.split(':').map(Number); state.equipment[i].specs[j][1]=el.value; save(); renderPreview();
+ }));
+ document.querySelectorAll('[data-remove]').forEach(el=>el.onclick=()=>{state.equipment.splice(+el.dataset.remove,1);save();rerender()});
+ document.querySelectorAll('[data-addspec]').forEach(el=>el.onclick=()=>{state.equipment[+el.dataset.addspec].specs.push(['','']);save();rerender()});
+ document.querySelectorAll('[data-rmspec]').forEach(el=>el.onclick=()=>{const [i,j]=el.dataset.rmspec.split(':').map(Number);state.equipment[i].specs.splice(j,1);save();rerender()});
+ document.querySelectorAll('[data-rmphoto]').forEach(el=>el.onclick=()=>{const [i,j]=el.dataset.rmphoto.split(':').map(Number);state.equipment[i].photos.splice(j,1);save();rerender()});
+ document.querySelectorAll('[data-file]').forEach(el=>el.onchange=e=>addPhotos(+el.dataset.file,[...e.target.files]));
+ document.querySelectorAll('[data-drop]').forEach(el=>{
+   el.ondragover=e=>{e.preventDefault();el.classList.add('drag')};
+   el.ondragleave=()=>el.classList.remove('drag');
+   el.ondrop=e=>{e.preventDefault();el.classList.remove('drag');addPhotos(+el.dataset.drop,[...e.dataTransfer.files].filter(f=>f.type.startsWith('image/')))};
+   el.onclick=e=>{if(e.target.tagName!=='INPUT')el.querySelector('input').click()};
+ });
+}
+function addPhotos(i,files){
+ files.forEach(file=>{
+   const r=new FileReader(); r.onload=()=>{state.equipment[i].photos.push(r.result);save();rerender()}; r.readAsDataURL(file);
+ });
+}
+document.getElementById('kpName').oninput=e=>{state.kpName=e.target.value;save();renderPreview()};
+document.getElementById('video').oninput=e=>{state.video=e.target.value;save();renderPreview()};
+document.getElementById('footerText').oninput=e=>{state.footerText=e.target.value;save();renderPreview()};
+document.getElementById('addEquipment').onclick=()=>{state.equipment.push({name:'Новое оборудование',description:'',note:'',price:'',specs:[['','']],photos:[]});save();rerender()};
+document.getElementById('printBtn').onclick=()=>window.print();
+document.getElementById('resetBtn').onclick=()=>{if(confirm('Сбросить КП к исходному примеру?')){state=structuredClone(defaultState);save();rerender();syncFields()}};
+function syncFields(){document.getElementById('kpName').value=state.kpName;document.getElementById('video').value=state.video;document.getElementById('footerText').value=state.footerText}
+const gd=document.getElementById('globalDrop'), gf=document.getElementById('globalFiles');
+gd.onclick=e=>{if(e.target!==gf)gf.click()}; gf.onchange=e=>{if(state.equipment.length)addPhotos(0,[...e.target.files])};
+gd.ondragover=e=>{e.preventDefault();gd.classList.add('drag')}; gd.ondragleave=()=>gd.classList.remove('drag');
+gd.ondrop=e=>{e.preventDefault();gd.classList.remove('drag');if(state.equipment.length)addPhotos(0,[...e.dataTransfer.files].filter(f=>f.type.startsWith('image/')))};
+window.addEventListener('beforeunload',save);
+syncFields(); rerender();
+</script>
+</body>
+</html>
