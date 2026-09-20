@@ -288,7 +288,8 @@ textarea{
 
 .photo-drop{
   width:100%;
-  height:210px;
+  aspect-ratio:1 / 1;
+  min-height:0;
   border:2px dashed #cfd3d8;
   border-radius:10px;
   display:flex;
@@ -318,7 +319,6 @@ textarea{
   width:100%;
   height:100%;
   object-fit:contain;
-  padding:8px;
   display:block;
 }
 
@@ -389,10 +389,6 @@ textarea{
   gap:20px;
 }
 
-/*
-  Обёртка позволяет масштабировать всю страницу целиком.
-  Поэтому пользователь всегда видит лист A4 полностью.
-*/
 .preview-page-shell{
   position:relative;
   flex:none;
@@ -481,7 +477,8 @@ textarea{
 
 .product-photo-frame{
   width:100%;
-  height:66mm;
+  aspect-ratio:1 / 1;
+  height:auto;
   border:1px solid #e0e2e5;
   border-radius:7px;
   display:flex;
@@ -497,7 +494,6 @@ textarea{
   height:100%;
   object-fit:contain;
   display:block;
-  padding:3mm;
 }
 
 /* ============================================================
@@ -779,10 +775,6 @@ textarea{
 
 <main class="layout">
 
-<!-- ============================================================
-     EDITOR
-============================================================ -->
-
 <section class="editor" id="editor">
 
   <div id="productsEditor"></div>
@@ -794,10 +786,6 @@ textarea{
     ＋ Добавить оборудование
   </button>
 
-
-  <!-- ==========================================================
-       MANAGER
-  =========================================================== -->
 
   <div class="editor-section">
 
@@ -837,10 +825,6 @@ textarea{
 </section>
 
 
-<!-- ============================================================
-     PREVIEW
-============================================================ -->
-
 <section class="preview-side">
 
   <div class="preview-title">
@@ -862,10 +846,6 @@ textarea{
 
 </div>
 
-
-<!-- ============================================================
-     LIBRARIES
-============================================================ -->
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
@@ -1024,55 +1004,281 @@ function openDB(){
 }
 
 
-function savePhoto(blob){
+/*
+  Подготавливаем фотографию перед сохранением.
+
+  Что делаем:
+  - создаём квадратный холст;
+  - сохраняем пропорции исходного изображения;
+  - вписываем изображение целиком без обрезки;
+  - ограничиваем размер до 1600x1600;
+  - сохраняем как JPEG с хорошим качеством.
+*/
+
+function preparePhoto(file){
 
   return new Promise((resolve,reject)=>{
 
-    if(!db){
+    const url =
+      URL.createObjectURL(
+        file
+      );
+
+    const image =
+      new Image();
+
+
+    image.onload = ()=>{
+
+      try{
+
+        const sourceWidth =
+          image.naturalWidth ||
+          image.width;
+
+        const sourceHeight =
+          image.naturalHeight ||
+          image.height;
+
+
+        if(
+          !sourceWidth ||
+          !sourceHeight
+        ){
+
+          throw new Error(
+            "Не удалось определить размер фотографии"
+          );
+
+        }
+
+
+        const maxSize = 1600;
+
+
+        const squareSize =
+          Math.min(
+            maxSize,
+            Math.max(
+              sourceWidth,
+              sourceHeight
+            )
+          );
+
+
+        const canvas =
+          document.createElement(
+            "canvas"
+          );
+
+
+        canvas.width =
+          squareSize;
+
+        canvas.height =
+          squareSize;
+
+
+        const context =
+          canvas.getContext(
+            "2d"
+          );
+
+
+        if(!context){
+
+          throw new Error(
+            "Не удалось создать обработчик изображения"
+          );
+
+        }
+
+
+        /*
+          Белый фон нужен для того,
+          чтобы прозрачные PNG/WebP
+          корректно выглядели в PDF/DOCX
+          и в квадратной рамке.
+        */
+
+        context.fillStyle =
+          "#ffffff";
+
+        context.fillRect(
+          0,
+          0,
+          squareSize,
+          squareSize
+        );
+
+
+        const scale =
+          Math.min(
+            squareSize / sourceWidth,
+            squareSize / sourceHeight
+          );
+
+
+        const width =
+          Math.round(
+            sourceWidth * scale
+          );
+
+
+        const height =
+          Math.round(
+            sourceHeight * scale
+          );
+
+
+        const x =
+          Math.round(
+            (squareSize - width) / 2
+          );
+
+
+        const y =
+          Math.round(
+            (squareSize - height) / 2
+          );
+
+
+        context.drawImage(
+          image,
+          x,
+          y,
+          width,
+          height
+        );
+
+
+        canvas.toBlob(
+          blob=>{
+
+            URL.revokeObjectURL(
+              url
+            );
+
+
+            if(!blob){
+
+              reject(
+                new Error(
+                  "Не удалось обработать фотографию"
+                )
+              );
+
+              return;
+
+            }
+
+
+            resolve(
+              blob
+            );
+
+          },
+          "image/jpeg",
+          0.88
+        );
+
+      }catch(error){
+
+        URL.revokeObjectURL(
+          url
+        );
+
+        reject(error);
+
+      }
+
+    };
+
+
+    image.onerror = ()=>{
+
+      URL.revokeObjectURL(
+        url
+      );
 
       reject(
         new Error(
-          "Хранилище фотографий недоступно"
+          "Не удалось открыть изображение"
         )
       );
 
-      return;
+    };
+
+
+    image.src = url;
+
+  });
+
+}
+
+
+function savePhoto(blob){
+
+  return new Promise(async (resolve,reject)=>{
+
+    try{
+
+      if(!db){
+
+        await openDB();
+
+      }
+
+
+      if(!db){
+
+        throw new Error(
+          "Хранилище фотографий недоступно"
+        );
+
+      }
+
+
+      const id =
+        "photo_" +
+        Date.now() +
+        "_" +
+        Math.random()
+          .toString(36)
+          .slice(2);
+
+
+      const transaction =
+        db.transaction(
+          STORE_NAME,
+          "readwrite"
+        );
+
+
+      transaction
+        .objectStore(STORE_NAME)
+        .put(blob,id);
+
+
+      transaction.oncomplete = ()=>{
+
+        resolve(id);
+
+      };
+
+
+      transaction.onerror = ()=>{
+
+        reject(transaction.error);
+
+      };
+
+
+    }catch(error){
+
+      reject(error);
 
     }
-
-    const id =
-      "photo_" +
-      Date.now() +
-      "_" +
-      Math.random()
-        .toString(36)
-        .slice(2);
-
-
-    const transaction =
-      db.transaction(
-        STORE_NAME,
-        "readwrite"
-      );
-
-
-    transaction
-      .objectStore(STORE_NAME)
-      .put(blob,id);
-
-
-    transaction.oncomplete = ()=>{
-
-      resolve(id);
-
-    };
-
-
-    transaction.onerror = ()=>{
-
-      reject(transaction.error);
-
-    };
 
   });
 
@@ -1081,7 +1287,7 @@ function savePhoto(blob){
 
 function getPhoto(id){
 
-  return new Promise((resolve,reject)=>{
+  return new Promise(async (resolve,reject)=>{
 
     if(!id){
 
@@ -1092,42 +1298,57 @@ function getPhoto(id){
     }
 
 
-    if(!db){
+    try{
 
-      resolve(null);
+      if(!db){
 
-      return;
+        await openDB();
+
+      }
+
+
+      if(!db){
+
+        resolve(null);
+
+        return;
+
+      }
+
+
+      const transaction =
+        db.transaction(
+          STORE_NAME,
+          "readonly"
+        );
+
+
+      const request =
+        transaction
+          .objectStore(STORE_NAME)
+          .get(id);
+
+
+      request.onsuccess = ()=>{
+
+        resolve(
+          request.result || null
+        );
+
+      };
+
+
+      request.onerror = ()=>{
+
+        reject(request.error);
+
+      };
+
+    }catch(error){
+
+      reject(error);
 
     }
-
-
-    const transaction =
-      db.transaction(
-        STORE_NAME,
-        "readonly"
-      );
-
-
-    const request =
-      transaction
-        .objectStore(STORE_NAME)
-        .get(id);
-
-
-    request.onsuccess = ()=>{
-
-      resolve(
-        request.result || null
-      );
-
-    };
-
-
-    request.onerror = ()=>{
-
-      reject(request.error);
-
-    };
 
   });
 
@@ -1136,9 +1357,9 @@ function getPhoto(id){
 
 function deletePhoto(id){
 
-  return new Promise((resolve,reject)=>{
+  return new Promise(async (resolve,reject)=>{
 
-    if(!id || !db){
+    if(!id){
 
       resolve();
 
@@ -1147,24 +1368,48 @@ function deletePhoto(id){
     }
 
 
-    const transaction =
-      db.transaction(
-        STORE_NAME,
-        "readwrite"
-      );
+    try{
+
+      if(!db){
+
+        await openDB();
+
+      }
 
 
-    transaction
-      .objectStore(STORE_NAME)
-      .delete(id);
+      if(!db){
+
+        resolve();
+
+        return;
+
+      }
 
 
-    transaction.oncomplete =
-      ()=>resolve();
+      const transaction =
+        db.transaction(
+          STORE_NAME,
+          "readwrite"
+        );
 
 
-    transaction.onerror =
-      ()=>reject(transaction.error);
+      transaction
+        .objectStore(STORE_NAME)
+        .delete(id);
+
+
+      transaction.oncomplete =
+        ()=>resolve();
+
+
+      transaction.onerror =
+        ()=>reject(transaction.error);
+
+    }catch(error){
+
+      reject(error);
+
+    }
 
   });
 
@@ -1191,11 +1436,6 @@ function loadState(){
 
   }catch(e){}
 
-
-  /*
-    Если новая версия ещё не существует,
-    пытаемся забрать предыдущую.
-  */
 
   if(!saved){
 
@@ -1231,10 +1471,6 @@ function loadState(){
   }
 
 
-  /*
-    Если это уже новая структура.
-  */
-
   if(Array.isArray(saved.products)){
 
     state.products =
@@ -1248,11 +1484,6 @@ function loadState(){
 
   }
 
-
-  /*
-    Миграция старого формата:
-    старые поля превращаются в первый товар.
-  */
 
   else if(
     saved.productName !== undefined ||
@@ -1366,6 +1597,7 @@ function escapeHtml(value){
     .replace(/"/g,"&quot;")
 
     .replace(/'/g,"&#039;");
+
 
 }
 
@@ -1661,7 +1893,7 @@ function renderProductsEditor(){
               <br>
 
               <small>
-                Фото автоматически подгоняется под стандартный размер без обрезки
+                Фото автоматически подгоняется под квадрат без обрезки
               </small>
 
             </div>
@@ -2260,7 +2492,7 @@ async function renderEditorPhoto(product){
         <br>
 
         <small>
-          Фото автоматически подгоняется под стандартный размер без обрезки
+          Фото автоматически подгоняется под квадрат без обрезки
         </small>
 
       </div>
@@ -2361,24 +2593,30 @@ async function handlePhoto(
 
   try{
 
-    if(product.photoId){
+    /*
+      Сначала полностью подготавливаем
+      и сохраняем новую фотографию.
+      Старую удаляем только после успеха.
+    */
 
-      try{
-
-        await deletePhoto(
-          product.photoId
-        );
-
-      }catch(error){}
-
-    }
-
-
-    const id =
-      await savePhoto(file);
+    const preparedPhoto =
+      await preparePhoto(
+        file
+      );
 
 
-    product.photoId = id;
+    const newPhotoId =
+      await savePhoto(
+        preparedPhoto
+      );
+
+
+    const oldPhotoId =
+      product.photoId;
+
+
+    product.photoId =
+      newPhotoId;
 
 
     saveState();
@@ -2391,16 +2629,45 @@ async function handlePhoto(
 
     renderPreview();
 
+
+    /*
+      Старое фото удаляем только после
+      успешного сохранения новой версии.
+    */
+
+    if(oldPhotoId){
+
+      try{
+
+        await deletePhoto(
+          oldPhotoId
+        );
+
+      }catch(error){
+
+        console.warn(
+          "Не удалось удалить старое фото:",
+          error
+        );
+
+      }
+
+    }
+
   }catch(error){
 
     console.error(
+      "Photo save error:",
       error
     );
 
 
     alert(
-      "Не удалось сохранить фотографию.\n\n" +
-      "Попробуйте выбрать изображение ещё раз."
+      "Не удалось обработать и сохранить фотографию.\n\n" +
+      (
+        error.message ||
+        "Попробуйте выбрать изображение ещё раз."
+      )
     );
 
   }
@@ -2447,6 +2714,7 @@ async function getPhotoDataUrl(
         resolve(
           reader.result
         );
+
       };
 
 
@@ -2454,6 +2722,7 @@ async function getPhotoDataUrl(
         reject(
           reader.error
         );
+
       };
 
 
@@ -2678,12 +2947,8 @@ function createProductPageHtml(
         }
 
 
-        <!-- ХАРАКТЕРИСТИКИ СРАЗУ ПОСЛЕ ОПИСАНИЯ -->
-
         ${createSpecsTable(product)}
 
-
-        <!-- ВИДЕО СРАЗУ ПОСЛЕ ХАРАКТЕРИСТИК -->
 
         ${
           hasVideo
@@ -2706,8 +2971,6 @@ function createProductPageHtml(
           ""
         }
 
-
-        <!-- ЦЕНЫ -->
 
         ${
           price || discount
@@ -2775,8 +3038,6 @@ function createProductPageHtml(
         }
 
 
-        <!-- WHY US -->
-
         <div class="advantages">
 
           <div class="advantages-title">
@@ -2802,8 +3063,6 @@ function createProductPageHtml(
 
       </div>
 
-
-      <!-- FOOTER -->
 
       <div class="kp-footer">
 
@@ -2959,11 +3218,6 @@ function fitPreviewPages(){
   const a4 =
     getA4SizePx();
 
-
-  /*
-    Масштабируем лист так, чтобы вся страница
-    целиком помещалась в окно предпросмотра.
-  */
 
   const scale =
     Math.min(
@@ -3452,11 +3706,6 @@ async function blobToUint8Array(blob){
 }
 
 
-/*
-  Определяем размеры картинки
-  и сохраняем пропорции при вставке в DOCX.
-*/
-
 function getImageDimensions(blob){
 
   return new Promise(
@@ -3799,11 +4048,6 @@ async function createDocx(){
       state.products[index];
 
 
-    /*
-      Разделяем товары.
-      Каждый товар начинается как самостоятельный блок.
-    */
-
     if(index > 0){
 
       children.push(
@@ -3820,8 +4064,6 @@ async function createDocx(){
 
     }
 
-
-    /* ================= HEADER ================= */
 
     children.push(
 
@@ -3869,8 +4111,6 @@ async function createDocx(){
 
     );
 
-
-    /* ================= TITLE ================= */
 
     children.push(
 
@@ -3929,8 +4169,6 @@ async function createDocx(){
     );
 
 
-    /* ================= PHOTO ================= */
-
     const photoBlob =
       await getPhoto(
         product.photoId
@@ -3959,11 +4197,6 @@ async function createDocx(){
             dimensions.height
           );
 
-
-        /*
-          Для DOCX используем png/jpg
-          в зависимости от реального MIME.
-        */
 
         let imageType = "jpg";
 
@@ -4023,8 +4256,6 @@ async function createDocx(){
     }
 
 
-    /* ================= DESCRIPTION ================= */
-
     if(
       product.description.trim()
     ){
@@ -4056,8 +4287,6 @@ async function createDocx(){
 
     }
 
-
-    /* ================= NOTE ================= */
 
     if(
       product.note.trim()
@@ -4095,16 +4324,12 @@ async function createDocx(){
     }
 
 
-    /* ================= SPECS ================= */
-
     children.push(
       ...createDocxSpecs(
         product
       )
     );
 
-
-    /* ================= VIDEO ================= */
 
     if(
       product.videoUrl.trim()
@@ -4155,8 +4380,6 @@ async function createDocx(){
 
     }
 
-
-    /* ================= PRICE ================= */
 
     if(
       product.price ||
@@ -4238,8 +4461,6 @@ async function createDocx(){
     }
 
 
-    /* ================= STATUS ================= */
-
     children.push(
 
       new docx.Paragraph({
@@ -4275,8 +4496,6 @@ async function createDocx(){
     );
 
 
-    /* ================= COMMENT ================= */
-
     if(
       product.priceComment.trim()
     ){
@@ -4310,8 +4529,6 @@ async function createDocx(){
 
     }
 
-
-    /* ================= WHY US ================= */
 
     children.push(
 
@@ -4380,8 +4597,6 @@ async function createDocx(){
 
   }
 
-
-  /* ================= MANAGER ================= */
 
   children.push(
 
@@ -4477,8 +4692,6 @@ async function createDocx(){
 
   }
 
-
-  /* ================= FOOTER ================= */
 
   const footer =
     new docx.Footer({
@@ -4709,12 +4922,6 @@ async function init(){
 
   await renderPreview();
 
-
-  /*
-    После первого отображения ещё раз
-    рассчитываем масштаб, когда браузер
-    уже определил размеры окна.
-  */
 
   requestAnimationFrame(
     ()=>{
