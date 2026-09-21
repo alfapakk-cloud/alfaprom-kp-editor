@@ -209,7 +209,7 @@ async function ensureDocxLoaded(){
 
 async function createDocx(){
 
-  const docx=await ensureDocxLoaded();
+  const docx=window.docx;
   const children=[];
 
   for(let i=0;i<state.products.length;i++){
