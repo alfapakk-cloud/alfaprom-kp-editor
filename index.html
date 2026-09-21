@@ -182,85 +182,128 @@ async function blobToUint8Array(blob){
 async function createDocx(){
 
   const docx=window.docx;
-  const children=[];
 
-  const PAGE_WIDTH=11906;   // A4, DXA
-  const PAGE_HEIGHT=16838;  // A4, DXA
+  // =========================================================
+  // РАЗМЕРЫ A4 / ОТСТУПЫ
+  // =========================================================
 
-  const MARGIN_LEFT=850;
-  const MARGIN_RIGHT=850;
-  const MARGIN_TOP=650;
-  const MARGIN_BOTTOM=1050;
+  const PAGE_W=11906;
+  const PAGE_H=16838;
 
-  const CONTENT_WIDTH=
-    PAGE_WIDTH-MARGIN_LEFT-MARGIN_RIGHT;
+  const ML=850;
+  const MR=850;
+  const MT=500;
+  const MB=1150;
 
-  const COL1=3600;
-  const COL2=CONTENT_WIDTH-COL1;
+  const CONTENT_W=PAGE_W-ML-MR;
 
-  const border={
-    style:docx.BorderStyle.SINGLE,
-    size:5,
-    color:"D9DCE1"
-  };
+  const ORANGE="FF8100";
+  const TEXT="202124";
+  const MUTED="666666";
+  const BORDER="D9DCE0";
+  const LIGHT="F8F9FA";
+  const GREEN="168A45";
+  const RED="D93025";
+
+  const COL1=Math.round(CONTENT_W*.40);
+  const COL2=CONTENT_W-COL1;
 
   const cellMargins={
-    top:100,
-    bottom:100,
-    left:140,
-    right:140
+    top:90,
+    bottom:90,
+    left:120,
+    right:120
   };
 
-  function textRun(text,opts={}){
+  const thinBorder={
+    style:docx.BorderStyle.SINGLE,
+    size:4,
+    color:BORDER
+  };
+
+  // =========================================================
+  // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+  // =========================================================
+
+  function run(text,opts={}){
     return new docx.TextRun({
       text:String(text??""),
       font:"Arial",
       size:opts.size||18,
-      bold:opts.bold||false,
-      italics:opts.italics||false,
+      bold:!!opts.bold,
+      italics:!!opts.italics,
       color:opts.color,
       underline:opts.underline
     });
   }
 
-  function emptySpace(after=100){
+  function paragraph(children=[],opts={}){
     return new docx.Paragraph({
-      spacing:{after}
+      alignment:opts.alignment,
+      spacing:{
+        before:opts.before||0,
+        after:opts.after||0,
+        line:opts.line||240
+      },
+      children
     });
   }
 
-  function blockParagraph({
-    text,
-    size=18,
-    bold=false,
-    color,
-    fill,
-    before=0,
-    after=100,
-    alignment
-  }){
-    return new docx.Paragraph({
-      alignment,
-      spacing:{
-        before,
-        after
-      },
-      shading:fill?{fill}:undefined,
-      children:[
-        textRun(text,{
-          size,
-          bold,
-          color
-        })
-      ]
+  function blank(after=80){
+    return paragraph([],{
+      after
     });
   }
+
+  async function dataUrlToBytes(dataUrl){
+
+    if(!dataUrl) return null;
+
+    try{
+      const response=await fetch(dataUrl);
+      const blob=await response.blob();
+      return await blobToUint8Array(blob);
+    }catch(e){
+      console.warn("Не удалось загрузить изображение:",e);
+      return null;
+    }
+  }
+
+  // =========================================================
+  // ЛОГОТИП
+  // =========================================================
+
+  let logoBytes=null;
+  let logoType="png";
+
+  if(typeof LOGO_DATA==="string" && LOGO_DATA){
+
+    logoBytes=await dataUrlToBytes(LOGO_DATA);
+
+    if(
+      LOGO_DATA.startsWith("data:image/jpeg") ||
+      LOGO_DATA.startsWith("data:image/jpg")
+    ){
+      logoType="jpg";
+    }
+  }
+
+  // =========================================================
+  // ОСНОВНОЕ СОДЕРЖИМОЕ
+  // =========================================================
+
+  const children=[];
 
   for(let i=0;i<state.products.length;i++){
 
     const p=state.products[i];
 
-    if(i){
+    // =======================================================
+    // НОВОЕ ОБОРУДОВАНИЕ — НОВАЯ СТРАНИЦА
+    // =======================================================
+
+    if(i>0){
+
       children.push(
         new docx.Paragraph({
           pageBreakBefore:true,
@@ -269,67 +312,187 @@ async function createDocx(){
       );
     }
 
-    // =========================
+    // =======================================================
     // ШАПКА
-    // =========================
+    // =======================================================
 
-    children.push(
-      new docx.Paragraph({
-        border:{
+    const headerCells=[];
+
+    // Левая часть — логотип
+    const leftHeaderChildren=[];
+
+    if(logoBytes){
+
+      leftHeaderChildren.push(
+        new docx.ImageRun({
+          data:logoBytes,
+          transformation:{
+            width:185,
+            height:50
+          },
+          type:logoType
+        })
+      );
+
+    }else{
+
+      leftHeaderChildren.push(
+        run("АЛЬФАПРОМ",{
+          size:25,
+          bold:true,
+          color:ORANGE
+        })
+      );
+    }
+
+    headerCells.push(
+      new docx.TableCell({
+        width:{
+          size:Math.round(CONTENT_W*.60),
+          type:docx.WidthType.DXA
+        },
+        margins:{
+          top:30,
+          bottom:90,
+          left:0,
+          right:0
+        },
+        borders:{
+          top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
           bottom:{
-            color:"FF8100",
-            space:7,
             style:docx.BorderStyle.SINGLE,
-            size:12
-          }
-        },
-        spacing:{
-          after:140
+            size:10,
+            color:ORANGE
+          },
+          left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
         },
         children:[
-          textRun("АЛЬФАПРОМ",{
-            size:27,
-            bold:true,
-            color:"FF8100"
+          paragraph(leftHeaderChildren,{
+            after:0
+          })
+        ]
+      })
+    );
+
+    // Правая часть — телефон + сайт
+    headerCells.push(
+      new docx.TableCell({
+        width:{
+          size:Math.round(CONTENT_W*.40),
+          type:docx.WidthType.DXA
+        },
+        margins:{
+          top:30,
+          bottom:90,
+          left:0,
+          right:0
+        },
+        borders:{
+          top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          bottom:{
+            style:docx.BorderStyle.SINGLE,
+            size:10,
+            color:ORANGE
+          },
+          left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
+        },
+        children:[
+          paragraph([
+            run("8 (800) 200-29-23",{
+              size:17,
+              bold:true,
+              color:TEXT
+            })
+          ],{
+            alignment:docx.AlignmentType.RIGHT,
+            after:15
+          }),
+          paragraph([
+            run("alfaprom.org",{
+              size:14,
+              bold:true,
+              color:ORANGE
+            })
+          ],{
+            alignment:docx.AlignmentType.RIGHT,
+            after:0
           })
         ]
       })
     );
 
     children.push(
-      new docx.Paragraph({
-        spacing:{after:90},
-        children:[
-          textRun("Коммерческое предложение",{
-            size:25,
+      new docx.Table({
+        width:{
+          size:CONTENT_W,
+          type:docx.WidthType.DXA
+        },
+        columnWidths:[
+          Math.round(CONTENT_W*.60),
+          Math.round(CONTENT_W*.40)
+        ],
+        rows:[
+          new docx.TableRow({
+            cantSplit:true,
+            children:headerCells
+          })
+        ],
+        borders:{
+          top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          insideHorizontal:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          insideVertical:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
+        }
+      })
+    );
+
+    children.push(blank(130));
+
+    // =======================================================
+    // ЗАГОЛОВОК
+    // =======================================================
+
+    children.push(
+      paragraph([
+        run("Коммерческое предложение",{
+          size:25,
+          bold:true
+        })
+      ],{
+        after:70,
+        line:270
+      })
+    );
+
+    children.push(
+      paragraph([
+        run(
+          p.productName||`Оборудование №${i+1}`,
+          {
+            size:22,
             bold:true
-          })
-        ]
+          }
+        )
+      ],{
+        after:150,
+        line:270
       })
     );
 
-    children.push(
-      new docx.Paragraph({
-        spacing:{after:160},
-        children:[
-          textRun(
-            p.productName||`Оборудование №${i+1}`,
-            {
-              size:23,
-              bold:true
-            }
-          )
-        ]
-      })
-    );
-
-    // =========================
+    // =======================================================
     // ФОТО
-    // =========================
+    // =======================================================
+
+    const photoParagraphs=[];
 
     for(const id of p.photoIds||[]){
 
       const blob=await getPhoto(id).catch(()=>null);
+
       if(!blob) continue;
 
       const bytes=await blobToUint8Array(blob);
@@ -344,61 +507,62 @@ async function createDocx(){
         )
       );
 
-      children.push(
-        new docx.Paragraph({
-          alignment:docx.AlignmentType.CENTER,
-          spacing:{
-            before:40,
-            after:120
+      photoParagraphs.push(
+        new docx.ImageRun({
+          data:bytes,
+          transformation:{
+            width:px,
+            height:px
           },
-          children:[
-            new docx.ImageRun({
-              data:bytes,
-              transformation:{
-                width:px,
-                height:px
-              },
-              type:
-                blob.type==="image/png"
-                  ?"png"
-                  :"jpg"
-            })
-          ]
+          type:
+            blob.type==="image/png"
+              ?"png"
+              :"jpg"
         })
       );
     }
 
-    // =========================
+    if(photoParagraphs.length){
+
+      children.push(
+        paragraph(
+          photoParagraphs,
+          {
+            alignment:docx.AlignmentType.CENTER,
+            after:140
+          }
+        )
+      );
+    }
+
+    // =======================================================
     // ОПИСАНИЕ
-    // =========================
+    // =======================================================
 
     if(p.description.trim()){
 
       children.push(
-        new docx.Paragraph({
-          spacing:{
-            before:60,
-            after:140
-          },
-          children:[
-            textRun(p.description,{
-              size:18
-            })
-          ]
+        paragraph([
+          run(p.description,{
+            size:18
+          })
+        ],{
+          after:100,
+          line:260
         })
       );
     }
 
-    // =========================
+    // =======================================================
     // ПРИМЕЧАНИЕ
-    // =========================
+    // =======================================================
 
     if(p.note.trim()){
 
       children.push(
         new docx.Table({
           width:{
-            size:CONTENT_WIDTH,
+            size:CONTENT_W,
             type:docx.WidthType.DXA
           },
           rows:[
@@ -407,29 +571,34 @@ async function createDocx(){
               children:[
                 new docx.TableCell({
                   width:{
-                    size:CONTENT_WIDTH,
+                    size:CONTENT_W,
                     type:docx.WidthType.DXA
                   },
                   shading:{
                     fill:"F5F6F7"
                   },
-                  margins:cellMargins,
+                  margins:{
+                    top:100,
+                    bottom:100,
+                    left:140,
+                    right:140
+                  },
                   borders:{
-                    top:border,
-                    bottom:border,
-                    left:border,
-                    right:border
+                    top:thinBorder,
+                    bottom:thinBorder,
+                    left:thinBorder,
+                    right:thinBorder
                   },
                   children:[
-                    new docx.Paragraph({
-                      spacing:{after:0},
-                      children:[
-                        textRun(p.note,{
-                          size:17,
-                          italics:true,
-                          color:"666666"
-                        })
-                      ]
+                    paragraph([
+                      run(p.note,{
+                        size:16,
+                        italics:true,
+                        color:MUTED
+                      })
+                    ],{
+                      after:0,
+                      line:230
                     })
                   ]
                 })
@@ -439,12 +608,12 @@ async function createDocx(){
         })
       );
 
-      children.push(emptySpace(140));
+      children.push(blank(130));
     }
 
-    // =========================
+    // =======================================================
     // ХАРАКТЕРИСТИКИ
-    // =========================
+    // =======================================================
 
     const rows=parseSpecs(p.specsText);
 
@@ -452,6 +621,7 @@ async function createDocx(){
 
       const tableRows=[];
 
+      // Заголовок
       tableRows.push(
         new docx.TableRow({
           cantSplit:true,
@@ -459,29 +629,28 @@ async function createDocx(){
             new docx.TableCell({
               columnSpan:2,
               width:{
-                size:CONTENT_WIDTH,
+                size:CONTENT_W,
                 type:docx.WidthType.DXA
               },
               shading:{
-                fill:"FF8100"
+                fill:ORANGE
               },
               margins:cellMargins,
               borders:{
-                top:border,
-                bottom:border,
-                left:border,
-                right:border
+                top:thinBorder,
+                bottom:thinBorder,
+                left:thinBorder,
+                right:thinBorder
               },
               children:[
-                new docx.Paragraph({
-                  spacing:{after:0},
-                  children:[
-                    textRun("Характеристики",{
-                      size:18,
-                      bold:true,
-                      color:"FFFFFF"
-                    })
-                  ]
+                paragraph([
+                  run("Характеристики",{
+                    size:17,
+                    bold:true,
+                    color:"FFFFFF"
+                  })
+                ],{
+                  after:0
                 })
               ]
             })
@@ -503,20 +672,20 @@ async function createDocx(){
                 },
                 margins:cellMargins,
                 borders:{
-                  top:border,
-                  bottom:border,
-                  left:border,
-                  right:border
+                  top:thinBorder,
+                  bottom:thinBorder,
+                  left:thinBorder,
+                  right:thinBorder
                 },
                 children:[
-                  new docx.Paragraph({
-                    spacing:{after:0},
-                    children:[
-                      textRun(r[0],{
-                        size:16,
-                        bold:true
-                      })
-                    ]
+                  paragraph([
+                    run(r[0],{
+                      size:15,
+                      bold:true
+                    })
+                  ],{
+                    after:0,
+                    line:220
                   })
                 ]
               }),
@@ -528,19 +697,19 @@ async function createDocx(){
                 },
                 margins:cellMargins,
                 borders:{
-                  top:border,
-                  bottom:border,
-                  left:border,
-                  right:border
+                  top:thinBorder,
+                  bottom:thinBorder,
+                  left:thinBorder,
+                  right:thinBorder
                 },
                 children:[
-                  new docx.Paragraph({
-                    spacing:{after:0},
-                    children:[
-                      textRun(r[1],{
-                        size:16
-                      })
-                    ]
+                  paragraph([
+                    run(r[1],{
+                      size:15
+                    })
+                  ],{
+                    after:0,
+                    line:220
                   })
                 ]
               })
@@ -553,7 +722,7 @@ async function createDocx(){
       children.push(
         new docx.Table({
           width:{
-            size:CONTENT_WIDTH,
+            size:CONTENT_W,
             type:docx.WidthType.DXA
           },
           columnWidths:[
@@ -562,29 +731,29 @@ async function createDocx(){
           ],
           rows:tableRows,
           borders:{
-            top:border,
-            bottom:border,
-            left:border,
-            right:border,
-            insideHorizontal:border,
-            insideVertical:border
+            top:thinBorder,
+            bottom:thinBorder,
+            left:thinBorder,
+            right:thinBorder,
+            insideHorizontal:thinBorder,
+            insideVertical:thinBorder
           }
         })
       );
 
-      children.push(emptySpace(150));
+      children.push(blank(120));
     }
 
-    // =========================
+    // =======================================================
     // ВИДЕО
-    // =========================
+    // =======================================================
 
     if(p.videoUrl.trim()){
 
       children.push(
         new docx.Table({
           width:{
-            size:CONTENT_WIDTH,
+            size:CONTENT_W,
             type:docx.WidthType.DXA
           },
           rows:[
@@ -593,39 +762,43 @@ async function createDocx(){
               children:[
                 new docx.TableCell({
                   width:{
-                    size:CONTENT_WIDTH,
+                    size:CONTENT_W,
                     type:docx.WidthType.DXA
                   },
                   shading:{
-                    fill:"FFF4E8"
+                    fill:ORANGE
                   },
-                  margins:cellMargins,
+                  margins:{
+                    top:80,
+                    bottom:80,
+                    left:130,
+                    right:130
+                  },
                   borders:{
-                    top:border,
-                    bottom:border,
-                    left:border,
-                    right:border
+                    top:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},
+                    bottom:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},
+                    left:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},
+                    right:{style:docx.BorderStyle.NONE,size:0,color:ORANGE}
                   },
                   children:[
-                    new docx.Paragraph({
+                    paragraph([
+                      new docx.ExternalHyperlink({
+                        link:p.videoUrl,
+                        children:[
+                          run(
+                            "Смотреть видео оборудования",
+                            {
+                              size:16,
+                              bold:true,
+                              color:"FFFFFF",
+                              underline:{}
+                            }
+                          )
+                        ]
+                      })
+                    ],{
                       alignment:docx.AlignmentType.CENTER,
-                      spacing:{after:0},
-                      children:[
-                        new docx.ExternalHyperlink({
-                          link:p.videoUrl,
-                          children:[
-                            textRun(
-                              "▶  Смотреть видео оборудования",
-                              {
-                                size:17,
-                                bold:true,
-                                color:"FF8100",
-                                underline:{}
-                              }
-                            )
-                          ]
-                        })
-                      ]
+                      after:0
                     })
                   ]
                 })
@@ -635,45 +808,45 @@ async function createDocx(){
         })
       );
 
-      children.push(emptySpace(140));
+      children.push(blank(120));
     }
 
-    // =========================
+    // =======================================================
     // ЦЕНА
-    // =========================
+    // =======================================================
 
     const price=formatPrice(p.price,p.currency);
     const disc=formatPrice(p.discountPrice,p.currency);
 
     if(price||disc){
 
-      const priceRows=[];
+      const priceChildren=[];
 
       if(price){
-        priceRows.push(
-          new docx.Paragraph({
-            spacing:{after:disc?50:0},
-            children:[
-              textRun(`Цена: ${price}`,{
-                size:21,
-                bold:true
-              })
-            ]
+
+        priceChildren.push(
+          paragraph([
+            run(`Цена: ${price}`,{
+              size:20,
+              bold:true
+            })
+          ],{
+            after:disc?35:0
           })
         );
       }
 
       if(disc){
-        priceRows.push(
-          new docx.Paragraph({
-            spacing:{after:0},
-            children:[
-              textRun(`Цена со скидкой: ${disc}`,{
-                size:21,
-                bold:true,
-                color:"D93025"
-              })
-            ]
+
+        priceChildren.push(
+          paragraph([
+            run(`Цена со скидкой: ${disc}`,{
+              size:20,
+              bold:true,
+              color:RED
+            })
+          ],{
+            after:0
           })
         );
       }
@@ -681,7 +854,7 @@ async function createDocx(){
       children.push(
         new docx.Table({
           width:{
-            size:CONTENT_WIDTH,
+            size:CONTENT_W,
             type:docx.WidthType.DXA
           },
           rows:[
@@ -690,25 +863,25 @@ async function createDocx(){
               children:[
                 new docx.TableCell({
                   width:{
-                    size:CONTENT_WIDTH,
+                    size:CONTENT_W,
                     type:docx.WidthType.DXA
                   },
                   shading:{
-                    fill:"F7F7F7"
+                    fill:"FAFAFA"
                   },
                   margins:{
-                    top:150,
-                    bottom:150,
-                    left:180,
-                    right:180
+                    top:120,
+                    bottom:120,
+                    left:150,
+                    right:150
                   },
                   borders:{
-                    top:border,
-                    bottom:border,
-                    left:border,
-                    right:border
+                    top:thinBorder,
+                    bottom:thinBorder,
+                    left:thinBorder,
+                    right:thinBorder
                   },
-                  children:priceRows
+                  children:priceChildren
                 })
               ]
             })
@@ -716,260 +889,416 @@ async function createDocx(){
         })
       );
 
-      children.push(emptySpace(100));
+      children.push(blank(80));
     }
 
-    // =========================
+    // =======================================================
     // НАЛИЧИЕ
-    // =========================
+    // =======================================================
 
     const available=p.status!=="order";
 
     children.push(
-      new docx.Table({
-        width:{
-          size:CONTENT_WIDTH,
-          type:docx.WidthType.DXA
-        },
-        rows:[
-          new docx.TableRow({
-            cantSplit:true,
-            children:[
-              new docx.TableCell({
-                width:{
-                  size:CONTENT_WIDTH,
-                  type:docx.WidthType.DXA
-                },
-                shading:{
-                  fill:available
-                    ?"EAF6EE"
-                    :"FFF4E5"
-                },
-                margins:cellMargins,
-                borders:{
-                  top:border,
-                  bottom:border,
-                  left:border,
-                  right:border
-                },
-                children:[
-                  new docx.Paragraph({
-                    alignment:docx.AlignmentType.CENTER,
-                    spacing:{after:0},
-                    children:[
-                      textRun(
-                        available
-                          ?"✓  В наличии"
-                          :"◷  Под заказ",
-                        {
-                          size:18,
-                          bold:true,
-                          color:available
-                            ?"168A45"
-                            :"B96A00"
-                        }
-                      )
-                    ]
-                  })
-                ]
-              })
-            ]
-          })
-        ]
+      paragraph([
+        run(
+          available
+            ?"В наличии"
+            :"Под заказ",
+          {
+            size:17,
+            bold:true,
+            color:available?GREEN:"B96A00"
+          }
+        )
+      ],{
+        after:70
       })
     );
 
-    children.push(emptySpace(100));
-
-    // =========================
+    // =======================================================
     // КОММЕНТАРИЙ К ЦЕНЕ
-    // =========================
+    // =======================================================
 
     if(p.priceComment.trim()){
 
       children.push(
-        new docx.Paragraph({
-          spacing:{
-            after:140
-          },
-          children:[
-            textRun(p.priceComment,{
-              size:16,
-              color:"666666"
-            })
-          ]
+        paragraph([
+          run(p.priceComment,{
+            size:15,
+            color:MUTED
+          })
+        ],{
+          after:110,
+          line:220
         })
       );
     }
 
-    // =========================
+    // =======================================================
     // ПОЧЕМУ МЫ?
-    // =========================
+    // =======================================================
 
     children.push(
-      new docx.Paragraph({
-        spacing:{
-          before:80,
-          after:100
-        },
-        children:[
-          textRun("Почему мы?",{
-            size:22,
-            bold:true
-          })
-        ]
+      paragraph([
+        run("Почему мы?",{
+          size:21,
+          bold:true
+        })
+      ],{
+        before:60,
+        after:80
       })
     );
 
-    const advantageRows=[];
+    const adv=DEFAULT_ADVANTAGES||[];
 
-    DEFAULT_ADVANTAGES.forEach(x=>{
+    const advRows=[];
 
-      advantageRows.push(
-        new docx.TableRow({
-          cantSplit:true,
+    // Первый ряд — 3 карточки
+    const firstRow=[];
+
+    for(let n=0;n<3;n++){
+
+      const x=adv[n]||"";
+
+      firstRow.push(
+        new docx.TableCell({
+          width:{
+            size:Math.floor(CONTENT_W/3),
+            type:docx.WidthType.DXA
+          },
+          shading:{
+            fill:"FAFAFA"
+          },
+          margins:{
+            top:110,
+            bottom:110,
+            left:100,
+            right:100
+          },
+          borders:{
+            top:thinBorder,
+            bottom:thinBorder,
+            left:thinBorder,
+            right:thinBorder
+          },
           children:[
-            new docx.TableCell({
-              width:{
-                size:CONTENT_WIDTH,
-                type:docx.WidthType.DXA
-              },
-              shading:{
-                fill:"F8F9FA"
-              },
-              margins:{
-                top:90,
-                bottom:90,
-                left:160,
-                right:160
-              },
-              borders:{
-                top:{
-                  style:docx.BorderStyle.SINGLE,
-                  size:2,
-                  color:"E6E8EB"
-                },
-                bottom:{
-                  style:docx.BorderStyle.SINGLE,
-                  size:2,
-                  color:"E6E8EB"
-                },
-                left:{
-                  style:docx.BorderStyle.SINGLE,
-                  size:2,
-                  color:"E6E8EB"
-                },
-                right:{
-                  style:docx.BorderStyle.SINGLE,
-                  size:2,
-                  color:"E6E8EB"
-                }
-              },
-              children:[
-                new docx.Paragraph({
-                  spacing:{after:0},
-                  children:[
-                    textRun("✓ ",{
-                      size:16,
-                      bold:true,
-                      color:"FF8100"
-                    }),
-                    textRun(x,{
-                      size:16,
-                      bold:true
-                    })
-                  ]
-                })
-              ]
+            paragraph([
+              run("✓ ",{
+                size:15,
+                bold:true,
+                color:ORANGE
+              }),
+              run(x,{
+                size:14,
+                bold:true
+              })
+            ],{
+              alignment:docx.AlignmentType.CENTER,
+              after:0,
+              line:205
             })
           ]
         })
       );
-    });
+    }
 
-    if(advantageRows.length){
+    advRows.push(
+      new docx.TableRow({
+        cantSplit:true,
+        children:firstRow
+      })
+    );
 
-      children.push(
-        new docx.Table({
+    // Второй ряд — две карточки по центру
+    const secondRow=[];
+
+    // Пустая левая ячейка
+    secondRow.push(
+      new docx.TableCell({
+        width:{
+          size:Math.floor(CONTENT_W/3),
+          type:docx.WidthType.DXA
+        },
+        borders:{
+          top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
+        },
+        children:[paragraph([],{
+          after:0
+        })]
+      })
+    );
+
+    for(let n=3;n<5;n++){
+
+      const x=adv[n]||"";
+
+      secondRow.push(
+        new docx.TableCell({
           width:{
-            size:CONTENT_WIDTH,
+            size:Math.floor(CONTENT_W/3),
             type:docx.WidthType.DXA
           },
-          rows:advantageRows,
+          shading:{
+            fill:"FAFAFA"
+          },
+          margins:{
+            top:110,
+            bottom:110,
+            left:100,
+            right:100
+          },
           borders:{
-            top:{
-              style:docx.BorderStyle.NONE,
-              size:0,
-              color:"FFFFFF"
-            },
-            bottom:{
-              style:docx.BorderStyle.NONE,
-              size:0,
-              color:"FFFFFF"
-            },
-            left:{
-              style:docx.BorderStyle.NONE,
-              size:0,
-              color:"FFFFFF"
-            },
-            right:{
-              style:docx.BorderStyle.NONE,
-              size:0,
-              color:"FFFFFF"
-            },
-            insideHorizontal:{
-              style:docx.BorderStyle.NONE,
-              size:0,
-              color:"FFFFFF"
-            },
-            insideVertical:{
-              style:docx.BorderStyle.NONE,
-              size:0,
-              color:"FFFFFF"
-            }
-          }
+            top:thinBorder,
+            bottom:thinBorder,
+            left:thinBorder,
+            right:thinBorder
+          },
+          children:[
+            paragraph([
+              run("✓ ",{
+                size:15,
+                bold:true,
+                color:ORANGE
+              }),
+              run(x,{
+                size:14,
+                bold:true
+              })
+            ],{
+              alignment:docx.AlignmentType.CENTER,
+              after:0,
+              line:205
+            })
+          ]
         })
       );
     }
+
+    advRows.push(
+      new docx.TableRow({
+        cantSplit:true,
+        children:secondRow
+      })
+    );
+
+    children.push(
+      new docx.Table({
+        width:{
+          size:CONTENT_W,
+          type:docx.WidthType.DXA
+        },
+        columnWidths:[
+          Math.floor(CONTENT_W/3),
+          Math.floor(CONTENT_W/3),
+          CONTENT_W-2*Math.floor(CONTENT_W/3)
+        ],
+        rows:advRows,
+        borders:{
+          top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          insideHorizontal:{
+            style:docx.BorderStyle.NONE,
+            size:0,
+            color:"FFFFFF"
+          },
+          insideVertical:{
+            style:docx.BorderStyle.NONE,
+            size:0,
+            color:"FFFFFF"
+          }
+        }
+      })
+    );
   }
 
-  // =========================
+  // =========================================================
   // FOOTER
-  // =========================
+  // =========================================================
+
+  const footerLeft=[
+    paragraph([
+      run("АЛЬФАПРОМ",{
+        size:15,
+        bold:true,
+        color:"FFFFFF"
+      })
+    ],{
+      after:10
+    }),
+    paragraph([
+      run(
+        "Оборудование для пищевого производства и упаковки",
+        {
+          size:11,
+          bold:true,
+          color:"FFFFFF"
+        }
+      )
+    ],{
+      after:0,
+      line:190
+    })
+  ];
+
+  const footerRight=[];
+
+  if(state.managerName.trim()){
+
+    footerRight.push(
+      paragraph([
+        run(state.managerName,{
+          size:12,
+          bold:true,
+          color:"FFFFFF"
+        })
+      ],{
+        alignment:docx.AlignmentType.RIGHT,
+        after:5
+      })
+    );
+  }
+
+  if(state.managerPhone.trim()){
+
+    footerRight.push(
+      paragraph([
+        run(state.managerPhone,{
+          size:11,
+          color:"FFFFFF"
+        })
+      ],{
+        alignment:docx.AlignmentType.RIGHT,
+        after:3
+      })
+    );
+  }
+
+  footerRight.push(
+    paragraph([
+      run("8 (800) 200-29-23",{
+        size:11,
+        color:"FFFFFF"
+      })
+    ],{
+      alignment:docx.AlignmentType.RIGHT,
+      after:3
+    })
+  );
+
+  footerRight.push(
+    paragraph([
+      run("alfaprom.org",{
+        size:11,
+        bold:true,
+        color:"FFFFFF"
+      })
+    ],{
+      alignment:docx.AlignmentType.RIGHT,
+      after:0
+    })
+  );
 
   const footer=new docx.Footer({
+
     children:[
-      new docx.Paragraph({
-        alignment:docx.AlignmentType.CENTER,
-        border:{
+
+      new docx.Table({
+        width:{
+          size:CONTENT_W,
+          type:docx.WidthType.DXA
+        },
+        columnWidths:[
+          Math.round(CONTENT_W*.62),
+          CONTENT_W-Math.round(CONTENT_W*.62)
+        ],
+        rows:[
+          new docx.TableRow({
+            cantSplit:true,
+            children:[
+
+              new docx.TableCell({
+                width:{
+                  size:Math.round(CONTENT_W*.62),
+                  type:docx.WidthType.DXA
+                },
+                shading:{
+                  fill:ORANGE
+                },
+                margins:{
+                  top:100,
+                  bottom:100,
+                  left:0,
+                  right:100
+                },
+                borders:{
+                  top:{
+                    style:docx.BorderStyle.SINGLE,
+                    size:10,
+                    color:ORANGE
+                  },
+                  bottom:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},
+                  left:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},
+                  right:{style:docx.BorderStyle.NONE,size:0,color:ORANGE}
+                },
+                children:footerLeft
+              }),
+
+              new docx.TableCell({
+                width:{
+                  size:CONTENT_W-Math.round(CONTENT_W*.62),
+                  type:docx.WidthType.DXA
+                },
+                shading:{
+                  fill:ORANGE
+                },
+                margins:{
+                  top:100,
+                  bottom:100,
+                  left:100,
+                  right:0
+                },
+                borders:{
+                  top:{
+                    style:docx.BorderStyle.SINGLE,
+                    size:10,
+                    color:ORANGE
+                  },
+                  bottom:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},
+                  left:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},
+                  right:{style:docx.BorderStyle.NONE,size:0,color:ORANGE}
+                },
+                children:footerRight
+              })
+
+            ]
+          })
+        ],
+        borders:{
           top:{
-            color:"FF8100",
-            space:5,
             style:docx.BorderStyle.SINGLE,
-            size:8
-          }
-        },
-        spacing:{
-          before:80,
-          after:0
-        },
-        children:[
-          textRun(
-            "АЛЬФАПРОМ  |  8 (800) 200-29-23  |  alfaprom.org",
-            {
-              size:15,
-              bold:true,
-              color:"FF8100"
-            }
-          )
-        ]
+            size:10,
+            color:ORANGE
+          },
+          bottom:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},
+          left:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},
+          right:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},
+          insideHorizontal:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},
+          insideVertical:{style:docx.BorderStyle.NONE,size:0,color:ORANGE}
+        }
       })
+
     ]
   });
 
-  // =========================
-  // DOCUMENT
-  // =========================
+  // =========================================================
+  // ДОКУМЕНТ
+  // =========================================================
 
   const document=new docx.Document({
 
@@ -990,19 +1319,20 @@ async function createDocx(){
     },
 
     sections:[
+
       {
         properties:{
           page:{
             size:{
-              width:PAGE_WIDTH,
-              height:PAGE_HEIGHT
+              width:PAGE_W,
+              height:PAGE_H
             },
             margin:{
-              top:MARGIN_TOP,
-              right:MARGIN_RIGHT,
-              bottom:MARGIN_BOTTOM,
-              left:MARGIN_LEFT,
-              footer:400
+              top:MT,
+              right:MR,
+              bottom:MB,
+              left:ML,
+              footer:300
             }
           }
         },
@@ -1013,6 +1343,7 @@ async function createDocx(){
 
         children
       }
+
     ]
   });
 
