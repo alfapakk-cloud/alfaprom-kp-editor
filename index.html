@@ -161,51 +161,6 @@ async function downloadPDF(){
 }
 
 
-async function ensureDocxLoaded(){
-
-  if(window.docx) return window.docx;
-
-  await new Promise((resolve,reject)=>{
-
-    const existing=document.querySelector(
-      'script[src*="docx"]'
-    );
-
-    if(existing){
-      if(window.docx){
-        resolve();
-        return;
-      }
-
-      existing.addEventListener("load",resolve,{once:true});
-      existing.addEventListener("error",reject,{once:true});
-      return;
-    }
-
-    const script=document.createElement("script");
-
-    script.src=
-      "https://cdn.jsdelivr.net/npm/docx@9.5.1/build/index.umd.js";
-
-    script.onload=()=>{
-      if(window.docx) resolve();
-      else reject(
-        new Error("Библиотека DOCX загрузилась, но объект docx не найден.")
-      );
-    };
-
-    script.onerror=()=>{
-      reject(
-        new Error("Не удалось загрузить библиотеку DOCX.")
-      );
-    };
-
-    document.head.appendChild(script);
-  });
-
-  return window.docx;
-}
-
 
 async function createDocx(){
 
