@@ -102,6 +102,9 @@ async function downloadPDF(){
     root.style.zIndex="1";
 
     root.innerHTML=pages.join("");
+    console.log("PDF pages:", pages.length);
+console.log("PDF root:", root.innerHTML.length);
+console.log("PDF kp-page:", root.querySelectorAll(".kp-page").length);
     document.body.appendChild(root);
 
     root.querySelectorAll(".kp-page").forEach((p,i)=>{
