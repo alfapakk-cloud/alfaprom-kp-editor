@@ -82,11 +82,569 @@ const managerName=document.getElementById("managerName"),managerPhone=document.g
 document.getElementById("addProductBtn").onclick=()=>{state.products.push(createProduct());saveState();renderProductsEditor();renderPreview();setTimeout(()=>document.querySelectorAll(".product-editor-card").at(-1)?.scrollIntoView({behavior:"smooth",block:"start"}),50)};
 document.getElementById("resetBtn").onclick=async()=>{if(!confirm("Сбросить текущее коммерческое предложение?"))return;for(const p of state.products)for(const id of p.photoIds||[])await deletePhoto(id).catch(()=>{});state.products=[createProduct()];state.managerName="";state.managerPhone="";saveState();managerName.value="";managerPhone.value="";renderProductsEditor();renderPreview()};
 window.addEventListener("resize",fitPreviewPages);
-async function downloadPDF(){const b=document.getElementById("downloadPdfBtn");b.disabled=true;b.textContent="Формирование PDF...";let root=null;try{const pages=await buildAllPages();root=document.createElement("div");root.className="pdf-render-root";root.style.position="fixed";root.style.left="-100000px";root.style.top="0";root.innerHTML=pages.map((x,i)=>{const d=document.createElement("div");return x}).join("");document.body.appendChild(root);root.querySelectorAll(".kp-page").forEach((p,i)=>{p.style.pageBreakAfter=i<pages.length-1?"always":"auto";p.style.breakAfter=i<pages.length-1?"page":"auto"});await new Promise(r=>requestAnimationFrame(r));await new Promise(r=>setTimeout(r,100));const filename=safeFileName(state.products[0]?.productName)+".pdf";await html2pdf().set({margin:0,filename,image:{type:"jpeg",quality:.98},html2canvas:{scale:2,useCORS:true,backgroundColor:"#fff",logging:false},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css"],avoid:[".specs-table",".advantages"]}}).from(root).save()}catch(e){console.error(e);alert("Не удалось сформировать PDF.\n\n"+(e.message||e))}finally{root?.remove();b.disabled=false;b.textContent="Скачать PDF"}}
-function blobToUint8Array(b){return b.arrayBuffer().then(x=>new Uint8Array(x))}
-async function createDocx(){const children=[];for(let i=0;i<state.products.length;i++){const p=state.products[i];if(i)children.push(new docx.Paragraph({pageBreakBefore:true,children:[]}));children.push(new docx.Paragraph({border:{bottom:{color:"FF8100",space:6,style:docx.BorderStyle.SINGLE,size:10}},spacing:{after:100},children:[new docx.TextRun({text:"АЛЬФАПРОМ",bold:true,color:"FF8100",size:27})]}));children.push(new docx.Paragraph({spacing:{after:100},children:[new docx.TextRun({text:"Коммерческое предложение",bold:true,size:26})]}));children.push(new docx.Paragraph({spacing:{after:150},children:[new docx.TextRun({text:p.productName||`Оборудование №${i+1}`,bold:true,size:24})]}));for(const id of p.photoIds||[]){const blob=await getPhoto(id).catch(()=>null);if(!blob)continue;const bytes=await blobToUint8Array(blob);const size=getPhotoSize(p,id),px=Math.min(300,Math.round(size*MM_TO_PX));children.push(new docx.Paragraph({alignment:docx.AlignmentType.CENTER,spacing:{after:80},children:[new docx.ImageRun({data:bytes,transformation:{width:px,height:px},type:blob.type==="image/png"?"png":"jpg"})]}))}if(p.description.trim())children.push(new docx.Paragraph({spacing:{after:100},children:[new docx.TextRun({text:p.description,size:19})]}));if(p.note.trim())children.push(new docx.Paragraph({spacing:{after:100},children:[new docx.TextRun({text:p.note,italics:true,color:"666666",size:17})]}));const rows=parseSpecs(p.specsText);if(rows.length){const tr=[new docx.TableRow({children:[new docx.TableCell({columnSpan:2,shading:{fill:"FF8100"},children:[new docx.Paragraph({children:[new docx.TextRun({text:"Характеристики",bold:true,color:"FFFFFF",size:18})]})]})]})];rows.forEach(r=>tr.push(new docx.TableRow({children:[new docx.TableCell({children:[new docx.Paragraph({children:[new docx.TextRun({text:r[0],bold:true,size:16})]})]}),new docx.TableCell({children:[new docx.Paragraph({children:[new docx.TextRun({text:r[1],size:16})]})]})]})));children.push(new docx.Table({width:{size:100,type:docx.WidthType.PERCENTAGE},rows:tr,borders:{top:{style:docx.BorderStyle.SINGLE,size:4,color:"D9DCE0"},bottom:{style:docx.BorderStyle.SINGLE,size:4,color:"D9DCE0"},left:{style:docx.BorderStyle.SINGLE,size:4,color:"D9DCE0"},right:{style:docx.BorderStyle.SINGLE,size:4,color:"D9DCE0"},insideHorizontal:{style:docx.BorderStyle.SINGLE,size:4,color:"D9DCE0"},insideVertical:{style:docx.BorderStyle.SINGLE,size:4,color:"D9DCE0"}}}));}if(p.videoUrl.trim())children.push(new docx.Paragraph({spacing:{before:120,after:120},children:[new docx.ExternalHyperlink({link:p.videoUrl,children:[new docx.TextRun({text:"Смотреть видео оборудования",bold:true,color:"FF8100",underline:{},size:17})]})]}));const price=formatPrice(p.price,p.currency),disc=formatPrice(p.discountPrice,p.currency);if(price)children.push(new docx.Paragraph({children:[new docx.TextRun({text:`Цена: ${price}`,bold:true,size:23})]}));if(disc)children.push(new docx.Paragraph({children:[new docx.TextRun({text:`Цена со скидкой: ${disc}`,bold:true,color:"D93025",size:23})]}));children.push(new docx.Paragraph({spacing:{after:80},children:[new docx.TextRun({text:p.status==="order"?"Под заказ":"В наличии",bold:true,color:p.status==="order"?"B96A00":"168A45",size:18})]}));if(p.priceComment.trim())children.push(new docx.Paragraph({spacing:{after:120},children:[new docx.TextRun({text:p.priceComment,color:"666666",size:16})]}));children.push(new docx.Paragraph({spacing:{before:120,after:100},children:[new docx.TextRun({text:"Почему мы?",bold:true,size:22})]}));DEFAULT_ADVANTAGES.forEach(x=>children.push(new docx.Paragraph({bullet:{level:0},spacing:{after:50},children:[new docx.TextRun({text:x,bold:true,size:16})]})))}const footer=new docx.Footer({children:[new docx.Paragraph({children:[new docx.TextRun({text:"АЛЬФАПРОМ  |  8 (800) 200-29-23  |  alfaprom.org",bold:true,color:"FF8100",size:15})]})]});return docx.Packer.toBlob(new docx.Document({sections:[{properties:{page:{margin:{top:650,right:850,bottom:800,left:850}}},footers:[footer],children}]}))}
-async function downloadDOCX(){const b=document.getElementById("downloadDocxBtn");b.disabled=true;b.textContent="Формирование DOCX...";try{const blob=await createDocx(),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=safeFileName(state.products[0]?.productName)+".docx";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}catch(e){console.error(e);alert("Не удалось сформировать DOCX.\n\n"+(e.message||e))}finally{b.disabled=false;b.textContent="Скачать DOCX"}}
-async function init(){try{await openDB()}catch(e){console.error("IndexedDB error",e)}loadState();managerName.value=state.managerName;managerPhone.value=state.managerPhone;renderProductsEditor();await renderPreview();requestAnimationFrame(fitPreviewPages)}
+async function downloadPDF(){
+  const b=document.getElementById("downloadPdfBtn");
+  b.disabled=true;
+  b.textContent="Формирование PDF...";
+
+  let root=null;
+
+  try{
+    const pages=await buildAllPages();
+
+    root=document.createElement("div");
+    root.className="pdf-render-root";
+    root.style.position="absolute";
+    root.style.left="0";
+    root.style.top="0";
+    root.style.width="210mm";
+    root.style.background="#fff";
+    root.style.zIndex="-9999";
+
+    root.innerHTML=pages.join("");
+    document.body.appendChild(root);
+
+    root.querySelectorAll(".kp-page").forEach((p,i)=>{
+      p.style.pageBreakAfter=i<pages.length-1?"always":"auto";
+      p.style.breakAfter=i<pages.length-1?"page":"auto";
+    });
+
+    await new Promise(r=>requestAnimationFrame(r));
+    await new Promise(r=>setTimeout(r,300));
+
+    if(typeof window.html2pdf!=="function"){
+      throw new Error("Библиотека PDF (html2pdf) не загружена.");
+    }
+
+    const filename=safeFileName(
+      state.products[0]?.productName
+    )+".pdf";
+
+    await window.html2pdf()
+      .set({
+        margin:0,
+        filename,
+        image:{
+          type:"jpeg",
+          quality:.98
+        },
+        html2canvas:{
+          scale:2,
+          useCORS:true,
+          backgroundColor:"#fff",
+          logging:false
+        },
+        jsPDF:{
+          unit:"mm",
+          format:"a4",
+          orientation:"portrait"
+        },
+        pagebreak:{
+          mode:["css"],
+          avoid:[".specs-table",".advantages"]
+        }
+      })
+      .from(root)
+      .save();
+
+  }catch(e){
+    console.error(e);
+    alert(
+      "Не удалось сформировать PDF.\n\n"+
+      (e.message||e)
+    );
+  }finally{
+    root?.remove();
+    b.disabled=false;
+    b.textContent="Скачать PDF";
+  }
+}
+
+
+async function ensureDocxLoaded(){
+
+  if(window.docx) return window.docx;
+
+  await new Promise((resolve,reject)=>{
+
+    const existing=document.querySelector(
+      'script[src*="docx"]'
+    );
+
+    if(existing){
+      if(window.docx){
+        resolve();
+        return;
+      }
+
+      existing.addEventListener("load",resolve,{once:true});
+      existing.addEventListener("error",reject,{once:true});
+      return;
+    }
+
+    const script=document.createElement("script");
+
+    script.src=
+      "https://cdn.jsdelivr.net/npm/docx@9.5.1/build/index.umd.js";
+
+    script.onload=()=>{
+      if(window.docx) resolve();
+      else reject(
+        new Error("Библиотека DOCX загрузилась, но объект docx не найден.")
+      );
+    };
+
+    script.onerror=()=>{
+      reject(
+        new Error("Не удалось загрузить библиотеку DOCX.")
+      );
+    };
+
+    document.head.appendChild(script);
+  });
+
+  return window.docx;
+}
+
+
+async function createDocx(){
+
+  const docx=await ensureDocxLoaded();
+  const children=[];
+
+  for(let i=0;i<state.products.length;i++){
+
+    const p=state.products[i];
+
+    if(i){
+      children.push(
+        new docx.Paragraph({
+          pageBreakBefore:true,
+          children:[]
+        })
+      );
+    }
+
+    children.push(
+      new docx.Paragraph({
+        border:{
+          bottom:{
+            color:"FF8100",
+            space:6,
+            style:docx.BorderStyle.SINGLE,
+            size:10
+          }
+        },
+        spacing:{after:100},
+        children:[
+          new docx.TextRun({
+            text:"АЛЬФАПРОМ",
+            bold:true,
+            color:"FF8100",
+            size:27
+          })
+        ]
+      })
+    );
+
+    children.push(
+      new docx.Paragraph({
+        spacing:{after:100},
+        children:[
+          new docx.TextRun({
+            text:"Коммерческое предложение",
+            bold:true,
+            size:26
+          })
+        ]
+      })
+    );
+
+    children.push(
+      new docx.Paragraph({
+        spacing:{after:150},
+        children:[
+          new docx.TextRun({
+            text:p.productName||`Оборудование №${i+1}`,
+            bold:true,
+            size:24
+          })
+        ]
+      })
+    );
+
+    for(const id of p.photoIds||[]){
+
+      const blob=await getPhoto(id).catch(()=>null);
+      if(!blob) continue;
+
+      const bytes=await blobToUint8Array(blob);
+      const size=getPhotoSize(p,id);
+      const px=Math.min(
+        300,
+        Math.round(size*MM_TO_PX)
+      );
+
+      children.push(
+        new docx.Paragraph({
+          alignment:docx.AlignmentType.CENTER,
+          spacing:{after:80},
+          children:[
+            new docx.ImageRun({
+              data:bytes,
+              transformation:{
+                width:px,
+                height:px
+              },
+              type:
+                blob.type==="image/png"
+                  ?"png"
+                  :"jpg"
+            })
+          ]
+        })
+      );
+    }
+
+    if(p.description.trim()){
+      children.push(
+        new docx.Paragraph({
+          spacing:{after:100},
+          children:[
+            new docx.TextRun({
+              text:p.description,
+              size:19
+            })
+          ]
+        })
+      );
+    }
+
+    if(p.note.trim()){
+      children.push(
+        new docx.Paragraph({
+          spacing:{after:100},
+          children:[
+            new docx.TextRun({
+              text:p.note,
+              italics:true,
+              color:"666666",
+              size:17
+            })
+          ]
+        })
+      );
+    }
+
+    const rows=parseSpecs(p.specsText);
+
+    if(rows.length){
+
+      const tr=[
+        new docx.TableRow({
+          children:[
+            new docx.TableCell({
+              columnSpan:2,
+              shading:{fill:"FF8100"},
+              children:[
+                new docx.Paragraph({
+                  children:[
+                    new docx.TextRun({
+                      text:"Характеристики",
+                      bold:true,
+                      color:"FFFFFF",
+                      size:18
+                    })
+                  ]
+                })
+              ]
+            })
+          ]
+        })
+      ];
+
+      rows.forEach(r=>{
+        tr.push(
+          new docx.TableRow({
+            children:[
+              new docx.TableCell({
+                children:[
+                  new docx.Paragraph({
+                    children:[
+                      new docx.TextRun({
+                        text:r[0],
+                        bold:true,
+                        size:16
+                      })
+                    ]
+                  })
+                ]
+              }),
+              new docx.TableCell({
+                children:[
+                  new docx.Paragraph({
+                    children:[
+                      new docx.TextRun({
+                        text:r[1],
+                        size:16
+                      })
+                    ]
+                  })
+                ]
+              })
+            ]
+          })
+        );
+      });
+
+      children.push(
+        new docx.Table({
+          width:{
+            size:100,
+            type:docx.WidthType.PERCENTAGE
+          },
+          rows:tr,
+          borders:{
+            top:{
+              style:docx.BorderStyle.SINGLE,
+              size:4,
+              color:"D9DCE0"
+            },
+            bottom:{
+              style:docx.BorderStyle.SINGLE,
+              size:4,
+              color:"D9DCE0"
+            },
+            left:{
+              style:docx.BorderStyle.SINGLE,
+              size:4,
+              color:"D9DCE0"
+            },
+            right:{
+              style:docx.BorderStyle.SINGLE,
+              size:4,
+              color:"D9DCE0"
+            },
+            insideHorizontal:{
+              style:docx.BorderStyle.SINGLE,
+              size:4,
+              color:"D9DCE0"
+            },
+            insideVertical:{
+              style:docx.BorderStyle.SINGLE,
+              size:4,
+              color:"D9DCE0"
+            }
+          }
+        })
+      );
+    }
+
+    if(p.videoUrl.trim()){
+      children.push(
+        new docx.Paragraph({
+          spacing:{
+            before:120,
+            after:120
+          },
+          children:[
+            new docx.ExternalHyperlink({
+              link:p.videoUrl,
+              children:[
+                new docx.TextRun({
+                  text:"Смотреть видео оборудования",
+                  bold:true,
+                  color:"FF8100",
+                  underline:{},
+                  size:17
+                })
+              ]
+            })
+          ]
+        })
+      );
+    }
+
+    const price=formatPrice(p.price,p.currency);
+    const disc=formatPrice(p.discountPrice,p.currency);
+
+    if(price){
+      children.push(
+        new docx.Paragraph({
+          children:[
+            new docx.TextRun({
+              text:`Цена: ${price}`,
+              bold:true,
+              size:23
+            })
+          ]
+        })
+      );
+    }
+
+    if(disc){
+      children.push(
+        new docx.Paragraph({
+          children:[
+            new docx.TextRun({
+              text:`Цена со скидкой: ${disc}`,
+              bold:true,
+              color:"D93025",
+              size:23
+            })
+          ]
+        })
+      );
+    }
+
+    children.push(
+      new docx.Paragraph({
+        spacing:{after:80},
+        children:[
+          new docx.TextRun({
+            text:p.status==="order"
+              ?"Под заказ"
+              :"В наличии",
+            bold:true,
+            color:p.status==="order"
+              ?"B96A00"
+              :"168A45",
+            size:18
+          })
+        ]
+      })
+    );
+
+    if(p.priceComment.trim()){
+      children.push(
+        new docx.Paragraph({
+          spacing:{after:120},
+          children:[
+            new docx.TextRun({
+              text:p.priceComment,
+              color:"666666",
+              size:16
+            })
+          ]
+        })
+      );
+    }
+
+    children.push(
+      new docx.Paragraph({
+        spacing:{
+          before:120,
+          after:100
+        },
+        children:[
+          new docx.TextRun({
+            text:"Почему мы?",
+            bold:true,
+            size:22
+          })
+        ]
+      })
+    );
+
+    DEFAULT_ADVANTAGES.forEach(x=>{
+      children.push(
+        new docx.Paragraph({
+          bullet:{level:0},
+          spacing:{after:50},
+          children:[
+            new docx.TextRun({
+              text:x,
+              bold:true,
+              size:16
+            })
+          ]
+        })
+      );
+    });
+  }
+
+  const footer=new docx.Footer({
+    children:[
+      new docx.Paragraph({
+        children:[
+          new docx.TextRun({
+            text:"АЛЬФАПРОМ  |  8 (800) 200-29-23  |  alfaprom.org",
+            bold:true,
+            color:"FF8100",
+            size:15
+          })
+        ]
+      })
+    ]
+  });
+
+  const document=new docx.Document({
+    sections:[
+      {
+        properties:{
+          page:{
+            margin:{
+              top:650,
+              right:850,
+              bottom:800,
+              left:850
+            }
+          }
+        },
+        footers:[footer],
+        children
+      }
+    ]
+  });
+
+  return docx.Packer.toBlob(document);
+}
+
+
+async function downloadDOCX(){
+
+  const b=document.getElementById("downloadDocxBtn");
+
+  b.disabled=true;
+  b.textContent="Формирование DOCX...";
+
+  try{
+
+    const blob=await createDocx();
+
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+
+    a.href=url;
+    a.download=
+      safeFileName(
+        state.products[0]?.productName
+      )+".docx";
+
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    setTimeout(()=>{
+      URL.revokeObjectURL(url);
+    },1000);
+
+  }catch(e){
+
+    console.error(e);
+
+    alert(
+      "Не удалось сформировать DOCX.\n\n"+
+      (e.message||e)
+    );
+
+  }finally{
+
+    b.disabled=false;
+    b.textContent="Скачать DOCX";
+
+  }
+}async function init(){try{await openDB()}catch(e){console.error("IndexedDB error",e)}loadState();managerName.value=state.managerName;managerPhone.value=state.managerPhone;renderProductsEditor();await renderPreview();requestAnimationFrame(fitPreviewPages)}
 document.getElementById("downloadPdfBtn").onclick=downloadPDF;document.getElementById("downloadDocxBtn").onclick=downloadDOCX;init();
 </script>
 </body>
