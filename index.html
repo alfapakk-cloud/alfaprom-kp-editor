@@ -176,7 +176,9 @@ async function downloadPDF(){
 }
 
 
-
+async function blobToUint8Array(blob){
+  return new Uint8Array(await blob.arrayBuffer());
+}
 async function createDocx(){
 
   const docx=window.docx;
