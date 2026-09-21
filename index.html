@@ -129,11 +129,16 @@ async function downloadPDF(){
           quality:.98
         },
         html2canvas:{
-          scale:2,
-          useCORS:true,
-          backgroundColor:"#fff",
-          logging:false
-        },
+  scale:2,
+  useCORS:true,
+  backgroundColor:"#fff",
+  logging:false,
+  onclone:(clonedDoc)=>{
+    clonedDoc.querySelectorAll('img[src^="blob:"]').forEach(img=>{
+      img.remove();
+    });
+  }
+},
         jsPDF:{
           unit:"mm",
           format:"a4",
