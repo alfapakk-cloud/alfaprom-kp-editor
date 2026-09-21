@@ -98,17 +98,14 @@ async function downloadPDF(){
     root=document.createElement("div");
     root.className="pdf-render-root";
     root.style.position="fixed";
-root.style.left="0";
-root.style.top="0";
-root.style.width="210mm";
-root.style.background="#fff";
-root.style.zIndex="9999";
-root.style.visibility="visible";
+    root.style.left="-100000px";
+    root.style.top="0";
 
-    root.innerHTML=pages.join("");
-    console.log("PDF pages:", pages.length);
-console.log("PDF root:", root.innerHTML.length);
-console.log("PDF kp-page:", root.querySelectorAll(".kp-page").length);
+    root.innerHTML=pages.map((x,i)=>{
+      const d=document.createElement("div");
+      return x;
+    }).join("");
+
     document.body.appendChild(root);
 
     root.querySelectorAll(".kp-page").forEach((p,i)=>{
@@ -117,42 +114,38 @@ console.log("PDF kp-page:", root.querySelectorAll(".kp-page").length);
     });
 
     await new Promise(r=>requestAnimationFrame(r));
-    await new Promise(r=>setTimeout(r,300));
-
-    if(typeof window.html2pdf!=="function"){
-      throw new Error("Библиотека PDF (html2pdf) не загружена.");
-    }
+    await new Promise(r=>setTimeout(r,100));
 
     const filename=safeFileName(
       state.products[0]?.productName
     )+".pdf";
 
-  await window.html2pdf()
-  .set({
-    margin:0,
-    filename,
-    image:{
-      type:"jpeg",
-      quality:.98
-    },
-    html2canvas:{
-      scale:2,
-      useCORS:true,
-      backgroundColor:"#fff",
-      logging:true
-    },
-    jsPDF:{
-      unit:"mm",
-      format:"a4",
-      orientation:"portrait"
-    },
-    pagebreak:{
-      mode:["css"],
-      avoid:[".specs-table",".advantages"]
-    }
-  })
-  .from(root)
-  .save();
+    await html2pdf()
+      .set({
+        margin:0,
+        filename,
+        image:{
+          type:"jpeg",
+          quality:.98
+        },
+        html2canvas:{
+          scale:2,
+          useCORS:true,
+          backgroundColor:"#fff",
+          logging:false
+        },
+        jsPDF:{
+          unit:"mm",
+          format:"a4",
+          orientation:"portrait"
+        },
+        pagebreak:{
+          mode:["css"],
+          avoid:[".specs-table",".advantages"]
+        }
+      })
+      .from(root)
+      .save();
 
   }catch(e){
     console.error(e);
