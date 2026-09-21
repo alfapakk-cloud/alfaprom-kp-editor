@@ -99,59 +99,67 @@ async function downloadPDF(){
     root=document.createElement("div");
     root.className="pdf-render-root";
     root.style.position="fixed";
-    root.style.left="-100000px";
+    root.style.left="0";
     root.style.top="0";
-
-    root.innerHTML=pages.map((x,i)=>{
-      const d=document.createElement("div");
-      return x;
-    }).join("");
+    root.style.width="210mm";
+    root.style.visibility="visible";
+    root.style.zIndex="-1";
+    root.innerHTML=pages.join("");
 
     document.body.appendChild(root);
 
     root.querySelectorAll(".kp-page").forEach((p,i)=>{
-      p.style.pageBreakAfter=i<pages.length-1?"always":"auto";
-      p.style.breakAfter=i<pages.length-1?"page":"auto";
+      p.style.pageBreakAfter="auto";
+      p.style.breakAfter="auto";
     });
 
     await new Promise(r=>requestAnimationFrame(r));
     await new Promise(r=>setTimeout(r,100));
 
+    const pdf=new window.jspdf.jsPDF({
+      unit:"mm",
+      format:"a4",
+      orientation:"portrait"
+    });
+
+    const pageElements=[...root.querySelectorAll(".kp-page")];
+
+    for(let i=0;i<pageElements.length;i++){
+      const canvas=await window.html2canvas(pageElements[i],{
+        scale:2,
+        useCORS:true,
+        backgroundColor:"#fff",
+        logging:false,
+        onclone:(clonedDoc)=>{
+          clonedDoc
+            .querySelectorAll('img[src^="blob:"]')
+            .forEach(img=>img.remove());
+        }
+      });
+
+      const imgData=canvas.toDataURL("image/jpeg",.98);
+
+      if(i>0){
+        pdf.addPage();
+      }
+
+      pdf.addImage(
+        imgData,
+        "JPEG",
+        0,
+        0,
+        210,
+        297,
+        undefined,
+        "FAST"
+      );
+    }
+
     const filename=safeFileName(
       state.products[0]?.productName
     )+".pdf";
 
-    await html2pdf()
-      .set({
-        margin:0,
-        filename,
-        image:{
-          type:"jpeg",
-          quality:.98
-        },
-        html2canvas:{
-  scale:2,
-  useCORS:true,
-  backgroundColor:"#fff",
-  logging:false,
-  onclone:(clonedDoc)=>{
-    clonedDoc.querySelectorAll('img[src^="blob:"]').forEach(img=>{
-      img.remove();
-    });
-  }
-},
-        jsPDF:{
-          unit:"mm",
-          format:"a4",
-          orientation:"portrait"
-        },
-        pagebreak:{
-          mode:["css"],
-          avoid:[".specs-table",".advantages"]
-        }
-      })
-      .from(root)
-      .save();
+    pdf.save(filename);
 
   }catch(e){
     console.error(e);
