@@ -72,11 +72,28 @@ const drop=item.querySelector(`[data-photo-drop="${p.id}-${i}"]`),remove=item.qu
 function bindPhotoReorder(p,item,index){
   item.draggable=true;
 
+  const handle=item.querySelector(".photo-resize-handle");
+
+  if(handle){
+    handle.addEventListener("pointerdown",()=>{
+      item.draggable=false;
+    });
+
+    handle.addEventListener("pointerup",()=>{
+      item.draggable=true;
+    });
+
+    handle.addEventListener("pointercancel",()=>{
+      item.draggable=true;
+    });
+  }
+
   item.ondragstart=e=>{
     if(e.target.closest(".photo-resize-handle")){
       e.preventDefault();
       return;
     }
+
     e.dataTransfer.effectAllowed="move";
     e.dataTransfer.setData("text/plain",String(index));
     item.classList.add("photo-dragging");
@@ -84,6 +101,8 @@ function bindPhotoReorder(p,item,index){
 
   item.ondragend=()=>{
     item.classList.remove("photo-dragging");
+    item.draggable=true;
+
     document.querySelectorAll(".photo-editor-item").forEach(x=>{
       x.classList.remove("photo-drag-over");
     });
