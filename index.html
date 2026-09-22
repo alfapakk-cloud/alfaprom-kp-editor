@@ -534,25 +534,28 @@ function footerHtml(){return`<div class="kp-footer"><div class="footer-left">А�
 function advantagesHtml(){return`<div class="advantages"><div class="advantages-title">Почему мы?</div><div class="advantages-grid">${DEFAULT_ADVANTAGES.map(x=>`<div class="advantage">${escapeHtml(x)}</div>`).join("")}</div></div>`}
 function makePage(content,index,continuation=false,withAdvantages=false){
   const c=content.join("");
+  const pageClass=withAdvantages?"kp-page final-page":"kp-page";
 
-  return`<div class="kp-page">
+  return`<div class="${pageClass}">
     <div class="kp-content">
       ${headerHtml()}
       ${continuation?`<div class="page-continuation">Продолжение предложения — оборудование №${index+1}</div>`:""}
       ${c}
-      ${withAdvantages?advantagesHtml():""}
     </div>
-    ${footerHtml()}
+
+    <div class="kp-bottom">
+      ${withAdvantages?advantagesHtml():""}
+      ${footerHtml()}
+    </div>
   </div>`
 }
 
 
-async function paginateProduct(p,index){
+async function paginateProduct(p,index,withAdvantages=false){
   const photos=await getProductPhotosData(p);
   const blocks=blockHtml(p,index,photos);
 
   const measure=document.createElement("div");
-
   measure.className="kp-page";
   measure.style.position="absolute";
   measure.style.left="-100000px";
@@ -565,7 +568,9 @@ async function paginateProduct(p,index){
       ${headerHtml()}
       <div id="measureBlocks"></div>
     </div>
-    ${footerHtml()}
+    <div class="kp-bottom">
+      ${footerHtml()}
+    </div>
   `;
 
   document.body.appendChild(measure);
@@ -575,9 +580,50 @@ async function paginateProduct(p,index){
 
   await new Promise(r=>requestAnimationFrame(r));
 
-  const available=
+  const availableNormal=
     content.clientHeight -
     measure.querySelector(".kp-header").offsetHeight;
+
+  let finalMeasure=null;
+  let finalTarget=null;
+  let availableFinal=availableNormal;
+
+  if(withAdvantages){
+    finalMeasure=document.createElement("div");
+    finalMeasure.className="kp-page final-page";
+    finalMeasure.style.position="absolute";
+    finalMeasure.style.left="-100000px";
+    finalMeasure.style.top="0";
+    finalMeasure.style.visibility="hidden";
+    finalMeasure.style.boxShadow="none";
+
+    finalMeasure.innerHTML=`
+      <div class="kp-content">
+        ${headerHtml()}
+        <div id="finalMeasureBlocks"></div>
+      </div>
+      <div class="kp-bottom">
+        ${advantagesHtml()}
+        ${footerHtml()}
+      </div>
+    `;
+
+    document.body.appendChild(finalMeasure);
+
+    finalTarget=finalMeasure.querySelector("#finalMeasureBlocks");
+    const finalContent=finalMeasure.querySelector(".kp-content");
+
+    await new Promise(r=>requestAnimationFrame(r));
+
+    const reservePx=
+      finalMeasure.querySelector(".advantages").getBoundingClientRect().height +
+      finalMeasure.querySelector(".kp-footer").getBoundingClientRect().height;
+
+    availableFinal=
+      finalContent.clientHeight -
+      finalMeasure.querySelector(".kp-header").offsetHeight -
+      reservePx;
+  }
 
   const pages=[];
   let current=[];
@@ -590,7 +636,7 @@ async function paginateProduct(p,index){
 
     await new Promise(r=>requestAnimationFrame(r));
 
-    if(target.scrollHeight>available && current.length){
+    if(target.scrollHeight>availableNormal && current.length){
       target.removeChild(el);
 
       pages.push(current);
@@ -598,9 +644,9 @@ async function paginateProduct(p,index){
 
       target.innerHTML="";
 
-      const cont=document.createElement("div");
-      cont.innerHTML=html;
-      target.appendChild(cont);
+      const next=document.createElement("div");
+      next.innerHTML=html;
+      target.appendChild(next);
 
       await new Promise(r=>requestAnimationFrame(r));
 
@@ -618,14 +664,37 @@ async function paginateProduct(p,index){
     pages.push([]);
   }
 
+  if(withAdvantages){
+    while(pages.length){
+      const last=pages[pages.length-1];
+
+      finalTarget.innerHTML=last.join("");
+
+      await new Promise(r=>requestAnimationFrame(r));
+
+      if(finalTarget.scrollHeight<=availableFinal){
+        break;
+      }
+
+      if(last.length>1){
+        const moved=last.pop();
+        pages.push([moved]);
+        continue;
+      }
+
+      break;
+    }
+  }
+
   measure.remove();
+  if(finalMeasure)finalMeasure.remove();
 
   return pages.map((arr,i)=>
     makePage(
       arr,
       index,
       i>0,
-      false
+      withAdvantages && i===pages.length-1
     )
   );
 }
