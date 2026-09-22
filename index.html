@@ -547,21 +547,13 @@ function makePage(content,index,continuation=false,withAdvantages=false){
 }
 
 
-async function paginateProduct(p,index,withAdvantages=false){
-
+async function paginateProduct(p,index){
   const photos=await getProductPhotosData(p);
   const blocks=blockHtml(p,index,photos);
-
-  /*
-    Обычная страница.
-    Нижний блок здесь не участвует
-    в основном потоке контента.
-  */
 
   const measure=document.createElement("div");
 
   measure.className="kp-page";
-
   measure.style.position="absolute";
   measure.style.left="-100000px";
   measure.style.top="0";
@@ -570,143 +562,51 @@ async function paginateProduct(p,index,withAdvantages=false){
 
   measure.innerHTML=`
     <div class="kp-content">
-
       ${headerHtml()}
-
       <div id="measureBlocks"></div>
-
     </div>
-
-    <div class="kp-bottom">
-      ${footerHtml()}
-    </div>
+    ${footerHtml()}
   `;
 
   document.body.appendChild(measure);
 
-  const target=
-    measure.querySelector("#measureBlocks");
-
-  const content=
-    measure.querySelector(".kp-content");
+  const target=measure.querySelector("#measureBlocks");
+  const content=measure.querySelector(".kp-content");
 
   await new Promise(r=>requestAnimationFrame(r));
 
-  const contentRect=
-    content.getBoundingClientRect();
-
-  const targetRect=
-    target.getBoundingClientRect();
-
-  const availableNormal=
-    contentRect.bottom-targetRect.top;
-
-
-  /*
-    Для финальной страницы используем
-    именно final-page с зарезервированным
-    нижним пространством.
-  */
-
-  let finalMeasure=null;
-  let finalTarget=null;
-  let availableFinal=availableNormal;
-
-  if(withAdvantages){
-
-    finalMeasure=document.createElement("div");
-
-    finalMeasure.className="kp-page final-page";
-
-    finalMeasure.style.position="absolute";
-    finalMeasure.style.left="-100000px";
-    finalMeasure.style.top="0";
-    finalMeasure.style.visibility="hidden";
-    finalMeasure.style.boxShadow="none";
-
-    finalMeasure.innerHTML=`
-      <div class="kp-content">
-
-        ${headerHtml()}
-
-        <div id="finalMeasureBlocks"></div>
-
-      </div>
-
-      <div class="kp-bottom">
-
-        ${advantagesHtml()}
-
-        ${footerHtml()}
-
-      </div>
-    `;
-
-    document.body.appendChild(finalMeasure);
-
-    finalTarget=
-      finalMeasure.querySelector("#finalMeasureBlocks");
-
-    const finalContent=
-      finalMeasure.querySelector(".kp-content");
-
-    await new Promise(r=>requestAnimationFrame(r));
-
-    const finalContentRect=
-      finalContent.getBoundingClientRect();
-
-    const finalTargetRect=
-      finalTarget.getBoundingClientRect();
-
-    availableFinal=
-      finalContentRect.bottom-finalTargetRect.top;
-  }
-
-
-  /*
-    Разбиваем контент на обычные страницы.
-  */
+  const available=
+    content.clientHeight -
+    measure.querySelector(".kp-header").offsetHeight;
 
   const pages=[];
   let current=[];
 
   for(const html of blocks){
-
     const el=document.createElement("div");
-
     el.innerHTML=html;
 
     target.appendChild(el);
 
     await new Promise(r=>requestAnimationFrame(r));
 
-    if(
-      target.scrollHeight>availableNormal &&
-      current.length
-    ){
-
+    if(target.scrollHeight>available && current.length){
       target.removeChild(el);
 
       pages.push(current);
-
       current=[];
 
       target.innerHTML="";
 
-      const next=document.createElement("div");
-
-      next.innerHTML=html;
-
-      target.appendChild(next);
+      const cont=document.createElement("div");
+      cont.innerHTML=html;
+      target.appendChild(cont);
 
       await new Promise(r=>requestAnimationFrame(r));
 
       current.push(html);
-
     }else{
-
       current.push(html);
-
     }
   }
 
@@ -718,69 +618,16 @@ async function paginateProduct(p,index,withAdvantages=false){
     pages.push([]);
   }
 
-
-  /*
-    Финальная страница.
-    Здесь жёстко резервируется место
-    под "Почему мы?" и футер.
-  */
-
-  if(withAdvantages){
-
-    while(pages.length){
-
-      const last=
-        pages[pages.length-1];
-
-      finalTarget.innerHTML=
-        last.join("");
-
-      await new Promise(r=>requestAnimationFrame(r));
-
-      if(
-        finalTarget.scrollHeight<=availableFinal
-      ){
-
-        break;
-
-      }
-
-      if(last.length>1){
-
-        const moved=
-          last.pop();
-
-        pages.push([moved]);
-
-        continue;
-
-      }
-
-      break;
-    }
-  }
-
-
   measure.remove();
 
-  if(finalMeasure){
-    finalMeasure.remove();
-  }
-
-
-  return pages.map((arr,i)=>{
-
-    const isLastPage=
-      i===pages.length-1;
-
-    return makePage(
+  return pages.map((arr,i)=>
+    makePage(
       arr,
       index,
       i>0,
-      withAdvantages && isLastPage
-    );
-
-  });
+      false
+    )
+  );
 }
 
 
