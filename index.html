@@ -67,7 +67,61 @@ function parseSpecs(text){const lines=String(text||"").split(/\r?\n/).map(x=>x.t
 function createSpecsTable(p){const rows=parseSpecs(p.specsText);if(!rows.length)return"";return`<table class="specs-table"><thead><tr><th colspan="2">Характеристики</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${escapeHtml(r[0])}</td><td>${escapeHtml(r[1])}</td></tr>`).join("")}</tbody></table>`}
 function renderProductsEditor(){const c=document.getElementById("productsEditor");c.innerHTML="";state.products.forEach((p,i)=>{p.photoIds=Array.isArray(p.photoIds)?p.photoIds:[];ensurePhotoSizes(p);const card=document.createElement("div");card.className="product-editor-card";card.dataset.productId=p.id;card.innerHTML=`<div class="product-editor-head"><div class="product-editor-title">Оборудование <span class="product-number">№${i+1}</span></div>${state.products.length>1?`<button class="remove-product-btn" data-remove-product="${p.id}">Удалить оборудование</button>`:""}</div><div class="field"><label>Название оборудования</label><input type="text" data-field="productName" value="${escapeAttr(p.productName)}" placeholder="Например: Вакуумный упаковщик DZ-900"></div><div class="photo-editor"><div class="field" style="margin-bottom:6px"><label>Фотографии оборудования</label></div><div class="photo-editor-grid" data-photo-grid="${p.id}"></div><input type="file" class="file-input" accept="image/*" multiple data-photo-input="${p.id}"><div class="photo-actions"><button class="small-btn" type="button" data-choose-photo="${p.id}">＋ Добавить фото</button></div></div><div class="field"><label>Описание</label><textarea data-field="description" placeholder="Описание оборудования...">${escapeHtml(p.description)}</textarea></div><div class="field"><label>Дополнительная информация</label><textarea data-field="note" placeholder="Примечание...">${escapeHtml(p.note)}</textarea></div><div class="field"><label>Характеристики</label><textarea class="specs-textarea" data-field="specsText" placeholder="Вставьте характеристики одним блоком.\n\nНапример:\nПроизводительность\nдо 6 циклов/мин\nДлина планки\n800 мм\nШирина планки\n600 мм\nМощность\n3 кВт">${escapeHtml(p.specsText)}</textarea></div><div class="field"><label>Видео оборудования</label><input type="url" data-field="videoUrl" value="${escapeAttr(p.videoUrl)}" placeholder="https://..."></div><div class="two-cols"><div class="field"><label>Цена</label><input type="number" min="0" step="0.01" data-field="price" value="${escapeAttr(p.price)}" placeholder="0"></div><div class="field"><label>Валюта</label><select data-field="currency"><option value="RUB" ${p.currency==="RUB"?"selected":""}>₽ RUB</option><option value="USD" ${p.currency==="USD"?"selected":""}>$ USD</option><option value="EUR" ${p.currency==="EUR"?"selected":""}>€ EUR</option></select></div></div><div class="field"><label>Цена со скидкой</label><input type="number" min="0" step="0.01" data-field="discountPrice" value="${escapeAttr(p.discountPrice)}" placeholder="Если скидки нет — оставьте пустым"></div><div class="field"><label>Наличие</label><div class="status-buttons"><button type="button" class="status-button ${p.status==="available"?"active":""}" data-status="available" data-product-status="${p.id}">В наличии</button><button type="button" class="status-button ${p.status==="order"?"active":""}" data-status="order" data-product-status="${p.id}">Под заказ</button></div></div><div class="field"><label>Комментарий к цене</label><input type="text" data-field="priceComment" value="${escapeAttr(p.priceComment)}" placeholder="Например: Цена указана с НДС"></div>`;c.appendChild(card);renderEditorPhotos(p)});bindProductEditorEvents()}
 async function renderEditorPhotos(p){const grid=document.querySelector(`[data-photo-grid="${p.id}"]`);if(!grid)return;grid.innerHTML="";if(!p.photoIds.length){const item=document.createElement("div");item.className="photo-editor-item";item.innerHTML=`<div class="photo-drop" data-photo-drop-new="${p.id}"><div class="photo-placeholder">Нажмите сюда или перетащите фотографию<br><small>Можно добавить несколько фотографий</small></div></div>`;grid.appendChild(item);bindNewPhotoDrop(p,item);return}for(let i=0;i<p.photoIds.length;i++){const id=p.photoIds[i],size=getPhotoSize(p,id),px=Math.round(size*MM_TO_PX),item=document.createElement("div");item.className="photo-editor-item";item.style.width=px+"px";item.innerHTML=`<div class="photo-drop" data-photo-drop="${p.id}-${i}" style="width:${px}px;height:${px}px"><div class="photo-placeholder">Загрузка...</div></div><div class="photo-size-label">Размер в КП: ${size} × ${size} мм</div><button type="button" class="photo-item-remove" data-remove-photo-index="${p.id}-${i}">Удалить фото</button>`;grid.appendChild(item);const drop=item.querySelector(`[data-photo-drop="${p.id}-${i}"]`),remove=item.querySelector(`[data-remove-photo-index="${p.id}-${i}"]`);try{const blob=await getPhoto(id);if(!blob){p.photoIds=p.photoIds.filter(x=>x!==id);delete p.photoSizes[id];saveState();item.remove();continue}const url=URL.createObjectURL(blob);drop.classList.add("has-image");drop.innerHTML=`<img src="${url}" alt="Фото оборудования"><div class="photo-resize-handle" title="Потяните, чтобы изменить размер"></div>`;drop.querySelector("img").onload=()=>URL.revokeObjectURL(url);bindPhotoResize(p,id,item,drop)}catch(e){console.error(e)}remove.onclick=async e=>{e.preventDefault();e.stopPropagation();await deletePhoto(id).catch(()=>{});p.photoIds=p.photoIds.filter(x=>x!==id);delete p.photoSizes[id];saveState();renderProductsEditor();renderPreview()}}}
-function bindPhotoResize(p,id,item,drop){const h=drop.querySelector(".photo-resize-handle");if(!h)return;let start=0,sx=0,active=false;const move=e=>{if(!active)return;const delta=((e.clientX-sx)+(e.clientY-start))/2;const size=setPhotoSize(p,id,start+delta/MM_TO_PX),px=Math.round(size*MM_TO_PX);drop.style.width=px+"px";drop.style.height=px+"px";item.style.width=px+"px";const l=item.querySelector(".photo-size-label");if(l)l.textContent=`Размер в КП: ${size} × ${size} мм`};const up=()=>{if(!active)return;active=false;document.body.style.userSelect="";window.removeEventListener("pointermove",move);window.removeEventListener("pointerup",up);saveState();renderPreview()};h.onpointerdown=e=>{e.preventDefault();e.stopPropagation();active=true;sx=e.clientX;start=e.clientY;const base=getPhotoSize(p,id);start=base;/* reset below */start=base;const sy=e.clientY;window.addEventListener("pointermove",move);window.addEventListener("pointerup",up);document.body.style.userSelect="none";h.dataset.sy=sy};/* use closure-safe override */h.onpointerdown=e=>{e.preventDefault();e.stopPropagation();active=true;sx=e.clientX;const sy=e.clientY,base=getPhotoSize(p,id);let lastY=sy;const localMove=ev=>{if(!active)return;const delta=((ev.clientX-sx)+(ev.clientY-sy))/2;const size=setPhotoSize(p,id,base+delta/MM_TO_PX),px=Math.round(size*MM_TO_PX);drop.style.width=px+"px";drop.style.height=px+"px";item.style.width=px+"px";const l=item.querySelector(".photo-size-label");if(l)l.textContent=`Размер в КП: ${size} × ${size} мм`};const localUp=()=>{active=false;document.body.style.userSelect="";window.removeEventListener("pointermove",localMove);window.removeEventListener("pointerup",localUp);saveState();renderPreview()};window.addEventListener("pointermove",localMove);window.addEventListener("pointerup",localUp)}}
+function bindPhotoReorder(p,item,index){
+  item.draggable=true;
+
+  item.ondragstart=e=>{
+    if(e.target.closest(".photo-resize-handle")){
+      e.preventDefault();
+      return;
+    }
+    e.dataTransfer.effectAllowed="move";
+    e.dataTransfer.setData("text/plain",String(index));
+    item.classList.add("photo-dragging");
+  };
+
+  item.ondragend=()=>{
+    item.classList.remove("photo-dragging");
+    document.querySelectorAll(".photo-editor-item").forEach(x=>{
+      x.classList.remove("photo-drag-over");
+    });
+  };
+
+  item.ondragover=e=>{
+    e.preventDefault();
+    e.dataTransfer.dropEffect="move";
+    item.classList.add("photo-drag-over");
+  };
+
+  item.ondragleave=e=>{
+    if(!item.contains(e.relatedTarget)){
+      item.classList.remove("photo-drag-over");
+    }
+  };
+
+  item.ondrop=e=>{
+    e.preventDefault();
+    item.classList.remove("photo-drag-over");
+
+    const fromIndex=parseInt(e.dataTransfer.getData("text/plain"),10);
+
+    if(
+      Number.isNaN(fromIndex) ||
+      fromIndex===index ||
+      fromIndex<0 ||
+      fromIndex>=p.photoIds.length
+    ) return;
+
+    const moved=p.photoIds.splice(fromIndex,1)[0];
+    const targetIndex=fromIndex<index?index-1:index;
+
+    p.photoIds.splice(targetIndex,0,moved);
+
+    saveState();
+    renderProductsEditor();
+    renderPreview();
+  };
+}
 function bindNewPhotoDrop(p,item){const drop=item.querySelector(`[data-photo-drop-new="${p.id}"]`);if(!drop)return;drop.onclick=()=>document.querySelector(`[data-photo-input="${p.id}"]`)?.click();drop.ondragover=e=>{e.preventDefault();drop.classList.add("dragover")};drop.ondragleave=()=>drop.classList.remove("dragover");drop.ondrop=async e=>{e.preventDefault();drop.classList.remove("dragover");const files=Array.from(e.dataTransfer.files||[]).filter(f=>f.type?.startsWith("image/"));if(files.length)await handlePhotos(p,files)}}
 function bindProductEditorEvents(){document.querySelectorAll(".product-editor-card").forEach(card=>{const id=card.dataset.productId,p=state.products.find(x=>x.id===id);if(!p)return;card.querySelectorAll("[data-field]").forEach(f=>{f.addEventListener(f.tagName==="SELECT"?"change":"input",()=>{p[f.dataset.field]=f.value;saveState();renderPreview()})});card.querySelectorAll("[data-product-status]").forEach(b=>b.onclick=()=>{p.status=b.dataset.status;saveState();renderProductsEditor();renderPreview()});const choose=card.querySelector(`[data-choose-photo="${id}"]`),input=card.querySelector(`[data-photo-input="${id}"]`);choose.onclick=()=>input.click();input.onchange=async e=>{const files=Array.from(e.target.files||[]);if(files.length)await handlePhotos(p,files);input.value=""};const rm=card.querySelector(`[data-remove-product="${id}"]`);if(rm)rm.onclick=async()=>{if(!confirm("Удалить это оборудование из КП?"))return;for(const pid of p.photoIds||[])await deletePhoto(pid).catch(()=>{});state.products=state.products.filter(x=>x.id!==id);if(!state.products.length)state.products=[createProduct()];saveState();renderProductsEditor();renderPreview()}})}
 async function handlePhotos(p,files){const valid=files.filter(f=>f?.type?.startsWith("image/"));if(!valid.length){alert("Можно загружать только изображения.");return}const ids=[];try{for(const f of valid){const id=await savePhoto(await preparePhoto(f));ids.push(id);p.photoSizes[id]=DEFAULT_PHOTO_SIZE_MM}p.photoIds.push(...ids);saveState();renderProductsEditor();renderPreview()}catch(e){for(const id of ids)await deletePhoto(id).catch(()=>{});alert("Не удалось сохранить фотографию.\n\n"+(e.message||"Попробуйте выбрать изображение ещё раз."))}}
