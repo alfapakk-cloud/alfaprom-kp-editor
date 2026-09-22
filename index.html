@@ -533,43 +533,17 @@ function headerHtml(){return`<div class="kp-header"><img class="kp-logo" src="${
 function footerHtml(){return`<div class="kp-footer"><div class="footer-left">АЛЬФАПРОМ<br>Оборудование для пищевого производства и упаковки</div><div class="footer-right">${state.managerName.trim()?`<div class="footer-manager">${escapeHtml(state.managerName)}</div>`:""}${state.managerPhone.trim()?`<div>${escapeHtml(state.managerPhone)}</div>`:""}<div>8 (800) 200-29-23</div><div>alfaprom.org</div></div></div>`}
 function advantagesHtml(){return`<div class="advantages"><div class="advantages-title">Почему мы?</div><div class="advantages-grid">${DEFAULT_ADVANTAGES.map(x=>`<div class="advantage">${escapeHtml(x)}</div>`).join("")}</div></div>`}
 function makePage(content,index,continuation=false,withAdvantages=false){
-
   const c=content.join("");
 
-  const pageClass=
-    withAdvantages
-      ? "kp-page final-page"
-      : "kp-page";
-
-  return`<div class="${pageClass}">
-
+  return`<div class="kp-page">
     <div class="kp-content">
-
       ${headerHtml()}
-
-      ${continuation
-        ? `<div class="page-continuation">
-             Продолжение предложения — оборудование №${index+1}
-           </div>`
-        : ""
-      }
-
+      ${continuation?`<div class="page-continuation">Продолжение предложения — оборудование №${index+1}</div>`:""}
       ${c}
-
+      ${withAdvantages?advantagesHtml():""}
     </div>
-
-    <div class="kp-bottom">
-
-      ${withAdvantages
-        ? advantagesHtml()
-        : ""
-      }
-
-      ${footerHtml()}
-
-    </div>
-
-  </div>`;
+    ${footerHtml()}
+  </div>`
 }
 
 
