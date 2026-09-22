@@ -74,11 +74,11 @@ function bindPhotoReorder(p,item,index){
   let startX=0;
   let startY=0;
 
-  item.draggable=false;
+  item.dataset.photoIndex=index;
 
   item.onpointerdown=e=>{
-    if(e.target.closest(".photo-resize-handle")) return;
-    if(e.target.closest(".photo-item-remove")) return;
+    if(e.target.closest(".photo-resize-handle"))return;
+    if(e.target.closest(".photo-item-remove"))return;
 
     startX=e.clientX;
     startY=e.clientY;
@@ -88,69 +88,48 @@ function bindPhotoReorder(p,item,index){
       const dx=ev.clientX-startX;
       const dy=ev.clientY-startY;
 
-      if(!dragging && Math.sqrt(dx*dx+dy*dy)<6)return;
-
       if(!dragging){
+        if(Math.sqrt(dx*dx+dy*dy)<6)return;
+
         dragging=true;
         item.classList.add("photo-dragging");
+        document.body.style.userSelect="none";
       }
 
-      const elements=[...item.parentElement.querySelectorAll(".photo-editor-item")]
-        .filter(x=>x!==item);
-
-      elements.forEach(x=>x.classList.remove("photo-drag-over"));
-
-      const target=elements.find(x=>{
-        const r=x.getBoundingClientRect();
-        return ev.clientX>=r.left &&
-               ev.clientX<=r.right &&
-               ev.clientY>=r.top &&
-               ev.clientY<=r.bottom;
+      document.querySelectorAll(".photo-editor-item").forEach(x=>{
+        x.classList.remove("photo-drag-over");
       });
 
-      if(target)target.classList.add("photo-drag-over");
+      const target=document.elementFromPoint(ev.clientX,ev.clientY)?.closest(".photo-editor-item");
+
+      if(target && target!==item && target.parentElement===item.parentElement){
+        target.classList.add("photo-drag-over");
+      }
     };
 
     const up=ev=>{
       window.removeEventListener("pointermove",move);
       window.removeEventListener("pointerup",up);
 
+      document.body.style.userSelect="";
       item.classList.remove("photo-dragging");
 
-      const elements=[...item.parentElement.querySelectorAll(".photo-editor-item")]
-        .filter(x=>x!==item);
+      const target=document.elementFromPoint(ev.clientX,ev.clientY)?.closest(".photo-editor-item");
 
-      let target=null;
+      document.querySelectorAll(".photo-editor-item").forEach(x=>{
+        x.classList.remove("photo-drag-over");
+      });
 
-      for(const x of elements){
-        const r=x.getBoundingClientRect();
+      if(!dragging)return;
 
-        if(
-          ev.clientX>=r.left &&
-          ev.clientX<=r.right &&
-          ev.clientY>=r.top &&
-          ev.clientY<=r.bottom
-        ){
-          target=x;
-          break;
-        }
-      }
+      if(
+        !target ||
+        target===item ||
+        target.parentElement!==item.parentElement
+      )return;
 
-      elements.forEach(x=>x.classList.remove("photo-drag-over"));
-
-      if(!dragging || !target)return;
-
-      const fromIndex=p.photoIds.indexOf(
-        item.querySelector("[data-photo-drop]")?.dataset.photoDrop?.split("-").pop()
-      );
-
-      const targetDrop=target.querySelector("[data-photo-drop]");
-      const targetData=targetDrop?.dataset.photoDrop;
-
-      if(!targetData)return;
-
-      const parts=targetData.split("-");
-      const targetIndex=parseInt(parts[parts.length-1],10);
+      const fromIndex=parseInt(item.dataset.photoIndex,10);
+      const targetIndex=parseInt(target.dataset.photoIndex,10);
 
       if(
         Number.isNaN(fromIndex) ||
@@ -159,7 +138,12 @@ function bindPhotoReorder(p,item,index){
       )return;
 
       const moved=p.photoIds.splice(fromIndex,1)[0];
-      p.photoIds.splice(targetIndex,0,moved);
+
+      const newIndex=fromIndex<targetIndex
+        ? targetIndex
+        : targetIndex;
+
+      p.photoIds.splice(newIndex,0,moved);
 
       saveState();
       renderProductsEditor();
