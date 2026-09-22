@@ -76,7 +76,7 @@ function bindPhotoReorder(p,item,index){
 
   item.dataset.photoIndex=index;
 
-  item.onpointerdown=e=>{
+  item.addEventListener("pointerdown",e=>{
     if(e.target.closest(".photo-resize-handle"))return;
     if(e.target.closest(".photo-item-remove"))return;
 
@@ -90,7 +90,6 @@ function bindPhotoReorder(p,item,index){
 
       if(!dragging){
         if(Math.sqrt(dx*dx+dy*dy)<6)return;
-
         dragging=true;
         item.classList.add("photo-dragging");
         document.body.style.userSelect="none";
@@ -100,9 +99,15 @@ function bindPhotoReorder(p,item,index){
         x.classList.remove("photo-drag-over");
       });
 
-      const target=document.elementFromPoint(ev.clientX,ev.clientY)?.closest(".photo-editor-item");
+      const target=document
+        .elementFromPoint(ev.clientX,ev.clientY)
+        ?.closest(".photo-editor-item");
 
-      if(target && target!==item && target.parentElement===item.parentElement){
+      if(
+        target &&
+        target!==item &&
+        target.parentElement===item.parentElement
+      ){
         target.classList.add("photo-drag-over");
       }
     };
@@ -114,7 +119,9 @@ function bindPhotoReorder(p,item,index){
       document.body.style.userSelect="";
       item.classList.remove("photo-dragging");
 
-      const target=document.elementFromPoint(ev.clientX,ev.clientY)?.closest(".photo-editor-item");
+      const target=document
+        .elementFromPoint(ev.clientX,ev.clientY)
+        ?.closest(".photo-editor-item");
 
       document.querySelectorAll(".photo-editor-item").forEach(x=>{
         x.classList.remove("photo-drag-over");
@@ -139,11 +146,11 @@ function bindPhotoReorder(p,item,index){
 
       const moved=p.photoIds.splice(fromIndex,1)[0];
 
-      const newIndex=fromIndex<targetIndex
-        ? targetIndex
+      const insertIndex=fromIndex<targetIndex
+        ? targetIndex-1
         : targetIndex;
 
-      p.photoIds.splice(newIndex,0,moved);
+      p.photoIds.splice(insertIndex,0,moved);
 
       saveState();
       renderProductsEditor();
@@ -152,7 +159,7 @@ function bindPhotoReorder(p,item,index){
 
     window.addEventListener("pointermove",move);
     window.addEventListener("pointerup",up);
-  };
+  });
 }
 function bindNewPhotoDrop(p,item){const drop=item.querySelector(`[data-photo-drop-new="${p.id}"]`);if(!drop)return;drop.onclick=()=>document.querySelector(`[data-photo-input="${p.id}"]`)?.click();drop.ondragover=e=>{e.preventDefault();drop.classList.add("dragover")};drop.ondragleave=()=>drop.classList.remove("dragover");drop.ondrop=async e=>{e.preventDefault();drop.classList.remove("dragover");const files=Array.from(e.dataTransfer.files||[]).filter(f=>f.type?.startsWith("image/"));if(files.length)await handlePhotos(p,files)}}
 function bindProductEditorEvents(){document.querySelectorAll(".product-editor-card").forEach(card=>{const id=card.dataset.productId,p=state.products.find(x=>x.id===id);if(!p)return;card.querySelectorAll("[data-field]").forEach(f=>{f.addEventListener(f.tagName==="SELECT"?"change":"input",()=>{p[f.dataset.field]=f.value;saveState();renderPreview()})});card.querySelectorAll("[data-product-status]").forEach(b=>b.onclick=()=>{p.status=b.dataset.status;saveState();renderProductsEditor();renderPreview()});const choose=card.querySelector(`[data-choose-photo="${id}"]`),input=card.querySelector(`[data-photo-input="${id}"]`);choose.onclick=()=>input.click();input.onchange=async e=>{const files=Array.from(e.target.files||[]);if(files.length)await handlePhotos(p,files);input.value=""};const rm=card.querySelector(`[data-remove-product="${id}"]`);if(rm)rm.onclick=async()=>{if(!confirm("Удалить это оборудование из КП?"))return;for(const pid of p.photoIds||[])await deletePhoto(pid).catch(()=>{});state.products=state.products.filter(x=>x.id!==id);if(!state.products.length)state.products=[createProduct()];saveState();renderProductsEditor();renderPreview()}})}
