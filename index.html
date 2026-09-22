@@ -171,7 +171,53 @@ drop.style.touchAction="none";
   }
 }
 
+function bindPhotoResize(p,id,item,drop){
+  const h=drop.querySelector(".photo-resize-handle");
+  if(!h)return;
 
+  h.onpointerdown=e=>{
+    e.preventDefault();
+    e.stopPropagation();
+
+    const sx=e.clientX;
+    const sy=e.clientY;
+    const base=getPhotoSize(p,id);
+
+    const localMove=ev=>{
+      const delta=((ev.clientX-sx)+(ev.clientY-sy))/2;
+      const size=setPhotoSize(
+        p,
+        id,
+        base+delta/MM_TO_PX
+      );
+
+      const px=Math.round(size*MM_TO_PX);
+
+      drop.style.width=px+"px";
+      drop.style.height=px+"px";
+      item.style.width=px+"px";
+
+      const l=item.querySelector(".photo-size-label");
+      if(l){
+        l.textContent=`Размер в КП: ${size} × ${size} мм`;
+      }
+    };
+
+    const localUp=()=>{
+      document.body.style.userSelect="";
+      window.removeEventListener("pointermove",localMove);
+      window.removeEventListener("pointerup",localUp);
+
+      saveState();
+      renderPreview();
+    };
+
+    window.addEventListener("pointermove",localMove);
+    window.addEventListener("pointerup",localUp);
+
+    document.body.style.userSelect="none";
+  };
+}
 function bindPhotoReorder(p,item){
   const dragArea=item.querySelector(".photo-drop");
   if(!dragArea)return;
