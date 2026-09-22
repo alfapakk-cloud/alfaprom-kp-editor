@@ -370,19 +370,13 @@ async function paginateProduct(p,index){
   measure.style.visibility="hidden";
   measure.style.boxShadow="none";
 
-  /*
-    В измерительной странице сразу учитываем
-    нижний блок "Почему мы?" + footer.
-    Поэтому основной контент не сможет
-    занять их место.
-  */
   measure.innerHTML=`
     <div class="kp-content">
       ${headerHtml()}
       <div id="measureBlocks"></div>
     </div>
+
     <div class="kp-bottom">
-      ${advantagesHtml()}
       ${footerHtml()}
     </div>
   `;
@@ -391,19 +385,75 @@ async function paginateProduct(p,index){
 
   const target=measure.querySelector("#measureBlocks");
   const content=measure.querySelector(".kp-content");
+  const header=measure.querySelector(".kp-header");
 
   await new Promise(r=>requestAnimationFrame(r));
 
-  const available=content.clientHeight
-    - measure.querySelector(".kp-header").offsetHeight;
+  /*
+    Реально доступная высота основного контента.
+    Берём расстояние от начала блока контента
+    до его нижней границы с учётом шапки.
+  */
+  const contentRect=content.getBoundingClientRect();
+  const targetRect=target.getBoundingClientRect();
 
+  const availableNormal=
+    contentRect.bottom-targetRect.top;
+
+  /*
+    Отдельно измеряем финальную страницу,
+    где кроме контента должны поместиться
+    "Почему мы?" + footer.
+  */
+  const finalMeasure=document.createElement("div");
+
+  finalMeasure.className="kp-page";
+  finalMeasure.style.position="absolute";
+  finalMeasure.style.left="-100000px";
+  finalMeasure.style.top="0";
+  finalMeasure.style.visibility="hidden";
+  finalMeasure.style.boxShadow="none";
+
+  finalMeasure.innerHTML=`
+    <div class="kp-content">
+      ${headerHtml()}
+      <div id="finalMeasureBlocks"></div>
+    </div>
+
+    <div class="kp-bottom">
+      ${advantagesHtml()}
+      ${footerHtml()}
+    </div>
+  `;
+
+  document.body.appendChild(finalMeasure);
+
+  const finalTarget=
+    finalMeasure.querySelector("#finalMeasureBlocks");
+
+  const finalContent=
+    finalMeasure.querySelector(".kp-content");
+
+  await new Promise(r=>requestAnimationFrame(r));
+
+  const finalContentRect=
+    finalContent.getBoundingClientRect();
+
+  const finalTargetRect=
+    finalTarget.getBoundingClientRect();
+
+  const availableFinal=
+    finalContentRect.bottom-finalTargetRect.top;
+
+  /*
+    Сначала разбиваем обычный контент
+    по высоте обычной страницы.
+  */
   const pages=[];
   let current=[];
 
-  /*
-    Разбиваем обычный контент по доступной высоте.
-  */
   for(const html of blocks){
+
     const el=document.createElement("div");
     el.innerHTML=html;
 
@@ -411,7 +461,11 @@ async function paginateProduct(p,index){
 
     await new Promise(r=>requestAnimationFrame(r));
 
-    if(target.scrollHeight>available && current.length){
+    if(
+      target.scrollHeight>availableNormal &&
+      current.length
+    ){
+
       target.removeChild(el);
 
       pages.push(current);
@@ -419,14 +473,17 @@ async function paginateProduct(p,index){
 
       target.innerHTML="";
 
-      const cont=document.createElement("div");
-      cont.innerHTML=html;
-      target.appendChild(cont);
+      const next=document.createElement("div");
+      next.innerHTML=html;
+
+      target.appendChild(next);
 
       await new Promise(r=>requestAnimationFrame(r));
 
       current.push(html);
+
     }else{
+
       current.push(html);
     }
   }
@@ -435,62 +492,55 @@ async function paginateProduct(p,index){
     pages.push(current);
   }
 
-  /*
-    Теперь проверяем последнюю страницу:
-    на ней должны одновременно поместиться
-    контент + "Почему мы?" + footer.
-  */
-  if(pages.length){
-    while(pages[pages.length-1].length){
-
-      target.innerHTML=pages[pages.length-1].join("");
-
-      await new Promise(r=>requestAnimationFrame(r));
-
-      const testContentHeight=target.scrollHeight;
-
-      target.innerHTML=
-        pages[pages.length-1].join("")
-        +advantagesHtml();
-
-      await new Promise(r=>requestAnimationFrame(r));
-
-      const totalHeight=target.scrollHeight;
-
-      if(totalHeight<=available){
-        break;
-      }
-
-      /*
-        Последний блок переносим на новую страницу.
-      */
-      if(pages[pages.length-1].length===1){
-        const moved=pages[pages.length-1].pop();
-
-        pages.push([moved]);
-
-        break;
-      }
-
-      const moved=pages[pages.length-1].pop();
-
-      if(!pages[pages.length-1].length){
-        pages[pages.length-1].push(moved);
-        break;
-      }
-
-      pages.push([moved]);
-    }
-  }else{
+  if(!pages.length){
     pages.push([]);
   }
 
+  /*
+    Теперь проверяем последнюю страницу.
+    На ней должны одновременно поместиться:
+    контент + "Почему мы?" + footer.
+  */
+  while(pages.length){
+
+    const last=pages[pages.length-1];
+
+    finalTarget.innerHTML=last.join("");
+
+    await new Promise(r=>requestAnimationFrame(r));
+
+    if(finalTarget.scrollHeight<=availableFinal){
+      break;
+    }
+
+    /*
+      Если на последней странице несколько блоков,
+      переносим последний блок на новую страницу.
+    */
+    if(last.length>1){
+
+      const moved=last.pop();
+
+      pages.push([moved]);
+
+      continue;
+    }
+
+    /*
+      Если единственный блок сам по себе
+      не помещается на финальной странице,
+      оставляем его как есть — переносить
+      его внутри себя пока не умеем.
+    */
+    break;
+  }
+
   measure.remove();
+  finalMeasure.remove();
 
   /*
-    "Почему мы?" получает отдельный параметр
-    только на последней странице.
-    Внутрь content он больше НЕ добавляется.
+    "Почему мы?" показываем только
+    на последней странице этого оборудования.
   */
   return pages.map((arr,i)=>
     makePage(
