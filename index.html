@@ -533,11 +533,18 @@ function headerHtml(){return`<div class="kp-header"><img class="kp-logo" src="${
 function footerHtml(){return`<div class="kp-footer"><div class="footer-left">АЛЬФАПРОМ<br>Оборудование для пищевого производства и упаковки</div><div class="footer-right">${state.managerName.trim()?`<div class="footer-manager">${escapeHtml(state.managerName)}</div>`:""}${state.managerPhone.trim()?`<div>${escapeHtml(state.managerPhone)}</div>`:""}<div>8 (800) 200-29-23</div><div>alfaprom.org</div></div></div>`}
 function advantagesHtml(){return`<div class="advantages"><div class="advantages-title">Почему мы?</div><div class="advantages-grid">${DEFAULT_ADVANTAGES.map(x=>`<div class="advantage">${escapeHtml(x)}</div>`).join("")}</div></div>`}
 function makePage(content,index,continuation=false,withAdvantages=false){
+
   const c=content.join("");
 
-  return`<div class="kp-page">
+  const pageClass=
+    withAdvantages
+      ? "kp-page final-page"
+      : "kp-page";
+
+  return`<div class="${pageClass}">
 
     <div class="kp-content">
+
       ${headerHtml()}
 
       ${continuation
@@ -548,6 +555,7 @@ function makePage(content,index,continuation=false,withAdvantages=false){
       }
 
       ${c}
+
     </div>
 
     <div class="kp-bottom">
@@ -571,13 +579,9 @@ async function paginateProduct(p,index,withAdvantages=false){
   const blocks=blockHtml(p,index,photos);
 
   /*
-    ==========================================================
-    ИЗМЕРИТЕЛЬ ОБЫЧНОЙ СТРАНИЦЫ
-
-    Здесь футер находится отдельно от kp-content.
-    Поэтому kp-content занимает только пространство
-    между шапкой и нижним блоком.
-    ==========================================================
+    Обычная страница.
+    Нижний блок здесь не участвует
+    в основном потоке контента.
   */
 
   const measure=document.createElement("div");
@@ -614,10 +618,6 @@ async function paginateProduct(p,index,withAdvantages=false){
 
   await new Promise(r=>requestAnimationFrame(r));
 
-  /*
-    Доступная высота обычного контента.
-  */
-
   const contentRect=
     content.getBoundingClientRect();
 
@@ -629,13 +629,9 @@ async function paginateProduct(p,index,withAdvantages=false){
 
 
   /*
-    ==========================================================
-    ИЗМЕРИТЕЛЬ ФИНАЛЬНОЙ СТРАНИЦЫ
-
-    Только если это последнее оборудование
-    всего коммерческого предложения, резервируем место
-    под "Почему мы?".
-    ==========================================================
+    Для финальной страницы используем
+    именно final-page с зарезервированным
+    нижним пространством.
   */
 
   let finalMeasure=null;
@@ -646,7 +642,7 @@ async function paginateProduct(p,index,withAdvantages=false){
 
     finalMeasure=document.createElement("div");
 
-    finalMeasure.className="kp-page";
+    finalMeasure.className="kp-page final-page";
 
     finalMeasure.style.position="absolute";
     finalMeasure.style.left="-100000px";
@@ -694,9 +690,7 @@ async function paginateProduct(p,index,withAdvantages=false){
 
 
   /*
-    ==========================================================
-    РАЗБИВАЕМ ОСНОВНОЙ КОНТЕНТ
-    ==========================================================
+    Разбиваем контент на обычные страницы.
   */
 
   const pages=[];
@@ -716,11 +710,6 @@ async function paginateProduct(p,index,withAdvantages=false){
       target.scrollHeight>availableNormal &&
       current.length
     ){
-
-      /*
-        Этот блок уже не помещается.
-        Убираем его со страницы.
-      */
 
       target.removeChild(el);
 
@@ -748,34 +737,18 @@ async function paginateProduct(p,index,withAdvantages=false){
   }
 
   if(current.length){
-
     pages.push(current);
-
   }
 
   if(!pages.length){
-
     pages.push([]);
-
   }
 
 
   /*
-    ==========================================================
-    ФИНАЛЬНАЯ СТРАНИЦА
-
-    Если это последнее оборудование всего КП,
-    последняя страница должна вместить:
-
-      контент
-      +
-      "Почему мы?"
-      +
-      футер
-
-    Если не помещается — переносим последний
-    логический блок на новую страницу.
-    ==========================================================
+    Финальная страница.
+    Здесь жёстко резервируется место
+    под "Почему мы?" и футер.
   */
 
   if(withAdvantages){
@@ -798,12 +771,6 @@ async function paginateProduct(p,index,withAdvantages=false){
 
       }
 
-
-      /*
-        На странице больше одного логического блока.
-        Переносим последний блок целиком.
-      */
-
       if(last.length>1){
 
         const moved=
@@ -815,38 +782,17 @@ async function paginateProduct(p,index,withAdvantages=false){
 
       }
 
-
-      /*
-        Один крупный блок сам по себе превышает
-        доступную высоту. Внутри этого блока
-        принудительно не режем.
-      */
-
       break;
     }
   }
 
 
-  /*
-    ==========================================================
-    УБИРАЕМ ИЗМЕРИТЕЛИ
-    ==========================================================
-  */
-
   measure.remove();
 
   if(finalMeasure){
-
     finalMeasure.remove();
-
   }
 
-
-  /*
-    ==========================================================
-    ФОРМИРУЕМ ГОТОВЫЕ СТРАНИЦЫ
-    ==========================================================
-  */
 
   return pages.map((arr,i)=>{
 
@@ -876,11 +822,6 @@ async function buildAllPages(){
     i<state.products.length;
     i++
   ){
-
-    /*
-      "Почему мы?" резервируем только
-      для последнего товара всего КП.
-    */
 
     const isLastProduct=
       i===lastProductIndex;
