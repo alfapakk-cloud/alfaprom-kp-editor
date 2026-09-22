@@ -135,8 +135,8 @@ async function renderEditorPhotos(p){
       const url=URL.createObjectURL(blob);
 
       drop.classList.add("has-image");
-
-      drop.innerHTML=`<img src="${url}" alt="Фото оборудования">
+drop.style.touchAction="none";
+      drop.innerHTML=`<img src="${url}" alt="Фото оборудования" draggable="false">
         <div class="photo-resize-handle"
           title="Потяните, чтобы изменить размер"></div>`;
 
