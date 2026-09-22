@@ -349,21 +349,54 @@ function makePage(content,index,continuation=false,withAdvantages=false){
   const c=content.join("");
 
   return`<div class="kp-page">
+
     <div class="kp-content">
       ${headerHtml()}
-      ${continuation?`<div class="page-continuation">Продолжение предложения — оборудование №${index+1}</div>`:""}
-      ${c}${withAdvantages?advantagesHtml():""}
+
+      ${continuation
+        ? `<div class="page-continuation">
+             Продолжение предложения — оборудование №${index+1}
+           </div>`
+        : ""
+      }
+
+      ${c}
     </div>
-    ${footerHtml()}
-  </div>`
+
+    <div class="kp-bottom">
+
+      ${withAdvantages
+        ? advantagesHtml()
+        : ""
+      }
+
+      ${footerHtml()}
+
+    </div>
+
+  </div>`;
 }
-async function paginateProduct(p,index){
+
+
+async function paginateProduct(p,index,withAdvantages=false){
+
   const photos=await getProductPhotosData(p);
   const blocks=blockHtml(p,index,photos);
+
+  /*
+    ==========================================================
+    ИЗМЕРИТЕЛЬ ОБЫЧНОЙ СТРАНИЦЫ
+
+    Здесь футер находится отдельно от kp-content.
+    Поэтому kp-content занимает только пространство
+    между шапкой и нижним блоком.
+    ==========================================================
+  */
 
   const measure=document.createElement("div");
 
   measure.className="kp-page";
+
   measure.style.position="absolute";
   measure.style.left="-100000px";
   measure.style.top="0";
@@ -372,8 +405,11 @@ async function paginateProduct(p,index){
 
   measure.innerHTML=`
     <div class="kp-content">
+
       ${headerHtml()}
+
       <div id="measureBlocks"></div>
+
     </div>
 
     <div class="kp-bottom">
@@ -383,78 +419,106 @@ async function paginateProduct(p,index){
 
   document.body.appendChild(measure);
 
-  const target=measure.querySelector("#measureBlocks");
-  const content=measure.querySelector(".kp-content");
-  const header=measure.querySelector(".kp-header");
+  const target=
+    measure.querySelector("#measureBlocks");
+
+  const content=
+    measure.querySelector(".kp-content");
 
   await new Promise(r=>requestAnimationFrame(r));
 
   /*
-    Реально доступная высота основного контента.
-    Берём расстояние от начала блока контента
-    до его нижней границы с учётом шапки.
+    Доступная высота обычного контента.
   */
-  const contentRect=content.getBoundingClientRect();
-  const targetRect=target.getBoundingClientRect();
+
+  const contentRect=
+    content.getBoundingClientRect();
+
+  const targetRect=
+    target.getBoundingClientRect();
 
   const availableNormal=
     contentRect.bottom-targetRect.top;
 
-  /*
-    Отдельно измеряем финальную страницу,
-    где кроме контента должны поместиться
-    "Почему мы?" + footer.
-  */
-  const finalMeasure=document.createElement("div");
-
-  finalMeasure.className="kp-page";
-  finalMeasure.style.position="absolute";
-  finalMeasure.style.left="-100000px";
-  finalMeasure.style.top="0";
-  finalMeasure.style.visibility="hidden";
-  finalMeasure.style.boxShadow="none";
-
-  finalMeasure.innerHTML=`
-    <div class="kp-content">
-      ${headerHtml()}
-      <div id="finalMeasureBlocks"></div>
-    </div>
-
-    <div class="kp-bottom">
-      ${advantagesHtml()}
-      ${footerHtml()}
-    </div>
-  `;
-
-  document.body.appendChild(finalMeasure);
-
-  const finalTarget=
-    finalMeasure.querySelector("#finalMeasureBlocks");
-
-  const finalContent=
-    finalMeasure.querySelector(".kp-content");
-
-  await new Promise(r=>requestAnimationFrame(r));
-
-  const finalContentRect=
-    finalContent.getBoundingClientRect();
-
-  const finalTargetRect=
-    finalTarget.getBoundingClientRect();
-
-  const availableFinal=
-    finalContentRect.bottom-finalTargetRect.top;
 
   /*
-    Сначала разбиваем обычный контент
-    по высоте обычной страницы.
+    ==========================================================
+    ИЗМЕРИТЕЛЬ ФИНАЛЬНОЙ СТРАНИЦЫ
+
+    Только если это последнее оборудование
+    всего коммерческого предложения, резервируем место
+    под "Почему мы?".
+    ==========================================================
   */
+
+  let finalMeasure=null;
+  let finalTarget=null;
+  let availableFinal=availableNormal;
+
+  if(withAdvantages){
+
+    finalMeasure=document.createElement("div");
+
+    finalMeasure.className="kp-page";
+
+    finalMeasure.style.position="absolute";
+    finalMeasure.style.left="-100000px";
+    finalMeasure.style.top="0";
+    finalMeasure.style.visibility="hidden";
+    finalMeasure.style.boxShadow="none";
+
+    finalMeasure.innerHTML=`
+      <div class="kp-content">
+
+        ${headerHtml()}
+
+        <div id="finalMeasureBlocks"></div>
+
+      </div>
+
+      <div class="kp-bottom">
+
+        ${advantagesHtml()}
+
+        ${footerHtml()}
+
+      </div>
+    `;
+
+    document.body.appendChild(finalMeasure);
+
+    finalTarget=
+      finalMeasure.querySelector("#finalMeasureBlocks");
+
+    const finalContent=
+      finalMeasure.querySelector(".kp-content");
+
+    await new Promise(r=>requestAnimationFrame(r));
+
+    const finalContentRect=
+      finalContent.getBoundingClientRect();
+
+    const finalTargetRect=
+      finalTarget.getBoundingClientRect();
+
+    availableFinal=
+      finalContentRect.bottom-finalTargetRect.top;
+  }
+
+
+  /*
+    ==========================================================
+    РАЗБИВАЕМ ОСНОВНОЙ КОНТЕНТ
+    ==========================================================
+  */
+
   const pages=[];
   let current=[];
 
   for(const html of blocks){
 
     const el=document.createElement("div");
+
     el.innerHTML=html;
 
     target.appendChild(el);
@@ -466,14 +530,21 @@ async function paginateProduct(p,index){
       current.length
     ){
 
+      /*
+        Этот блок уже не помещается.
+        Убираем его со страницы.
+      */
+
       target.removeChild(el);
 
       pages.push(current);
+
       current=[];
 
       target.innerHTML="";
 
       const next=document.createElement("div");
+
       next.innerHTML=html;
 
       target.appendChild(next);
@@ -485,74 +556,160 @@ async function paginateProduct(p,index){
     }else{
 
       current.push(html);
+
     }
   }
 
   if(current.length){
+
     pages.push(current);
+
   }
 
   if(!pages.length){
+
     pages.push([]);
+
   }
 
+
   /*
-    Теперь проверяем последнюю страницу.
-    На ней должны одновременно поместиться:
-    контент + "Почему мы?" + footer.
+    ==========================================================
+    ФИНАЛЬНАЯ СТРАНИЦА
+
+    Если это последнее оборудование всего КП,
+    последняя страница должна вместить:
+
+      контент
+      +
+      "Почему мы?"
+      +
+      футер
+
+    Если не помещается — переносим последний
+    логический блок на новую страницу.
+    ==========================================================
   */
-  while(pages.length){
 
-    const last=pages[pages.length-1];
+  if(withAdvantages){
 
-    finalTarget.innerHTML=last.join("");
+    while(pages.length){
 
-    await new Promise(r=>requestAnimationFrame(r));
+      const last=
+        pages[pages.length-1];
 
-    if(finalTarget.scrollHeight<=availableFinal){
+      finalTarget.innerHTML=
+        last.join("");
+
+      await new Promise(r=>requestAnimationFrame(r));
+
+      if(
+        finalTarget.scrollHeight<=availableFinal
+      ){
+
+        break;
+
+      }
+
+
+      /*
+        На странице больше одного логического блока.
+        Переносим последний блок целиком.
+      */
+
+      if(last.length>1){
+
+        const moved=
+          last.pop();
+
+        pages.push([moved]);
+
+        continue;
+
+      }
+
+
+      /*
+        Один крупный блок сам по себе превышает
+        доступную высоту. Внутри этого блока
+        принудительно не режем.
+      */
+
       break;
     }
-
-    /*
-      Если на последней странице несколько блоков,
-      переносим последний блок на новую страницу.
-    */
-    if(last.length>1){
-
-      const moved=last.pop();
-
-      pages.push([moved]);
-
-      continue;
-    }
-
-    /*
-      Если единственный блок сам по себе
-      не помещается на финальной странице,
-      оставляем его как есть — переносить
-      его внутри себя пока не умеем.
-    */
-    break;
   }
 
-  measure.remove();
-  finalMeasure.remove();
 
   /*
-    "Почему мы?" показываем только
-    на последней странице этого оборудования.
+    ==========================================================
+    УБИРАЕМ ИЗМЕРИТЕЛИ
+    ==========================================================
   */
-  return pages.map((arr,i)=>
-    makePage(
+
+  measure.remove();
+
+  if(finalMeasure){
+
+    finalMeasure.remove();
+
+  }
+
+
+  /*
+    ==========================================================
+    ФОРМИРУЕМ ГОТОВЫЕ СТРАНИЦЫ
+    ==========================================================
+  */
+
+  return pages.map((arr,i)=>{
+
+    const isLastPage=
+      i===pages.length-1;
+
+    return makePage(
       arr,
       index,
       i>0,
-      i===pages.length-1
-    )
-  );
+      withAdvantages && isLastPage
+    );
+
+  });
 }
-async function buildAllPages(){const all=[];for(let i=0;i<state.products.length;i++){const pages=await paginateProduct(state.products[i],i);all.push(...pages)}return all}
-function getA4SizePx(){const d=document.createElement("div");d.style.cssText="position:absolute;visibility:hidden;width:210mm;height:297mm";document.body.appendChild(d);const r={width:d.getBoundingClientRect().width,height:d.getBoundingClientRect().height};d.remove();return r}
+
+
+async function buildAllPages(){
+
+  const all=[];
+
+  const lastProductIndex=
+    state.products.length-1;
+
+  for(
+    let i=0;
+    i<state.products.length;
+    i++
+  ){
+
+    /*
+      "Почему мы?" резервируем только
+      для последнего товара всего КП.
+    */
+
+    const isLastProduct=
+      i===lastProductIndex;
+
+    const pages=
+      await paginateProduct(
+        state.products[i],
+        i,
+        isLastProduct
+      );
+
+    all.push(...pages);
+  }
+
+  return all;
+}function getA4SizePx(){const d=document.createElement("div");d.style.cssText="position:absolute;visibility:hidden;width:210mm;height:297mm";document.body.appendChild(d);const r={width:d.getBoundingClientRect().width,height:d.getBoundingClientRect().height};d.remove();return r}
 function fitPreviewPages(){const scroll=document.getElementById("previewScroll"),shells=document.querySelectorAll(".preview-page-shell");if(!scroll||!shells.length)return;const a4=getA4SizePx(),scale=Math.min(Math.max(100,scroll.clientWidth-40)/a4.width,Math.max(100,scroll.clientHeight-40)/a4.height);shells.forEach(s=>{s.style.width=a4.width*scale+"px";s.style.height=a4.height*scale+"px";const p=s.querySelector(".preview-page-scaled");if(p)p.style.transform=`scale(${scale})`})}
 let renderToken=0;async function renderPreview(){const token=++renderToken,c=document.getElementById("previewPages");c.innerHTML="";const pages=await buildAllPages();if(token!==renderToken)return;for(const html of pages){const shell=document.createElement("div");shell.className="preview-page-shell";const page=document.createElement("div");page.className="preview-page-scaled";page.innerHTML=html;shell.appendChild(page);c.appendChild(shell)}fitPreviewPages()}
 const managerName=document.getElementById("managerName"),managerPhone=document.getElementById("managerPhone");managerName.oninput=()=>{state.managerName=managerName.value;saveState();renderPreview()};managerPhone.oninput=()=>{state.managerPhone=managerPhone.value;saveState();renderPreview()};
