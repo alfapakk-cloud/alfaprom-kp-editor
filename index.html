@@ -70,77 +70,104 @@ async function renderEditorPhotos(p){const grid=document.querySelector(`[data-ph
 bindPhotoReorder(p,item,i);
 const drop=item.querySelector(`[data-photo-drop="${p.id}-${i}"]`),remove=item.querySelector(`[data-remove-photo-index="${p.id}-${i}"]`);try{const blob=await getPhoto(id);if(!blob){p.photoIds=p.photoIds.filter(x=>x!==id);delete p.photoSizes[id];saveState();item.remove();continue}const url=URL.createObjectURL(blob);drop.classList.add("has-image");drop.innerHTML=`<img src="${url}" alt="Фото оборудования"><div class="photo-resize-handle" title="Потяните, чтобы изменить размер"></div>`;drop.querySelector("img").onload=()=>URL.revokeObjectURL(url);bindPhotoResize(p,id,item,drop)}catch(e){console.error(e)}remove.onclick=async e=>{e.preventDefault();e.stopPropagation();await deletePhoto(id).catch(()=>{});p.photoIds=p.photoIds.filter(x=>x!==id);delete p.photoSizes[id];saveState();renderProductsEditor();renderPreview()}}}
 function bindPhotoReorder(p,item,index){
-  item.draggable=true;
+  let dragging=false;
+  let startX=0;
+  let startY=0;
 
-  const handle=item.querySelector(".photo-resize-handle");
+  item.draggable=false;
 
-  if(handle){
-    handle.addEventListener("pointerdown",()=>{
-      item.draggable=false;
-    });
+  item.onpointerdown=e=>{
+    if(e.target.closest(".photo-resize-handle")) return;
+    if(e.target.closest(".photo-item-remove")) return;
 
-    handle.addEventListener("pointerup",()=>{
-      item.draggable=true;
-    });
+    startX=e.clientX;
+    startY=e.clientY;
+    dragging=false;
 
-    handle.addEventListener("pointercancel",()=>{
-      item.draggable=true;
-    });
-  }
+    const move=ev=>{
+      const dx=ev.clientX-startX;
+      const dy=ev.clientY-startY;
 
-  item.ondragstart=e=>{
-    if(e.target.closest(".photo-resize-handle")){
-      e.preventDefault();
-      return;
-    }
+      if(!dragging && Math.sqrt(dx*dx+dy*dy)<6)return;
 
-    e.dataTransfer.effectAllowed="move";
-    e.dataTransfer.setData("text/plain",String(index));
-    item.classList.add("photo-dragging");
-  };
+      if(!dragging){
+        dragging=true;
+        item.classList.add("photo-dragging");
+      }
 
-  item.ondragend=()=>{
-    item.classList.remove("photo-dragging");
-    item.draggable=true;
+      const elements=[...item.parentElement.querySelectorAll(".photo-editor-item")]
+        .filter(x=>x!==item);
 
-    document.querySelectorAll(".photo-editor-item").forEach(x=>{
-      x.classList.remove("photo-drag-over");
-    });
-  };
+      elements.forEach(x=>x.classList.remove("photo-drag-over"));
 
-  item.ondragover=e=>{
-    e.preventDefault();
-    e.dataTransfer.dropEffect="move";
-    item.classList.add("photo-drag-over");
-  };
+      const target=elements.find(x=>{
+        const r=x.getBoundingClientRect();
+        return ev.clientX>=r.left &&
+               ev.clientX<=r.right &&
+               ev.clientY>=r.top &&
+               ev.clientY<=r.bottom;
+      });
 
-  item.ondragleave=e=>{
-    if(!item.contains(e.relatedTarget)){
-      item.classList.remove("photo-drag-over");
-    }
-  };
+      if(target)target.classList.add("photo-drag-over");
+    };
 
-  item.ondrop=e=>{
-    e.preventDefault();
-    item.classList.remove("photo-drag-over");
+    const up=ev=>{
+      window.removeEventListener("pointermove",move);
+      window.removeEventListener("pointerup",up);
 
-    const fromIndex=parseInt(e.dataTransfer.getData("text/plain"),10);
+      item.classList.remove("photo-dragging");
 
-    if(
-      Number.isNaN(fromIndex) ||
-      fromIndex===index ||
-      fromIndex<0 ||
-      fromIndex>=p.photoIds.length
-    ) return;
+      const elements=[...item.parentElement.querySelectorAll(".photo-editor-item")]
+        .filter(x=>x!==item);
 
-    const moved=p.photoIds.splice(fromIndex,1)[0];
-    const targetIndex=fromIndex<index?index-1:index;
+      let target=null;
 
-    p.photoIds.splice(targetIndex,0,moved);
+      for(const x of elements){
+        const r=x.getBoundingClientRect();
 
-    saveState();
-    renderProductsEditor();
-    renderPreview();
+        if(
+          ev.clientX>=r.left &&
+          ev.clientX<=r.right &&
+          ev.clientY>=r.top &&
+          ev.clientY<=r.bottom
+        ){
+          target=x;
+          break;
+        }
+      }
+
+      elements.forEach(x=>x.classList.remove("photo-drag-over"));
+
+      if(!dragging || !target)return;
+
+      const fromIndex=p.photoIds.indexOf(
+        item.querySelector("[data-photo-drop]")?.dataset.photoDrop?.split("-").pop()
+      );
+
+      const targetDrop=target.querySelector("[data-photo-drop]");
+      const targetData=targetDrop?.dataset.photoDrop;
+
+      if(!targetData)return;
+
+      const parts=targetData.split("-");
+      const targetIndex=parseInt(parts[parts.length-1],10);
+
+      if(
+        Number.isNaN(fromIndex) ||
+        Number.isNaN(targetIndex) ||
+        fromIndex===targetIndex
+      )return;
+
+      const moved=p.photoIds.splice(fromIndex,1)[0];
+      p.photoIds.splice(targetIndex,0,moved);
+
+      saveState();
+      renderProductsEditor();
+      renderPreview();
+    };
+
+    window.addEventListener("pointermove",move);
+    window.addEventListener("pointerup",up);
   };
 }
 function bindNewPhotoDrop(p,item){const drop=item.querySelector(`[data-photo-drop-new="${p.id}"]`);if(!drop)return;drop.onclick=()=>document.querySelector(`[data-photo-input="${p.id}"]`)?.click();drop.ondragover=e=>{e.preventDefault();drop.classList.add("dragover")};drop.ondragleave=()=>drop.classList.remove("dragover");drop.ondrop=async e=>{e.preventDefault();drop.classList.remove("dragover");const files=Array.from(e.dataTransfer.files||[]).filter(f=>f.type?.startsWith("image/"));if(files.length)await handlePhotos(p,files)}}
