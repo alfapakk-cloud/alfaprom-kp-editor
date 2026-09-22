@@ -354,14 +354,9 @@ function makePage(content,index,continuation=false,withAdvantages=false){
     <div class="kp-content">
       ${headerHtml()}
       ${continuation?`<div class="page-continuation">Продолжение предложения — оборудование №${index+1}</div>`:""}
-      ${c}
+      ${c}${withAdvantages?advantagesHtml():""}
     </div>
-
-    <div class="kp-bottom">
-      ${withAdvantages?advantagesHtml():""}
-      ${footerHtml()}
-    </div>
-
+    ${footerHtml()}
   </div>`
 }
 async function paginateProduct(p,index){
