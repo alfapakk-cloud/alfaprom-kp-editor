@@ -71,96 +71,78 @@ bindPhotoReorder(p,item,i);
 const drop=item.querySelector(`[data-photo-drop="${p.id}-${i}"]`),remove=item.querySelector(`[data-remove-photo-index="${p.id}-${i}"]`);try{const blob=await getPhoto(id);if(!blob){p.photoIds=p.photoIds.filter(x=>x!==id);delete p.photoSizes[id];saveState();item.remove();continue}const url=URL.createObjectURL(blob);drop.classList.add("has-image");drop.innerHTML=`<img src="${url}" alt="Фото оборудования"><div class="photo-resize-handle" title="Потяните, чтобы изменить размер"></div>`;drop.querySelector("img").onload=()=>URL.revokeObjectURL(url);bindPhotoResize(p,id,item,drop);
 bindPhotoReorder(p,item,i);}catch(e){console.error(e)}remove.onclick=async e=>{e.preventDefault();e.stopPropagation();await deletePhoto(id).catch(()=>{});p.photoIds=p.photoIds.filter(x=>x!==id);delete p.photoSizes[id];saveState();renderProductsEditor();renderPreview()}}}
 function bindPhotoReorder(p,item,index){
-  let dragging=false;
-  let startX=0;
-  let startY=0;
+  const img=item.querySelector("img");
+  if(!img)return;
 
-  item.dataset.photoIndex=index;
+  img.draggable=true;
+  img.dataset.photoIndex=index;
 
-  item.addEventListener("pointerdown",e=>{
-    if(e.target.closest(".photo-resize-handle"))return;
-    if(e.target.closest(".photo-item-remove"))return;
+  img.ondragstart=e=>{
+    e.dataTransfer.effectAllowed="move";
+    e.dataTransfer.setData("text/plain",String(index));
+    item.classList.add("photo-dragging");
+  };
 
-    startX=e.clientX;
-    startY=e.clientY;
-    dragging=false;
+  img.ondragend=()=>{
+    item.classList.remove("photo-dragging");
 
-    const move=ev=>{
-      const dx=ev.clientX-startX;
-      const dy=ev.clientY-startY;
+    document.querySelectorAll(".photo-editor-item").forEach(x=>{
+      x.classList.remove("photo-drag-over");
+    });
+  };
 
-      if(!dragging){
-        if(Math.sqrt(dx*dx+dy*dy)<6)return;
-        dragging=true;
-        item.classList.add("photo-dragging");
-        document.body.style.userSelect="none";
-      }
+  item.ondragover=e=>{
+    e.preventDefault();
 
-      document.querySelectorAll(".photo-editor-item").forEach(x=>{
-        x.classList.remove("photo-drag-over");
-      });
+    const sourceIndex=parseInt(
+      e.dataTransfer.getData("text/plain"),
+      10
+    );
 
-      const target=document
-        .elementFromPoint(ev.clientX,ev.clientY)
-        ?.closest(".photo-editor-item");
+    if(
+      Number.isNaN(sourceIndex) ||
+      sourceIndex===index
+    )return;
 
-      if(
-        target &&
-        target!==item &&
-        target.parentElement===item.parentElement
-      ){
-        target.classList.add("photo-drag-over");
-      }
-    };
+    e.dataTransfer.dropEffect="move";
+    item.classList.add("photo-drag-over");
+  };
 
-    const up=ev=>{
-      window.removeEventListener("pointermove",move);
-      window.removeEventListener("pointerup",up);
+  item.ondragleave=e=>{
+    if(!item.contains(e.relatedTarget)){
+      item.classList.remove("photo-drag-over");
+    }
+  };
 
-      document.body.style.userSelect="";
-      item.classList.remove("photo-dragging");
+  item.ondrop=e=>{
+    e.preventDefault();
 
-      const target=document
-        .elementFromPoint(ev.clientX,ev.clientY)
-        ?.closest(".photo-editor-item");
+    item.classList.remove("photo-drag-over");
 
-      document.querySelectorAll(".photo-editor-item").forEach(x=>{
-        x.classList.remove("photo-drag-over");
-      });
+    const sourceIndex=parseInt(
+      e.dataTransfer.getData("text/plain"),
+      10
+    );
 
-      if(!dragging)return;
+    if(
+      Number.isNaN(sourceIndex) ||
+      sourceIndex<0 ||
+      sourceIndex>=p.photoIds.length ||
+      sourceIndex===index
+    )return;
 
-      if(
-        !target ||
-        target===item ||
-        target.parentElement!==item.parentElement
-      )return;
+    const moved=p.photoIds.splice(sourceIndex,1)[0];
 
-      const fromIndex=parseInt(item.dataset.photoIndex,10);
-      const targetIndex=parseInt(target.dataset.photoIndex,10);
+    const targetIndex=sourceIndex<index
+      ? index-1
+      : index;
 
-      if(
-        Number.isNaN(fromIndex) ||
-        Number.isNaN(targetIndex) ||
-        fromIndex===targetIndex
-      )return;
+    p.photoIds.splice(targetIndex,0,moved);
 
-      const moved=p.photoIds.splice(fromIndex,1)[0];
-
-      const insertIndex=fromIndex<targetIndex
-        ? targetIndex-1
-        : targetIndex;
-
-      p.photoIds.splice(insertIndex,0,moved);
-
-      saveState();
-      renderProductsEditor();
-      renderPreview();
-    };
-
-    window.addEventListener("pointermove",move);
-    window.addEventListener("pointerup",up);
-  });
+    saveState();
+    renderProductsEditor();
+    renderPreview();
+  };
 }
 function bindNewPhotoDrop(p,item){const drop=item.querySelector(`[data-photo-drop-new="${p.id}"]`);if(!drop)return;drop.onclick=()=>document.querySelector(`[data-photo-input="${p.id}"]`)?.click();drop.ondragover=e=>{e.preventDefault();drop.classList.add("dragover")};drop.ondragleave=()=>drop.classList.remove("dragover");drop.ondrop=async e=>{e.preventDefault();drop.classList.remove("dragover");const files=Array.from(e.dataTransfer.files||[]).filter(f=>f.type?.startsWith("image/"));if(files.length)await handlePhotos(p,files)}}
 function bindProductEditorEvents(){document.querySelectorAll(".product-editor-card").forEach(card=>{const id=card.dataset.productId,p=state.products.find(x=>x.id===id);if(!p)return;card.querySelectorAll("[data-field]").forEach(f=>{f.addEventListener(f.tagName==="SELECT"?"change":"input",()=>{p[f.dataset.field]=f.value;saveState();renderPreview()})});card.querySelectorAll("[data-product-status]").forEach(b=>b.onclick=()=>{p.status=b.dataset.status;saveState();renderProductsEditor();renderPreview()});const choose=card.querySelector(`[data-choose-photo="${id}"]`),input=card.querySelector(`[data-photo-input="${id}"]`);choose.onclick=()=>input.click();input.onchange=async e=>{const files=Array.from(e.target.files||[]);if(files.length)await handlePhotos(p,files);input.value=""};const rm=card.querySelector(`[data-remove-product="${id}"]`);if(rm)rm.onclick=async()=>{if(!confirm("Удалить это оборудование из КП?"))return;for(const pid of p.photoIds||[])await deletePhoto(pid).catch(()=>{});state.products=state.products.filter(x=>x.id!==id);if(!state.products.length)state.products=[createProduct()];saveState();renderProductsEditor();renderPreview()}})}
