@@ -367,7 +367,151 @@ function makePage(content,index,continuation=false,withAdvantages=false){
     </div>
 
   </div>`
-}async function paginateProduct(p,index){const photos=await getProductPhotosData(p),blocks=blockHtml(p,index,photos);const measure=document.createElement("div");measure.className="kp-page";measure.style.position="absolute";measure.style.left="-100000px";measure.style.top="0";measure.style.visibility="hidden";measure.style.boxShadow="none";measure.innerHTML=`<div class="kp-content">${headerHtml()}<div id="measureBlocks"></div></div>${footerHtml()}`;document.body.appendChild(measure);const target=measure.querySelector("#measureBlocks"),available=measure.querySelector(".kp-content").clientHeight-measure.querySelector(".kp-header").offsetHeight;const pages=[],current=[];await new Promise(r=>requestAnimationFrame(r));for(const html of blocks){const el=document.createElement("div");el.innerHTML=html;target.appendChild(el);await new Promise(r=>requestAnimationFrame(r));if(target.scrollHeight>available&&current.length){target.removeChild(el);pages.push(current.splice(0));target.innerHTML="";const cont=document.createElement("div");cont.innerHTML=html;target.appendChild(cont);await new Promise(r=>requestAnimationFrame(r));current.push(html)}else current.push(html)}if(current.length)pages.push(current.splice(0));/* advantages stay at a fixed bottom position on the final page; if they don't fit, make a new page */target.innerHTML=advantagesHtml();await new Promise(r=>requestAnimationFrame(r));const advH=target.scrollHeight;if(pages.length){target.innerHTML=pages[pages.length-1].join("");await new Promise(r=>requestAnimationFrame(r));if(target.scrollHeight+advH>available){pages.push([advantagesHtml()])}else{pages[pages.length-1].push(advantagesHtml())}}else pages.push([advantagesHtml()]);measure.remove();return pages.map((arr,i)=>makePage(arr,index,i>0,false));}
+}
+async function paginateProduct(p,index){
+  const photos=await getProductPhotosData(p);
+  const blocks=blockHtml(p,index,photos);
+
+  const measure=document.createElement("div");
+
+  measure.className="kp-page";
+  measure.style.position="absolute";
+  measure.style.left="-100000px";
+  measure.style.top="0";
+  measure.style.visibility="hidden";
+  measure.style.boxShadow="none";
+
+  /*
+    В измерительной странице сразу учитываем
+    нижний блок "Почему мы?" + footer.
+    Поэтому основной контент не сможет
+    занять их место.
+  */
+  measure.innerHTML=`
+    <div class="kp-content">
+      ${headerHtml()}
+      <div id="measureBlocks"></div>
+    </div>
+    <div class="kp-bottom">
+      ${advantagesHtml()}
+      ${footerHtml()}
+    </div>
+  `;
+
+  document.body.appendChild(measure);
+
+  const target=measure.querySelector("#measureBlocks");
+  const content=measure.querySelector(".kp-content");
+
+  await new Promise(r=>requestAnimationFrame(r));
+
+  const available=content.clientHeight
+    - measure.querySelector(".kp-header").offsetHeight;
+
+  const pages=[];
+  let current=[];
+
+  /*
+    Разбиваем обычный контент по доступной высоте.
+  */
+  for(const html of blocks){
+    const el=document.createElement("div");
+    el.innerHTML=html;
+
+    target.appendChild(el);
+
+    await new Promise(r=>requestAnimationFrame(r));
+
+    if(target.scrollHeight>available && current.length){
+      target.removeChild(el);
+
+      pages.push(current);
+      current=[];
+
+      target.innerHTML="";
+
+      const cont=document.createElement("div");
+      cont.innerHTML=html;
+      target.appendChild(cont);
+
+      await new Promise(r=>requestAnimationFrame(r));
+
+      current.push(html);
+    }else{
+      current.push(html);
+    }
+  }
+
+  if(current.length){
+    pages.push(current);
+  }
+
+  /*
+    Теперь проверяем последнюю страницу:
+    на ней должны одновременно поместиться
+    контент + "Почему мы?" + footer.
+  */
+  if(pages.length){
+    while(pages[pages.length-1].length){
+
+      target.innerHTML=pages[pages.length-1].join("");
+
+      await new Promise(r=>requestAnimationFrame(r));
+
+      const testContentHeight=target.scrollHeight;
+
+      target.innerHTML=
+        pages[pages.length-1].join("")
+        +advantagesHtml();
+
+      await new Promise(r=>requestAnimationFrame(r));
+
+      const totalHeight=target.scrollHeight;
+
+      if(totalHeight<=available){
+        break;
+      }
+
+      /*
+        Последний блок переносим на новую страницу.
+      */
+      if(pages[pages.length-1].length===1){
+        const moved=pages[pages.length-1].pop();
+
+        pages.push([moved]);
+
+        break;
+      }
+
+      const moved=pages[pages.length-1].pop();
+
+      if(!pages[pages.length-1].length){
+        pages[pages.length-1].push(moved);
+        break;
+      }
+
+      pages.push([moved]);
+    }
+  }else{
+    pages.push([]);
+  }
+
+  measure.remove();
+
+  /*
+    "Почему мы?" получает отдельный параметр
+    только на последней странице.
+    Внутрь content он больше НЕ добавляется.
+  */
+  return pages.map((arr,i)=>
+    makePage(
+      arr,
+      index,
+      i>0,
+      i===pages.length-1
+    )
+  );
+}
 async function buildAllPages(){const all=[];for(let i=0;i<state.products.length;i++){const pages=await paginateProduct(state.products[i],i);all.push(...pages)}return all}
 function getA4SizePx(){const d=document.createElement("div");d.style.cssText="position:absolute;visibility:hidden;width:210mm;height:297mm";document.body.appendChild(d);const r={width:d.getBoundingClientRect().width,height:d.getBoundingClientRect().height};d.remove();return r}
 function fitPreviewPages(){const scroll=document.getElementById("previewScroll"),shells=document.querySelectorAll(".preview-page-shell");if(!scroll||!shells.length)return;const a4=getA4SizePx(),scale=Math.min(Math.max(100,scroll.clientWidth-40)/a4.width,Math.max(100,scroll.clientHeight-40)/a4.height);shells.forEach(s=>{s.style.width=a4.width*scale+"px";s.style.height=a4.height*scale+"px";const p=s.querySelector(".preview-page-scaled");if(p)p.style.transform=`scale(${scale})`})}
