@@ -14,7 +14,23 @@
 .preview-side{min-width:0;min-height:0;display:flex;flex-direction:column;background:#e8eaed}.preview-title{flex:none;height:48px;display:flex;align-items:center;padding:0 18px;background:#fff;border-bottom:1px solid #d7d9dc;font-size:16px;font-weight:700}.preview-scroll{flex:1;min-height:0;overflow:auto;padding:20px}.preview-pages{display:flex;flex-direction:column;align-items:center;gap:20px}.preview-page-shell{position:relative;flex:none}.preview-page-scaled{position:absolute;left:0;top:0;transform-origin:top left}
 .kp-page{width:210mm;height:297mm;background:#fff;position:relative;box-shadow:0 3px 15px rgba(0,0,0,.14);display:flex;flex-direction:column;overflow:hidden;flex:none}.kp-content{flex:1;min-height:0;padding:7mm 15mm 6mm;overflow:hidden;display:flex;flex-direction:column}
 .kp-page.has-bottom .kp-content{padding-bottom:0}
-.kp-page.has-bottom .kp-bottom{position:absolute;left:0;right:0;bottom:0;width:100%;z-index:10}.kp-header{height:15mm;flex:none;display:flex;align-items:center;justify-content:space-between;border-bottom:1.5px solid var(--orange);margin-bottom:3mm}.kp-logo{display:block;width:auto;height:10.5mm;max-width:78mm;object-fit:contain}.kp-header-right{text-align:right;font-size:9.5px;line-height:1.3;color:#3f4348}.kp-header-phone{font-size:12px;font-weight:800;color:#202124}.kp-header-site{color:var(--orange);font-weight:700;text-decoration:none}.kp-title{font-size:20px;font-weight:800;margin-bottom:2.5mm;line-height:1.1}.kp-product-name{font-size:18px;font-weight:750;line-height:1.18;margin-bottom:3mm}
+.kp-page.has-bottom .kp-bottom{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  width:100%;
+  z-index:20;
+  display:flex;
+  flex-direction:column;
+  flex:none;
+}
+.kp-footer-stack{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  flex:none;
+}.kp-header{height:15mm;flex:none;display:flex;align-items:center;justify-content:space-between;border-bottom:1.5px solid var(--orange);margin-bottom:3mm}.kp-logo{display:block;width:auto;height:10.5mm;max-width:78mm;object-fit:contain}.kp-header-right{text-align:right;font-size:9.5px;line-height:1.3;color:#3f4348}.kp-header-phone{font-size:12px;font-weight:800;color:#202124}.kp-header-site{color:var(--orange);font-weight:700;text-decoration:none}.kp-title{font-size:20px;font-weight:800;margin-bottom:2.5mm;line-height:1.1}.kp-product-name{font-size:18px;font-weight:750;line-height:1.18;margin-bottom:3mm}
 .product-photo-grid{width:100%;display:flex;flex-wrap:wrap;align-items:flex-start;gap:4mm;margin-bottom:3.5mm}.product-photo-frame{flex:0 0 auto;border:1px solid #e0e2e5;border-radius:7px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff}.product-photo-frame img{width:100%;height:100%;object-fit:contain;display:block;padding:2.5mm}.kp-description{font-size:12.2px;line-height:1.45;white-space:pre-wrap;margin-bottom:2.5mm}.kp-note{font-size:11.2px;color:#666;line-height:1.35;white-space:pre-wrap;margin-bottom:2.5mm}.specs-table{width:100%;border-collapse:collapse;font-size:10.2px;margin:1.5mm 0 2.5mm}.specs-table th,.specs-table td{border:1px solid #d9dce0;padding:4px 6px;text-align:left;vertical-align:top}.specs-table th{background:var(--orange);color:#fff;font-weight:800}.specs-table td:first-child{width:40%;font-weight:650}.video-button{display:inline-block;margin:1mm 0 2.5mm;padding:7px 11px;border-radius:6px;background:var(--orange);color:#fff;text-decoration:none;font-size:10.5px;font-weight:700}.price-block{margin:1.5mm 0 2mm}.price-line{font-size:16px;font-weight:800;margin-bottom:1mm}.price-line.discount{color:var(--red)}.availability{font-size:12px;font-weight:800;margin-bottom:1.5mm}.availability.available{color:var(--green)}.availability.order{color:#b96a00}.price-comment{font-size:10.5px;color:#666;line-height:1.35;margin-bottom:2mm}
 .kp-bottom{
   flex:0 0 auto;
@@ -376,8 +392,10 @@ function makePage(content,index,continuation=false,withAdvantages=false){
     </div>
 
     <div class="kp-bottom">
-      ${withAdvantages?advantagesHtml():""}
-      ${footerHtml()}
+      <div class="kp-footer-stack">
+        ${withAdvantages?advantagesHtml():""}
+        ${footerHtml()}
+      </div>
     </div>
 
   </div>`
@@ -387,8 +405,10 @@ async function paginateProduct(p,index){
   const blocks=blockHtml(p,index,photos);
 
   /*
-    Измеряем НАСТОЯЩУЮ высоту связки "Почему мы?" + footer.
-    Она затем резервируется как единый footer-блок.
+    "Почему мы?" теперь не является частью пагинации.
+    Он существует только внутри footer-stack последней
+    страницы. Для расчёта берём фактическую высоту всего
+    footer-stack: преимущества + настоящий footer.
   */
   const measure=document.createElement("div");
   measure.className="kp-page has-bottom";
@@ -404,8 +424,10 @@ async function paginateProduct(p,index){
       <div id="measureBlocks"></div>
     </div>
     <div class="kp-bottom">
-      ${advantagesHtml()}
-      ${footerHtml()}
+      <div class="kp-footer-stack">
+        ${advantagesHtml()}
+        ${footerHtml()}
+      </div>
     </div>
   `;
 
@@ -414,7 +436,7 @@ async function paginateProduct(p,index){
 
   const content=measure.querySelector(".kp-content");
   const header=measure.querySelector(".kp-header");
-  const bottom=measure.querySelector(".kp-bottom");
+  const stack=measure.querySelector(".kp-footer-stack");
   const cs=getComputedStyle(content);
 
   const contentTop=
@@ -426,17 +448,17 @@ async function paginateProduct(p,index){
     parseFloat(cs.paddingBottom||"0");
 
   const headerBottom=header.getBoundingClientRect().bottom;
-  const bottomHeight=bottom.getBoundingClientRect().height;
+  const stackHeight=stack.getBoundingClientRect().height;
 
   const normalAvailable=contentBottom-headerBottom;
-  const finalAvailable=normalAvailable-bottomHeight;
+  const finalAvailable=normalAvailable-stackHeight;
 
   measure.remove();
 
   /*
-    Каждый обычный блок остаётся неделимым.
-    На последней странице место под нижнюю связку
-    вычитается из доступной высоты заранее.
+    Сначала строим страницы только из основного контента.
+    Последняя страница получает тот же фиксированный резерв,
+    который занимает footer-stack.
   */
   const pages=[];
   let current=[];
@@ -454,15 +476,7 @@ async function paginateProduct(p,index){
     const h=test.getBoundingClientRect().height;
     test.remove();
 
-    /*
-      Резервируем footer-stack на каждой странице.
-      На последней он будет показан, на остальных —
-      просто остаётся безопасным резервом, чтобы
-      контент никогда не занял его вертикальную область.
-    */
-    const limit=finalAvailable;
-
-    if(current.length && currentHeight+h>limit+0.5){
+    if(current.length && currentHeight+h>finalAvailable+0.5){
       pages.push(current);
       current=[html];
       currentHeight=h;
@@ -475,6 +489,11 @@ async function paginateProduct(p,index){
   if(current.length)pages.push(current);
   if(!pages.length)pages.push([]);
 
+  /*
+    ВАЖНО: footer-stack никогда не переносится.
+    Он создаётся только внутри последней kp-page и
+    абсолютным позиционированием привязан к её низу.
+  */
   return pages.map((arr,i)=>
     makePage(
       arr,
