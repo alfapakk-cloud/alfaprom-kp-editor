@@ -453,7 +453,7 @@ async function paginateProduct(p,index){
   }
 
   const firstAvailable=await measureAvailable(true);
-  const nextAvailable=await measureAvailable(false);
+  const nextAvailable=await measureAvailable(true);
 
   const pages=[];
   let current=[];
@@ -497,7 +497,7 @@ async function paginateProduct(p,index){
       arr,
       index,
       i>0,
-      i===0
+      true
     )
   );
 }
