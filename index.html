@@ -405,10 +405,9 @@ async function paginateProduct(p,index){
   const blocks=blockHtml(p,index,photos);
 
   /*
-    "Почему мы?" теперь не является частью пагинации.
-    Он существует только внутри footer-stack последней
-    страницы. Для расчёта берём фактическую высоту всего
-    footer-stack: преимущества + настоящий footer.
+    "Почему мы?" — часть первой страницы КП, а не последней.
+    При переполнении основного контента новые блоки уходят
+    на следующие страницы, а нижний блок остаётся на месте.
   */
   const measure=document.createElement("div");
   measure.className="kp-page has-bottom";
@@ -418,18 +417,14 @@ async function paginateProduct(p,index){
   measure.style.visibility="hidden";
   measure.style.boxShadow="none";
 
-  measure.innerHTML=`
-    <div class="kp-content">
-      ${headerHtml()}
-      <div id="measureBlocks"></div>
-    </div>
-    <div class="kp-bottom">
-      <div class="kp-footer-stack">
-        ${advantagesHtml()}
-        ${footerHtml()}
-      </div>
-    </div>
-  `;
+  measure.innerHTML=
+    '<div class="kp-content">' +
+      headerHtml() +
+      '<div id="measureBlocks"></div></div>' +
+    '<div class="kp-bottom"><div class="kp-footer-stack">' +
+      advantagesHtml() +
+      footerHtml() +
+    '</div></div>';
 
   document.body.appendChild(measure);
   await new Promise(r=>requestAnimationFrame(r));
@@ -437,32 +432,31 @@ async function paginateProduct(p,index){
   const content=measure.querySelector(".kp-content");
   const header=measure.querySelector(".kp-header");
   const stack=measure.querySelector(".kp-footer-stack");
+  const footer=measure.querySelector(".kp-footer");
   const cs=getComputedStyle(content);
-
-  const contentTop=
-    content.getBoundingClientRect().top+
-    parseFloat(cs.paddingTop||"0");
 
   const contentBottom=
     content.getBoundingClientRect().bottom-
     parseFloat(cs.paddingBottom||"0");
-
   const headerBottom=header.getBoundingClientRect().bottom;
-  const stackHeight=stack.getBoundingClientRect().height;
-
   const normalAvailable=contentBottom-headerBottom;
-  const finalAvailable=normalAvailable-stackHeight;
+
+  /*
+    Первая страница резервирует весь stack:
+    "Почему мы?" + footer.
+    Следующие страницы резервируют только footer.
+  */
+  const firstPageAvailable=
+    normalAvailable-stack.getBoundingClientRect().height;
+  const nextPageAvailable=
+    normalAvailable-footer.getBoundingClientRect().height;
 
   measure.remove();
 
-  /*
-    Сначала строим страницы только из основного контента.
-    Последняя страница получает тот же фиксированный резерв,
-    который занимает footer-stack.
-  */
   const pages=[];
   let current=[];
   let currentHeight=0;
+  let pageIndex=0;
 
   for(const html of blocks){
     const test=document.createElement("div");
@@ -476,8 +470,20 @@ async function paginateProduct(p,index){
     const h=test.getBoundingClientRect().height;
     test.remove();
 
-    if(current.length && currentHeight+h>finalAvailable+0.5){
+    const available=
+      pageIndex===0
+        ? firstPageAvailable
+        : nextPageAvailable;
+
+    if(current.length && currentHeight+h>available+0.5){
       pages.push(current);
+      current=[html];
+      currentHeight=h;
+      pageIndex++;
+    }else if(!current.length && pageIndex===0 && h>available+0.5){
+      /* Не позволяем первому блоку залезть под нижний блок. */
+      pages.push([]);
+      pageIndex=1;
       current=[html];
       currentHeight=h;
     }else{
@@ -489,17 +495,13 @@ async function paginateProduct(p,index){
   if(current.length)pages.push(current);
   if(!pages.length)pages.push([]);
 
-  /*
-    ВАЖНО: footer-stack никогда не переносится.
-    Он создаётся только внутри последней kp-page и
-    абсолютным позиционированием привязан к её низу.
-  */
+  /* "Почему мы?" всегда принадлежит первой странице. */
   return pages.map((arr,i)=>
     makePage(
       arr,
       index,
       i>0,
-      i===pages.length-1
+      i===0
     )
   );
 }
