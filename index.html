@@ -13,7 +13,7 @@
 .photo-editor{margin-bottom:14px}.photo-editor-grid{display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px}.photo-editor-item{flex:0 0 auto;min-width:0}.photo-drop{width:260px;height:260px;border:2px dashed #cfd3d8;border-radius:10px;display:flex;align-items:center;justify-content:center;text-align:center;background:#fafafa;overflow:hidden;position:relative;transition:border-color .15s,background .15s;cursor:pointer}.photo-drop:hover,.photo-drop.dragover{border-color:var(--orange);background:#fffaf5}.photo-drop.has-image{border-style:solid;border-color:#d7d9dc;background:#fff}.photo-drop img{width:100%;height:100%;object-fit:contain;display:block;padding:8px}.photo-placeholder{color:#73777d;font-size:13px;line-height:1.5;padding:20px}.photo-item-remove{margin-top:6px;width:100%;border:1px solid #e0c9c6;background:#fff;color:#b42318;border-radius:7px;padding:6px 8px;font-size:12px}.photo-size-label{margin-top:5px;text-align:center;font-size:11px;color:#777}.photo-resize-handle{position:absolute;right:5px;bottom:5px;width:24px;height:24px;border-radius:6px;background:rgba(255,129,0,.96);border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.28);cursor:nwse-resize;z-index:5}.photo-resize-handle:after{content:"";position:absolute;right:4px;bottom:4px;width:7px;height:7px;border-right:2px solid #fff;border-bottom:2px solid #fff}.photo-actions{margin-top:8px;display:flex;gap:8px}.small-btn{border:1px solid #d3d6da;background:#fff;border-radius:7px;padding:7px 10px;font-size:12px}.file-input{display:none}
 .preview-side{min-width:0;min-height:0;display:flex;flex-direction:column;background:#e8eaed}.preview-title{flex:none;height:48px;display:flex;align-items:center;padding:0 18px;background:#fff;border-bottom:1px solid #d7d9dc;font-size:16px;font-weight:700}.preview-scroll{flex:1;min-height:0;overflow:auto;padding:20px}.preview-pages{display:flex;flex-direction:column;align-items:center;gap:20px}.preview-page-shell{position:relative;flex:none}.preview-page-scaled{position:absolute;left:0;top:0;transform-origin:top left}
 .kp-page{width:210mm;height:297mm;background:#fff;position:relative;box-shadow:0 3px 15px rgba(0,0,0,.14);display:flex;flex-direction:column;overflow:hidden;flex:none}.kp-content{flex:1;min-height:0;padding:7mm 15mm 6mm;overflow:hidden;display:flex;flex-direction:column}
-.kp-page.has-bottom .kp-content{padding-bottom:58mm}
+.kp-page.has-bottom .kp-content{padding-bottom:0}
 .kp-page.has-bottom .kp-bottom{position:absolute;left:0;right:0;bottom:0;width:100%;z-index:10}.kp-header{height:15mm;flex:none;display:flex;align-items:center;justify-content:space-between;border-bottom:1.5px solid var(--orange);margin-bottom:3mm}.kp-logo{display:block;width:auto;height:10.5mm;max-width:78mm;object-fit:contain}.kp-header-right{text-align:right;font-size:9.5px;line-height:1.3;color:#3f4348}.kp-header-phone{font-size:12px;font-weight:800;color:#202124}.kp-header-site{color:var(--orange);font-weight:700;text-decoration:none}.kp-title{font-size:20px;font-weight:800;margin-bottom:2.5mm;line-height:1.1}.kp-product-name{font-size:18px;font-weight:750;line-height:1.18;margin-bottom:3mm}
 .product-photo-grid{width:100%;display:flex;flex-wrap:wrap;align-items:flex-start;gap:4mm;margin-bottom:3.5mm}.product-photo-frame{flex:0 0 auto;border:1px solid #e0e2e5;border-radius:7px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff}.product-photo-frame img{width:100%;height:100%;object-fit:contain;display:block;padding:2.5mm}.kp-description{font-size:12.2px;line-height:1.45;white-space:pre-wrap;margin-bottom:2.5mm}.kp-note{font-size:11.2px;color:#666;line-height:1.35;white-space:pre-wrap;margin-bottom:2.5mm}.specs-table{width:100%;border-collapse:collapse;font-size:10.2px;margin:1.5mm 0 2.5mm}.specs-table th,.specs-table td{border:1px solid #d9dce0;padding:4px 6px;text-align:left;vertical-align:top}.specs-table th{background:var(--orange);color:#fff;font-weight:800}.specs-table td:first-child{width:40%;font-weight:650}.video-button{display:inline-block;margin:1mm 0 2.5mm;padding:7px 11px;border-radius:6px;background:var(--orange);color:#fff;text-decoration:none;font-size:10.5px;font-weight:700}.price-block{margin:1.5mm 0 2mm}.price-line{font-size:16px;font-weight:800;margin-bottom:1mm}.price-line.discount{color:var(--red)}.availability{font-size:12px;font-weight:800;margin-bottom:1.5mm}.availability.available{color:var(--green)}.availability.order{color:#b96a00}.price-comment{font-size:10.5px;color:#666;line-height:1.35;margin-bottom:2mm}
 .kp-bottom{
@@ -387,11 +387,9 @@ async function paginateProduct(p,index){
   const blocks=blockHtml(p,index,photos);
 
   /*
-    Нижний блок на последней странице закреплён абсолютно,
-    поэтому здесь резервируем под него фиксированное место.
+    Измеряем НАСТОЯЩУЮ высоту связки "Почему мы?" + footer.
+    Она затем резервируется как единый footer-блок.
   */
-  const bottomReserve=58;
-
   const measure=document.createElement("div");
   measure.className="kp-page has-bottom";
   measure.style.position="absolute";
@@ -416,40 +414,55 @@ async function paginateProduct(p,index){
 
   const content=measure.querySelector(".kp-content");
   const header=measure.querySelector(".kp-header");
-  const contentStyle=getComputedStyle(content);
+  const bottom=measure.querySelector(".kp-bottom");
+  const cs=getComputedStyle(content);
 
-  const pageInnerHeight=
-    content.clientHeight
-    -parseFloat(contentStyle.paddingTop||"0")
-    -parseFloat(contentStyle.paddingBottom||"0");
+  const contentTop=
+    content.getBoundingClientRect().top+
+    parseFloat(cs.paddingTop||"0");
 
-  const headerHeight=header.offsetHeight;
-  const normalAvailable=pageInnerHeight-headerHeight;
-  const finalAvailable=normalAvailable-bottomReserve;
+  const contentBottom=
+    content.getBoundingClientRect().bottom-
+    parseFloat(cs.paddingBottom||"0");
+
+  const headerBottom=header.getBoundingClientRect().bottom;
+  const bottomHeight=bottom.getBoundingClientRect().height;
+
+  const normalAvailable=contentBottom-headerBottom;
+  const finalAvailable=normalAvailable-bottomHeight;
 
   measure.remove();
 
+  /*
+    Каждый обычный блок остаётся неделимым.
+    На последней странице место под нижнюю связку
+    вычитается из доступной высоты заранее.
+  */
   const pages=[];
   let current=[];
   let currentHeight=0;
 
-  /*
-    Измеряем каждый цельный блок. Последняя страница
-    всегда оставляет место под закреплённый нижний блок.
-  */
   for(const html of blocks){
     const test=document.createElement("div");
-    test.style.cssText="position:absolute;left:-100000px;top:0;visibility:hidden;width:180mm";
+    test.style.cssText=
+      "position:absolute;left:-100000px;top:0;visibility:hidden;"+
+      "width:180mm;box-sizing:border-box;";
     test.innerHTML=html;
     document.body.appendChild(test);
 
     await new Promise(r=>requestAnimationFrame(r));
-    const h=test.offsetHeight;
+    const h=test.getBoundingClientRect().height;
     test.remove();
 
+    /*
+      Резервируем footer-stack на каждой странице.
+      На последней он будет показан, на остальных —
+      просто остаётся безопасным резервом, чтобы
+      контент никогда не занял его вертикальную область.
+    */
     const limit=finalAvailable;
 
-    if(current.length && currentHeight+h>limit){
+    if(current.length && currentHeight+h>limit+0.5){
       pages.push(current);
       current=[html];
       currentHeight=h;
@@ -462,12 +475,6 @@ async function paginateProduct(p,index){
   if(current.length)pages.push(current);
   if(!pages.length)pages.push([]);
 
-  /*
-    Если последний блок сам по себе слишком высокий для
-    последней страницы, не двигаем нижнюю секцию — она
-    всё равно остаётся закреплённой внизу. Сам блок
-    остаётся цельным, как и раньше.
-  */
   return pages.map((arr,i)=>
     makePage(
       arr,
