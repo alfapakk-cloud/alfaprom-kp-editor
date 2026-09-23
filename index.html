@@ -405,97 +405,117 @@ async function paginateProduct(p,index){
   const blocks=blockHtml(p,index,photos);
 
   /*
-    "Почему мы?" — часть первой страницы КП, а не последней.
-    При переполнении основного контента новые блоки уходят
-    на следующие страницы, а нижний блок остаётся на месте.
+    Пагинация считается на реальной геометрии страницы.
+    Раньше высота блоков измерялась в отдельном div, а затем
+    результат сравнивался с другой геометрией .kp-content.
+    Из-за этого браузер мог дать другой перенос и блок уезжал
+    на следующую страницу раньше/позже ожидаемого.
+
+    Теперь мы добавляем блоки прямо в такую же .kp-page, как
+    в превью, и проверяем фактическую нижнюю границу контента
+    относительно .kp-bottom. Поэтому нижний блок физически
+    остаётся привязанным к низу страницы, а основной контент
+    переносится только при реальном переполнении.
   */
-  const measure=document.createElement("div");
-  measure.className="kp-page has-bottom";
-  measure.style.position="absolute";
-  measure.style.left="-100000px";
-  measure.style.top="0";
-  measure.style.visibility="hidden";
-  measure.style.boxShadow="none";
 
-  measure.innerHTML=
-    '<div class="kp-content">' +
-      headerHtml() +
-      '<div id="measureBlocks"></div></div>' +
-    '<div class="kp-bottom"><div class="kp-footer-stack">' +
-      advantagesHtml() +
-      footerHtml() +
-    '</div></div>';
+  async function createMeasurePage(firstPage){
+    const page=document.createElement("div");
+    page.className=firstPage?"kp-page has-bottom":"kp-page";
+    page.style.position="absolute";
+    page.style.left="-100000px";
+    page.style.top="0";
+    page.style.visibility="hidden";
+    page.style.boxShadow="none";
 
-  document.body.appendChild(measure);
-  await new Promise(r=>requestAnimationFrame(r));
+    page.innerHTML=
+      '<div class="kp-content">' +
+        headerHtml() +
+        (firstPage
+          ? ""
+          : '<div class="page-continuation">Продолжение предложения — оборудование №'+(index+1)+'</div>') +
+        '<div class="measureBlocks"></div>' +
+      '</div>' +
+      '<div class="kp-bottom"><div class="kp-footer-stack">' +
+        (firstPage?advantagesHtml():"") +
+        footerHtml() +
+      '</div></div>';
 
-  const content=measure.querySelector(".kp-content");
-  const header=measure.querySelector(".kp-header");
-  const stack=measure.querySelector(".kp-footer-stack");
-  const footer=measure.querySelector(".kp-footer");
-  const cs=getComputedStyle(content);
+    document.body.appendChild(page);
+    await new Promise(r=>requestAnimationFrame(r));
 
-  const contentBottom=
-    content.getBoundingClientRect().bottom-
-    parseFloat(cs.paddingBottom||"0");
-  const headerBottom=header.getBoundingClientRect().bottom;
-  const normalAvailable=contentBottom-headerBottom;
+    const content=page.querySelector(".kp-content");
+    const blocksRoot=page.querySelector(".measureBlocks");
+    const bottom=page.querySelector(".kp-bottom");
+    const bottomTop=bottom.getBoundingClientRect().top;
 
-  /*
-    Первая страница резервирует весь stack:
-    "Почему мы?" + footer.
-    Следующие страницы резервируют только footer.
-  */
-  const firstPageAvailable=
-    normalAvailable-stack.getBoundingClientRect().height;
-  const nextPageAvailable=
-    normalAvailable-footer.getBoundingClientRect().height;
+    return {page,content,blocksRoot,bottomTop};
+  }
 
-  measure.remove();
-
+  let firstPage=true;
+  let measure=await createMeasurePage(true);
   const pages=[];
+
   let current=[];
-  let currentHeight=0;
-  let pageIndex=0;
+  let lastGoodHeight=0;
 
   for(const html of blocks){
-    const test=document.createElement("div");
-    test.style.cssText=
-      "position:absolute;left:-100000px;top:0;visibility:hidden;"+
-      "width:180mm;box-sizing:border-box;";
-    test.innerHTML=html;
-    document.body.appendChild(test);
+    const node=document.createElement("div");
+    node.innerHTML=html;
+    const fragment=document.createDocumentFragment();
+    while(node.firstChild) fragment.appendChild(node.firstChild);
 
+    measure.blocksRoot.appendChild(fragment);
     await new Promise(r=>requestAnimationFrame(r));
-    const h=test.getBoundingClientRect().height;
-    test.remove();
 
-    const available=
-      pageIndex===0
-        ? firstPageAvailable
-        : nextPageAvailable;
+    const last=measure.blocksRoot.lastElementChild;
+    const lastBottom=last.getBoundingClientRect().bottom;
 
-    if(current.length && currentHeight+h>available+0.5){
+    if(current.length && lastBottom>measure.bottomTop+0.5){
       pages.push(current);
+      measure.page.remove();
+
+      firstPage=false;
+      measure=await createMeasurePage(false);
+
+      current=[];
+      lastGoodHeight=0;
+
+      const retry=document.createElement("div");
+      retry.innerHTML=html;
+      while(retry.firstChild) measure.blocksRoot.appendChild(retry.firstChild);
+
+      await new Promise(r=>requestAnimationFrame(r));
+      current.push(html);
+      lastGoodHeight=measure.blocksRoot.lastElementChild.getBoundingClientRect().bottom;
+    }else if(!current.length && lastBottom>measure.bottomTop+0.5){
+      /*
+        Один отдельный блок выше доступного места первой страницы.
+        Не ломаем его: переносим целиком на следующую страницу.
+      */
+      measure.blocksRoot.innerHTML="";
+      measure.page.remove();
+
+      firstPage=false;
+      measure=await createMeasurePage(false);
+
+      const retry=document.createElement("div");
+      retry.innerHTML=html;
+      while(retry.firstChild) measure.blocksRoot.appendChild(retry.firstChild);
+
+      await new Promise(r=>requestAnimationFrame(r));
       current=[html];
-      currentHeight=h;
-      pageIndex++;
-    }else if(!current.length && pageIndex===0 && h>available+0.5){
-      /* Не позволяем первому блоку залезть под нижний блок. */
-      pages.push([]);
-      pageIndex=1;
-      current=[html];
-      currentHeight=h;
+      lastGoodHeight=measure.blocksRoot.lastElementChild.getBoundingClientRect().bottom;
     }else{
       current.push(html);
-      currentHeight+=h;
+      lastGoodHeight=lastBottom;
     }
   }
 
-  if(current.length)pages.push(current);
-  if(!pages.length)pages.push([]);
+  if(current.length) pages.push(current);
+  if(!pages.length) pages.push([]);
 
-  /* "Почему мы?" всегда принадлежит первой странице. */
+  measure.page.remove();
+
   return pages.map((arr,i)=>
     makePage(
       arr,
