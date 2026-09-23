@@ -405,20 +405,14 @@ async function paginateProduct(p,index){
   const blocks=blockHtml(p,index,photos);
 
   /*
-    Пагинация считается на реальной геометрии страницы.
-    Раньше высота блоков измерялась в отдельном div, а затем
-    результат сравнивался с другой геометрией .kp-content.
-    Из-за этого браузер мог дать другой перенос и блок уезжал
-    на следующую страницу раньше/позже ожидаемого.
-
-    Теперь мы добавляем блоки прямо в такую же .kp-page, как
-    в превью, и проверяем фактическую нижнюю границу контента
-    относительно .kp-bottom. Поэтому нижний блок физически
-    остаётся привязанным к низу страницы, а основной контент
-    переносится только при реальном переполнении.
+    "Почему мы?" и футер — единый нижний блок первой страницы.
+    Он НИКОГДА не участвует в переносе и НИКОГДА не переносится.
+    Основной контент занимает только оставшееся место сверху.
+    Если контент не помещается — создаётся следующая страница.
+    На следующей странице есть только футер внизу.
   */
 
-  async function createMeasurePage(firstPage){
+  async function measureAvailable(firstPage){
     const page=document.createElement("div");
     page.className=firstPage?"kp-page has-bottom":"kp-page";
     page.style.position="absolute";
@@ -430,9 +424,9 @@ async function paginateProduct(p,index){
     page.innerHTML=
       '<div class="kp-content">' +
         headerHtml() +
-        (firstPage
-          ? ""
-          : '<div class="page-continuation">Продолжение предложения — оборудование №'+(index+1)+'</div>') +
+        (index>0 && !firstPage
+          ? '<div class="page-continuation">Продолжение предложения — оборудование №'+(index+1)+'</div>'
+          : '') +
         '<div class="measureBlocks"></div>' +
       '</div>' +
       '<div class="kp-bottom"><div class="kp-footer-stack">' +
@@ -444,78 +438,60 @@ async function paginateProduct(p,index){
     await new Promise(r=>requestAnimationFrame(r));
 
     const content=page.querySelector(".kp-content");
-    const blocksRoot=page.querySelector(".measureBlocks");
+    const header=page.querySelector(".kp-header");
     const bottom=page.querySelector(".kp-bottom");
+
+    const cs=getComputedStyle(content);
+    const contentTop=header.getBoundingClientRect().bottom;
+    const contentBottom=content.getBoundingClientRect().bottom-parseFloat(cs.paddingBottom||"0");
     const bottomTop=bottom.getBoundingClientRect().top;
 
-    return {page,content,blocksRoot,bottomTop};
+    const available=Math.max(0,bottomTop-contentTop);
+
+    page.remove();
+    return available;
   }
 
-  let firstPage=true;
-  let measure=await createMeasurePage(true);
-  const pages=[];
+  const firstAvailable=await measureAvailable(true);
+  const nextAvailable=await measureAvailable(false);
 
+  const pages=[];
   let current=[];
-  let lastGoodHeight=0;
+  let currentHeight=0;
+  let pageIndex=0;
 
   for(const html of blocks){
-    const node=document.createElement("div");
-    node.innerHTML=html;
-    const fragment=document.createDocumentFragment();
-    while(node.firstChild) fragment.appendChild(node.firstChild);
+    const test=document.createElement("div");
+    test.style.cssText=
+      "position:absolute;left:-100000px;top:0;visibility:hidden;width:180mm;box-sizing:border-box;";
+    test.innerHTML=html;
+    document.body.appendChild(test);
 
-    measure.blocksRoot.appendChild(fragment);
     await new Promise(r=>requestAnimationFrame(r));
+    const h=test.getBoundingClientRect().height;
+    test.remove();
 
-    const last=measure.blocksRoot.lastElementChild;
-    const lastBottom=last.getBoundingClientRect().bottom;
+    const available=pageIndex===0?firstAvailable:nextAvailable;
 
-    if(current.length && lastBottom>measure.bottomTop+0.5){
+    if(current.length && currentHeight+h>available+0.5){
       pages.push(current);
-      measure.page.remove();
-
-      firstPage=false;
-      measure=await createMeasurePage(false);
-
-      current=[];
-      lastGoodHeight=0;
-
-      const retry=document.createElement("div");
-      retry.innerHTML=html;
-      while(retry.firstChild) measure.blocksRoot.appendChild(retry.firstChild);
-
-      await new Promise(r=>requestAnimationFrame(r));
-      current.push(html);
-      lastGoodHeight=measure.blocksRoot.lastElementChild.getBoundingClientRect().bottom;
-    }else if(!current.length && lastBottom>measure.bottomTop+0.5){
-      /*
-        Один отдельный блок выше доступного места первой страницы.
-        Не ломаем его: переносим целиком на следующую страницу.
-      */
-      measure.blocksRoot.innerHTML="";
-      measure.page.remove();
-
-      firstPage=false;
-      measure=await createMeasurePage(false);
-
-      const retry=document.createElement("div");
-      retry.innerHTML=html;
-      while(retry.firstChild) measure.blocksRoot.appendChild(retry.firstChild);
-
-      await new Promise(r=>requestAnimationFrame(r));
       current=[html];
-      lastGoodHeight=measure.blocksRoot.lastElementChild.getBoundingClientRect().bottom;
+      currentHeight=h;
+      pageIndex++;
     }else{
       current.push(html);
-      lastGoodHeight=lastBottom;
+      currentHeight+=h;
     }
   }
 
   if(current.length) pages.push(current);
   if(!pages.length) pages.push([]);
 
-  measure.page.remove();
-
+  /*
+    ВАЖНО: withAdvantages=true только у первой страницы.
+    Этот блок никогда не создаётся внутри массива content,
+    поэтому он физически не может "переехать" на другую страницу.
+  */
   return pages.map((arr,i)=>
     makePage(
       arr,
