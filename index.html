@@ -1337,7 +1337,7 @@ async function createDocx(){
   // ДОКУМЕНТ
   // =========================================================
 
-  const document=new docx.Document({
+  const doc=new docx.Document({
 
     styles:{
       default:{
@@ -1384,7 +1384,7 @@ async function createDocx(){
     ]
   });
 
-  return docx.Packer.toBlob(document);
+  return docx.Packer.toBlob(doc);
 }
 
 
