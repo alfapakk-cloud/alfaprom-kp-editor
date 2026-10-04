@@ -666,7 +666,7 @@ async function createDocx(){
     // В шапке DOCX не используем таблицу для горизонтального позиционирования.
     // Логотип и телефон остаются в одной строке, а телефон уходит на правый
     // tab-stop. Важно: здесь должен быть настоящий символ TAB, а не текст "\\t".
-    const RIGHT_TAB=CONTENT_W+454;
+    const RIGHT_TAB=CONTENT_W;
 
     const phoneText="8\u00A0(800)\u00A0200-29-23";
     const siteText="alfaprom\u2060.\u2060org";
@@ -680,14 +680,14 @@ async function createDocx(){
           })
         : run("АЛЬФАПРОМ",{size:25,bold:true,color:ORANGE}),
       new docx.TextRun({text:"\t",font:"Arial",size:17}),
-      run(phoneText,{size:17,bold:true,color:TEXT})
+      run(phoneText,{size:17,bold:true,color:TEXT,position:46})
     ],{
       tabStops:[{
         type:docx.TabStopType.RIGHT,
         position:RIGHT_TAB
       }],
       alignment:docx.AlignmentType.LEFT,
-      before:-524,
+      indent:{right:-454},
       after:0,
       line:240,
       keepLines:true,
@@ -699,7 +699,7 @@ async function createDocx(){
       new docx.ExternalHyperlink({
         link:"https://alfaprom.org",
         children:[
-          run(siteText,{size:14,bold:true,color:ORANGE,underline:{type:docx.UnderlineType.SINGLE}})
+          run(siteText,{size:14,bold:true,color:ORANGE,underline:{type:docx.UnderlineType.SINGLE},position:46})
         ]
       })
     ],{
@@ -708,7 +708,7 @@ async function createDocx(){
         position:RIGHT_TAB
       }],
       alignment:docx.AlignmentType.LEFT,
-      before:-524,
+      indent:{right:-454},
       after:0,
       line:220,
       keepLines:true
