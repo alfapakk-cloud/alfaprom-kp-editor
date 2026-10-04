@@ -594,13 +594,16 @@ async function createDocx(){
       bold:!!opts.bold,
       italics:!!opts.italics,
       color:opts.color,
-      underline:opts.underline
+      underline:opts.underline,
+      position:opts.position
     });
   }
 
   function paragraph(children=[],opts={}){
     const p=new docx.Paragraph({
       alignment:opts.alignment,
+      tabStops:opts.tabStops,
+      indent:opts.indent,
       keepLines:!!opts.keepLines,
       keepNext:!!opts.keepNext,
       pageBreakBefore:!!opts.pageBreakBefore,
