@@ -687,10 +687,11 @@ async function createDocx(){
           new docx.TableCell({
             width:{size:headerRightW,type:docx.WidthType.DXA},
             margins:{top:0,bottom:0,left:0,right:0},
+            verticalAlign:docx.VerticalAlign.CENTER,
             borders:{top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}},
             children:[
               paragraph([run("8 (800) 200-29-23",{size:17,bold:true,color:TEXT})],{alignment:docx.AlignmentType.RIGHT,after:4,keepLines:true,keepNext:true}),
-              paragraph([run("alfaprom.org",{size:14,bold:true,color:ORANGE})],{alignment:docx.AlignmentType.RIGHT,after:0,keepLines:true})
+              paragraph([run("alfaprom.org",{size:14,bold:true,color:ORANGE})],{alignment:docx.AlignmentType.RIGHT,after:0,keepLines:true,keepNext:false})
             ]
           })
         ]
@@ -780,7 +781,7 @@ async function createDocx(){
         }
       })
     );
-    children.push(blank(120));
+    children.push(blank(180));
   }
 
   function addDocxNote(text){
