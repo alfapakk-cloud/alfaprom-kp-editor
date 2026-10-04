@@ -1153,6 +1153,7 @@ async function createDocx(){
       }
 
       for(const block of pageBlocks){
+        // Объектные блоки (описание/характеристики) передаём напрямую.
         if(block && typeof block==="object"){
           addDocxPageBlock(block,p);
           continue;
@@ -1162,15 +1163,26 @@ async function createDocx(){
         const host=document.createElement("div");
         host.innerHTML=html;
 
-        if(
-          host.querySelector(".kp-title") ||
-          host.querySelector(".kp-product-name") ||
-          host.querySelector(".product-photo-grid")
-        ){
-          continue;
-        }
+        // Важно: pageBlocks содержит HTML всей страницы превью.
+        // Нельзя отбрасывать такой блок целиком из-за заголовка/фото:
+        // после них внутри находятся описание, характеристики, цена и т.д.
+        // Извлекаем только информационные блоки, которые реально нужны DOCX.
+        const contentNodes=[
+          ...host.querySelectorAll(
+            ".kp-description, .specs-table, .kp-note, .video-button, .price-block, .availability, .price-comment"
+          )
+        ];
 
-        addDocxPageBlock(block,p);
+        if(contentNodes.length){
+          for(const node of contentNodes){
+            const wrapper=document.createElement("div");
+            wrapper.appendChild(node.cloneNode(true));
+            addDocxPageBlock(wrapper.innerHTML,p);
+          }
+        }else{
+          // Совместимость с отдельными HTML-блоками без контейнера страницы.
+          addDocxPageBlock(block,p);
+        }
       }
 
       // На первой странице оставляем нижний блок как в основной версии DOCX.
