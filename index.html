@@ -1106,151 +1106,102 @@ async function createDocx(){
     }
 
     // =======================================================
-    // ВИДЕО
-    // =======================================================
-
-    if(p.videoUrl.trim()){
-
-      children.push(
-        new docx.Table({
-          width:{
-            size:CONTENT_W,
-            type:docx.WidthType.DXA
-          },
-          rows:[
-            new docx.TableRow({
-              cantSplit:true,
-              children:[
-                new docx.TableCell({
-                  width:{
-                    size:CONTENT_W,
-                    type:docx.WidthType.DXA
-                  },
-                  shading:{
-                    fill:ORANGE
-                  },
-                  margins:{
-                    top:80,
-                    bottom:80,
-                    left:130,
-                    right:130
-                  },
-                  borders:{
-                    top:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},
-                    bottom:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},
-                    left:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},
-                    right:{style:docx.BorderStyle.NONE,size:0,color:ORANGE}
-                  },
-                  children:[
-                    paragraph([
-                      new docx.ExternalHyperlink({
-                        link:p.videoUrl,
-                        children:[
-                          run(
-                            "Смотреть видео оборудования",
-                            {
-                              size:16,
-                              bold:true,
-                              color:"FFFFFF",
-                              underline:{}
-                            }
-                          )
-                        ]
-                      })
-                    ],{
-                      alignment:docx.AlignmentType.CENTER,
-                      after:0
-                    })
-                  ]
-                })
-              ]
-            })
-          ]
-        })
-      );
-
-      children.push(blank(120));
-    }
-
-    // =======================================================
-    // ЦЕНА
+    // ВИДЕО + ЦЕНЫ
     // =======================================================
 
     const price=formatPrice(p.price,p.currency);
     const disc=formatPrice(p.discountPrice,p.currency);
 
-    if(price||disc){
+    if(p.videoUrl.trim() || price || disc){
 
-      const priceChildren=[];
+      const cells=[];
 
-      if(price){
-
-        priceChildren.push(
-          paragraph([
-            run(`Цена: ${price}`,{
-              size:20,
-              bold:true
-            })
-          ],{
-            after:disc?35:0
+      if(p.videoUrl.trim()){
+        cells.push(
+          new docx.TableCell({
+            width:{size:Math.floor(CONTENT_W/3),type:docx.WidthType.DXA},
+            margins:{top:100,bottom:100,left:100,right:100},
+            borders:{
+              top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+              bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+              left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+              right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
+            },
+            children:[
+              paragraph([
+                new docx.ExternalHyperlink({
+                  link:p.videoUrl,
+                  children:[run("Смотреть видео оборудования",{size:16,bold:true,color:"111111",underline:{}})]
+                })
+              ],{alignment:docx.AlignmentType.LEFT,after:0})
+            ]
           })
         );
+      }else{
+        cells.push(new docx.TableCell({children:[paragraph([],{after:0})]}));
+      }
+
+      if(price){
+        cells.push(
+          new docx.TableCell({
+            width:{size:Math.floor(CONTENT_W/3),type:docx.WidthType.DXA},
+            margins:{top:100,bottom:100,left:100,right:100},
+            borders:{
+              top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+              bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+              left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+              right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
+            },
+            children:[paragraph([
+              run("Цена: "+price,{size:20,bold:true})
+            ],{after:0})]
+          })
+        );
+      }else{
+        cells.push(new docx.TableCell({children:[paragraph([],{after:0})]}));
       }
 
       if(disc){
-
-        priceChildren.push(
-          paragraph([
-            run(`Цена со скидкой: ${disc}`,{
-              size:20,
-              bold:true,
-              color:RED
-            })
-          ],{
-            after:0
+        cells.push(
+          new docx.TableCell({
+            width:{size:CONTENT_W-2*Math.floor(CONTENT_W/3),type:docx.WidthType.DXA},
+            margins:{top:100,bottom:100,left:100,right:100},
+            borders:{
+              top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+              bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+              left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+              right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
+            },
+            children:[paragraph([
+              run("Цена со скидкой: "+disc,{size:20,bold:true,color:RED})
+            ],{after:0})]
           })
         );
+      }else{
+        cells.push(new docx.TableCell({children:[paragraph([],{after:0})]}));
       }
 
       children.push(
         new docx.Table({
-          width:{
-            size:CONTENT_W,
-            type:docx.WidthType.DXA
-          },
-          rows:[
-            new docx.TableRow({
-              cantSplit:true,
-              children:[
-                new docx.TableCell({
-                  width:{
-                    size:CONTENT_W,
-                    type:docx.WidthType.DXA
-                  },
-                  shading:{
-                    fill:"FAFAFA"
-                  },
-                  margins:{
-                    top:120,
-                    bottom:120,
-                    left:150,
-                    right:150
-                  },
-                  borders:{
-                    top:thinBorder,
-                    bottom:thinBorder,
-                    left:thinBorder,
-                    right:thinBorder
-                  },
-                  children:priceChildren
-                })
-              ]
-            })
-          ]
+          width:{size:CONTENT_W,type:docx.WidthType.DXA},
+          columnWidths:[
+            Math.floor(CONTENT_W/3),
+            Math.floor(CONTENT_W/3),
+            CONTENT_W-2*Math.floor(CONTENT_W/3)
+          ],
+          rows:[new docx.TableRow({cantSplit:true,children:cells})],
+          borders:{
+            top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+            bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+            left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+            right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+            insideHorizontal:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+            insideVertical:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
+          }
         })
       );
 
-      children.push(blank(80));
+      children.push(blank(120));
     }
 
     // =======================================================
