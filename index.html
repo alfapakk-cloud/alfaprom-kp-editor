@@ -650,156 +650,72 @@ async function createDocx(){
   }
 
   // =========================================================
-  // ОСНОВНОЕ СОДЕРЖИМОЕ
+  // ОСНОВНОЕ СОДЕРЖИМОЕ — ПО СТРАНИЦАМ ПРЕВЬЮ
   // =========================================================
 
   const children=[];
 
-  for(let i=0;i<state.products.length;i++){
-
-    const p=state.products[i];
-
-    // =======================================================
-    // НОВОЕ ОБОРУДОВАНИЕ — НОВАЯ СТРАНИЦА
-    // =======================================================
-
-    if(i>0){
-
-      children.push(
-        new docx.Paragraph({
-          pageBreakBefore:true,
-          children:[]
-        })
-      );
-    }
-
-    // =======================================================
-    // ШАПКА
-    // =======================================================
-
+  function addDocxHeader(continuationText=""){
     const headerCells=[];
 
-    // Левая часть — логотип
     const leftHeaderChildren=[];
-
     if(logoBytes){
-
       leftHeaderChildren.push(
         new docx.ImageRun({
           data:logoBytes,
-          transformation:{
-            width:185,
-            height:50
-          },
+          transformation:{width:185,height:50},
           type:logoType
         })
       );
-
     }else{
-
       leftHeaderChildren.push(
-        run("АЛЬФАПРОМ",{
-          size:25,
-          bold:true,
-          color:ORANGE
-        })
+        run("АЛЬФАПРОМ",{size:25,bold:true,color:ORANGE})
       );
     }
 
+    const headerLeftW=Math.round(CONTENT_W*.60);
+    const headerRightW=CONTENT_W-headerLeftW;
+
     headerCells.push(
       new docx.TableCell({
-        width:{
-          size:Math.round(CONTENT_W*.60),
-          type:docx.WidthType.DXA
-        },
-        margins:{
-          top:30,
-          bottom:90,
-          left:0,
-          right:0
-        },
+        width:{size:headerLeftW,type:docx.WidthType.DXA},
+        margins:{top:30,bottom:90,left:0,right:0},
         borders:{
           top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          bottom:{
-            style:docx.BorderStyle.SINGLE,
-            size:10,
-            color:ORANGE
-          },
+          bottom:{style:docx.BorderStyle.SINGLE,size:10,color:ORANGE},
           left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
           right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
         },
-        children:[
-          paragraph(leftHeaderChildren,{
-            after:0
-          })
-        ]
+        children:[paragraph(leftHeaderChildren,{after:0})]
       })
     );
 
-    // Правая часть — телефон + сайт
     headerCells.push(
       new docx.TableCell({
-        width:{
-          size:Math.round(CONTENT_W*.40),
-          type:docx.WidthType.DXA
-        },
-        margins:{
-          top:30,
-          bottom:90,
-          left:0,
-          right:0
-        },
+        width:{size:headerRightW,type:docx.WidthType.DXA},
+        margins:{top:30,bottom:90,left:0,right:0},
         borders:{
           top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          bottom:{
-            style:docx.BorderStyle.SINGLE,
-            size:10,
-            color:ORANGE
-          },
+          bottom:{style:docx.BorderStyle.SINGLE,size:10,color:ORANGE},
           left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
           right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
         },
         children:[
           paragraph([
-            run("8 (800) 200-29-23",{
-              size:17,
-              bold:true,
-              color:TEXT
-            })
-          ],{
-            alignment:docx.AlignmentType.RIGHT,
-            after:15
-          }),
+            run("8 (800) 200-29-23",{size:17,bold:true,color:TEXT})
+          ],{alignment:docx.AlignmentType.RIGHT,after:15}),
           paragraph([
-            run("alfaprom.org",{
-              size:14,
-              bold:true,
-              color:ORANGE
-            })
-          ],{
-            alignment:docx.AlignmentType.RIGHT,
-            after:0
-          })
+            run("alfaprom.org",{size:14,bold:true,color:ORANGE})
+          ],{alignment:docx.AlignmentType.RIGHT,after:0})
         ]
       })
     );
 
     children.push(
       new docx.Table({
-        width:{
-          size:CONTENT_W,
-          type:docx.WidthType.DXA
-        },
-        columnWidths:[
-          Math.round(CONTENT_W*.60),
-          Math.round(CONTENT_W*.40)
-        ],
-        rows:[
-          new docx.TableRow({
-            cantSplit:true,
-            children:headerCells
-          })
-        ],
+        width:{size:CONTENT_W,type:docx.WidthType.DXA},
+        columnWidths:[headerLeftW,headerRightW],
+        rows:[new docx.TableRow({cantSplit:true,children:headerCells})],
         borders:{
           top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
           bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
@@ -813,505 +729,202 @@ async function createDocx(){
 
     children.push(blank(130));
 
-    // =======================================================
-    // ЗАГОЛОВОК
-    // =======================================================
-
-    children.push(
-      paragraph([
-        run("Коммерческое предложение",{
-          size:25,
-          bold:true
-        })
-      ],{
-        after:70,
-        line:270
-      })
-    );
-
-    children.push(
-      paragraph([
-        run(
-          p.productName||`Оборудование №${i+1}`,
-          {
-            size:22,
-            bold:true
-          }
-        )
-      ],{
-        after:150,
-        line:270
-      })
-    );
-
-    // =======================================================
-    // ФОТО
-    // =======================================================
-
-    const photoParagraphs=[];
-
-    for(const id of p.photoIds||[]){
-
-      const blob=await getPhoto(id).catch(()=>null);
-
-      if(!blob) continue;
-
-      const bytes=await blobToUint8Array(blob);
-
-      const size=getPhotoSize(p,id);
-
-      const px=Math.min(
-        300,
-        Math.max(
-          120,
-          Math.round(size*MM_TO_PX)
-        )
-      );
-
-      photoParagraphs.push(
-        new docx.ImageRun({
-          data:bytes,
-          transformation:{
-            width:px,
-            height:px
-          },
-          type:
-            blob.type==="image/png"
-              ?"png"
-              :"jpg"
-        })
-      );
-    }
-
-    if(photoParagraphs.length){
-
-      children.push(
-        paragraph(
-          photoParagraphs,
-          {
-            alignment:docx.AlignmentType.CENTER,
-            after:140
-          }
-        )
-      );
-    }
-
-    // =======================================================
-    // ОПИСАНИЕ
-    // =======================================================
-
-    if(p.description.trim()){
-
+    if(continuationText){
       children.push(
         paragraph([
-          run(p.description,{
-            size:18
+          run(continuationText,{size:12,color:MUTED,bold:true})
+        ],{after:100,line:220})
+      );
+    }
+  }
+
+  function addDocxSpecsTable(rows){
+    if(!rows.length)return;
+
+    const tableRows=[
+      new docx.TableRow({
+        cantSplit:true,
+        children:[
+          new docx.TableCell({
+            columnSpan:2,
+            width:{size:CONTENT_W,type:docx.WidthType.DXA},
+            shading:{fill:ORANGE},
+            margins:cellMargins,
+            borders:{top:thinBorder,bottom:thinBorder,left:thinBorder,right:thinBorder},
+            children:[
+              paragraph([
+                run("Характеристики",{size:17,bold:true,color:"FFFFFF"})
+              ],{after:0})
+            ]
           })
-        ],{
-          after:100,
-          line:260
-        })
-      );
-    }
+        ]
+      })
+    ];
 
-    // =======================================================
-    // ПРИМЕЧАНИЕ
-    // =======================================================
-
-    if(p.note.trim()){
-
-      children.push(
-        new docx.Table({
-          width:{
-            size:CONTENT_W,
-            type:docx.WidthType.DXA
-          },
-          rows:[
-            new docx.TableRow({
-              cantSplit:true,
-              children:[
-                new docx.TableCell({
-                  width:{
-                    size:CONTENT_W,
-                    type:docx.WidthType.DXA
-                  },
-                  shading:{
-                    fill:"F5F6F7"
-                  },
-                  margins:{
-                    top:100,
-                    bottom:100,
-                    left:140,
-                    right:140
-                  },
-                  borders:{
-                    top:thinBorder,
-                    bottom:thinBorder,
-                    left:thinBorder,
-                    right:thinBorder
-                  },
-                  children:[
-                    paragraph([
-                      run(p.note,{
-                        size:16,
-                        italics:true,
-                        color:MUTED
-                      })
-                    ],{
-                      after:0,
-                      line:230
-                    })
-                  ]
-                })
-              ]
-            })
-          ]
-        })
-      );
-
-      children.push(blank(130));
-    }
-
-    // =======================================================
-    // ХАРАКТЕРИСТИКИ
-    // =======================================================
-
-    const rows=parseSpecs(p.specsText);
-
-    if(rows.length){
-
-      const tableRows=[];
-
-      // Заголовок
+    rows.forEach(r=>{
       tableRows.push(
         new docx.TableRow({
           cantSplit:true,
           children:[
             new docx.TableCell({
-              columnSpan:2,
-              width:{
-                size:CONTENT_W,
-                type:docx.WidthType.DXA
-              },
-              shading:{
-                fill:ORANGE
-              },
+              width:{size:COL1,type:docx.WidthType.DXA},
               margins:cellMargins,
-              borders:{
-                top:thinBorder,
-                bottom:thinBorder,
-                left:thinBorder,
-                right:thinBorder
-              },
+              borders:{top:thinBorder,bottom:thinBorder,left:thinBorder,right:thinBorder},
               children:[
-                paragraph([
-                  run("Характеристики",{
-                    size:17,
-                    bold:true,
-                    color:"FFFFFF"
-                  })
-                ],{
-                  after:0
-                })
+                paragraph([run(r[0],{size:15,bold:true})],{after:0,line:220})
+              ]
+            }),
+            new docx.TableCell({
+              width:{size:COL2,type:docx.WidthType.DXA},
+              margins:cellMargins,
+              borders:{top:thinBorder,bottom:thinBorder,left:thinBorder,right:thinBorder},
+              children:[
+                paragraph([run(r[1],{size:15})],{after:0,line:220})
               ]
             })
           ]
         })
       );
+    });
 
-      rows.forEach(r=>{
+    children.push(
+      new docx.Table({
+        width:{size:CONTENT_W,type:docx.WidthType.DXA},
+        columnWidths:[COL1,COL2],
+        rows:tableRows,
+        borders:{
+          top:thinBorder,bottom:thinBorder,left:thinBorder,right:thinBorder,
+          insideHorizontal:thinBorder,insideVertical:thinBorder
+        }
+      })
+    );
+    children.push(blank(120));
+  }
 
-        tableRows.push(
+  function addDocxNote(text){
+    children.push(
+      new docx.Table({
+        width:{size:CONTENT_W,type:docx.WidthType.DXA},
+        columnWidths:[CONTENT_W],
+        rows:[
           new docx.TableRow({
             cantSplit:true,
             children:[
-
               new docx.TableCell({
-                width:{
-                  size:COL1,
-                  type:docx.WidthType.DXA
-                },
-                margins:cellMargins,
-                borders:{
-                  top:thinBorder,
-                  bottom:thinBorder,
-                  left:thinBorder,
-                  right:thinBorder
-                },
+                width:{size:CONTENT_W,type:docx.WidthType.DXA},
+                shading:{fill:"F5F6F7"},
+                margins:{top:100,bottom:100,left:140,right:140},
+                borders:{top:thinBorder,bottom:thinBorder,left:thinBorder,right:thinBorder},
                 children:[
-                  paragraph([
-                    run(r[0],{
-                      size:15,
-                      bold:true
-                    })
-                  ],{
-                    after:0,
-                    line:220
-                  })
-                ]
-              }),
-
-              new docx.TableCell({
-                width:{
-                  size:COL2,
-                  type:docx.WidthType.DXA
-                },
-                margins:cellMargins,
-                borders:{
-                  top:thinBorder,
-                  bottom:thinBorder,
-                  left:thinBorder,
-                  right:thinBorder
-                },
-                children:[
-                  paragraph([
-                    run(r[1],{
-                      size:15
-                    })
-                  ],{
-                    after:0,
-                    line:220
-                  })
+                  paragraph([run(text,{size:16,italics:true,color:MUTED})],{after:0,line:230})
                 ]
               })
-
             ]
           })
-        );
-      });
-
-      children.push(
-        new docx.Table({
-          width:{
-            size:CONTENT_W,
-            type:docx.WidthType.DXA
-          },
-          columnWidths:[
-            COL1,
-            COL2
-          ],
-          rows:tableRows,
-          borders:{
-            top:thinBorder,
-            bottom:thinBorder,
-            left:thinBorder,
-            right:thinBorder,
-            insideHorizontal:thinBorder,
-            insideVertical:thinBorder
-          }
-        })
-      );
-
-      children.push(blank(120));
-    }
-
-    // =======================================================
-    // ВИДЕО
-    // =======================================================
-
-    if(p.videoUrl.trim()){
-
-      children.push(
-        new docx.Table({
-          width:{size:CONTENT_W,type:docx.WidthType.DXA},
-          columnWidths:[CONTENT_W],
-          rows:[
-            new docx.TableRow({
-              cantSplit:true,
-              children:[
-                new docx.TableCell({
-                  width:{size:CONTENT_W,type:docx.WidthType.DXA},
-                  shading:{fill:"111111"},
-                  margins:{top:100,bottom:100,left:160,right:160},
-                  borders:{
-                    top:{style:docx.BorderStyle.NONE,size:0,color:"111111"},
-                    bottom:{style:docx.BorderStyle.NONE,size:0,color:"111111"},
-                    left:{style:docx.BorderStyle.NONE,size:0,color:"111111"},
-                    right:{style:docx.BorderStyle.NONE,size:0,color:"111111"}
-                  },
-                  children:[
-                    paragraph([
-                      new docx.ExternalHyperlink({
-                        link:p.videoUrl,
-                        children:[
-                          run("▶ ",{size:16,bold:true,color:ORANGE}),
-                          run("Смотреть видео оборудования",{size:16,bold:true,color:"FFFFFF"})
-                        ]
-                      })
-                    ],{alignment:docx.AlignmentType.LEFT,after:0})
-                  ]
-                })
-              ]
-            })
-          ],
-          borders:{
-            top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-            bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-            left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-            right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-            insideHorizontal:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-            insideVertical:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
-          }
-        })
-      );
-
-      children.push(blank(100));
-    }
-
-    // =======================================================
-    // ЦЕНЫ
-    // =======================================================
-
-    const price=formatPrice(p.price,p.currency);
-    const disc=formatPrice(p.discountPrice,p.currency);
-
-    if(price || disc){
-
-      if(price){
-        children.push(
-          paragraph([
-            run("Цена: "+price,{size:20,bold:true})
-          ],{after:55})
-        );
-      }
-
-      if(disc){
-        children.push(
-          paragraph([
-            run("Цена со скидкой: "+disc,{size:20,bold:true,color:RED})
-          ],{after:80})
-        );
-      }
-    }
-
-    children.push(blank(80));
-
-    // =======================================================
-    // НАЛИЧИЕ
-    // =======================================================
-
-    const available=p.status!=="order";
-
-    children.push(
-      paragraph([
-        run(
-          available
-            ?"В наличии"
-            :"Под заказ",
-          {
-            size:17,
-            bold:true,
-            color:available?GREEN:"B96A00"
-          }
-        )
-      ],{
-        after:70
+        ]
       })
     );
+    children.push(blank(130));
+  }
 
-    // =======================================================
-    // КОММЕНТАРИЙ К ЦЕНЕ
-    // =======================================================
-
-    if(p.priceComment.trim()){
-
-      children.push(
-        paragraph([
-          run(p.priceComment,{
-            size:15,
-            color:MUTED
+  function addDocxVideo(url){
+    children.push(
+      new docx.Table({
+        width:{size:CONTENT_W,type:docx.WidthType.DXA},
+        columnWidths:[CONTENT_W],
+        rows:[
+          new docx.TableRow({
+            cantSplit:true,
+            children:[
+              new docx.TableCell({
+                width:{size:CONTENT_W,type:docx.WidthType.DXA},
+                shading:{fill:"111111"},
+                margins:{top:100,bottom:100,left:160,right:160},
+                borders:{
+                  top:{style:docx.BorderStyle.NONE,size:0,color:"111111"},
+                  bottom:{style:docx.BorderStyle.NONE,size:0,color:"111111"},
+                  left:{style:docx.BorderStyle.NONE,size:0,color:"111111"},
+                  right:{style:docx.BorderStyle.NONE,size:0,color:"111111"}
+                },
+                children:[
+                  paragraph([
+                    new docx.ExternalHyperlink({
+                      link:url,
+                      children:[
+                        run("▶ ",{size:16,bold:true,color:ORANGE}),
+                        run("Смотреть видео оборудования",{size:16,bold:true,color:"FFFFFF"})
+                      ]
+                    })
+                  ],{alignment:docx.AlignmentType.LEFT,after:0})
+                ]
+              })
+            ]
           })
-        ],{
-          after:110,
-          line:220
-        })
-      );
-    }
+        ],
+        borders:{
+          top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          insideHorizontal:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          insideVertical:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
+        }
+      })
+    );
+    children.push(blank(100));
+  }
 
-    // =======================================================
-    // ПОЧЕМУ МЫ?
-    // =======================================================
-
+  function addDocxAdvantages(){
     children.push(
       paragraph([
-        run("Почему мы?",{
-          size:21,
-          bold:true
-        })
-      ],{
-        before:60,
-        after:80
-      })
+        run("Почему мы?",{size:21,bold:true})
+      ],{before:60,after:80})
     );
 
     const adv=DEFAULT_ADVANTAGES||[];
 
-    const advRows=[];
-
-    // Первый ряд — 3 карточки
     const firstRow=[];
-
     for(let n=0;n<3;n++){
-
       const x=adv[n]||"";
-
       firstRow.push(
         new docx.TableCell({
-          width:{
-            size:Math.floor(CONTENT_W/3),
-            type:docx.WidthType.DXA
-          },
-          shading:{
-            fill:"FAFAFA"
-          },
-          margins:{
-            top:110,
-            bottom:110,
-            left:100,
-            right:100
-          },
-          borders:{
-            top:thinBorder,
-            bottom:thinBorder,
-            left:thinBorder,
-            right:thinBorder
-          },
+          width:{size:Math.floor(CONTENT_W/3),type:docx.WidthType.DXA},
+          shading:{fill:"FAFAFA"},
+          margins:{top:110,bottom:110,left:100,right:100},
+          borders:{top:thinBorder,bottom:thinBorder,left:thinBorder,right:thinBorder},
           children:[
             paragraph([
-              run("✓ ",{
-                size:15,
-                bold:true,
-                color:ORANGE
-              }),
-              run(x,{
-                size:14,
-                bold:true
-              })
-            ],{
-              alignment:docx.AlignmentType.CENTER,
-              after:0,
-              line:205
-            })
+              run("✓ ",{size:15,bold:true,color:ORANGE}),
+              run(x,{size:14,bold:true})
+            ],{alignment:docx.AlignmentType.CENTER,after:0,line:205})
           ]
         })
       );
     }
 
-    advRows.push(
-      new docx.TableRow({
-        cantSplit:true,
-        children:firstRow
+    children.push(
+      new docx.Table({
+        width:{size:CONTENT_W,type:docx.WidthType.DXA},
+        columnWidths:[
+          Math.floor(CONTENT_W/3),
+          Math.floor(CONTENT_W/3),
+          CONTENT_W-2*Math.floor(CONTENT_W/3)
+        ],
+        rows:[new docx.TableRow({cantSplit:true,children:firstRow})],
+        borders:{
+          top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          insideHorizontal:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          insideVertical:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
+        }
       })
     );
 
-    // Второй ряд — две карточки строго по центру
-    const secondRow=[];
-
     const blankWidth=Math.floor(CONTENT_W/6);
     const cardWidth=Math.floor(CONTENT_W/3);
-
-    // Пустая левая половина первой шестой части
-    secondRow.push(
+    const secondRow=[
       new docx.TableCell({
         width:{size:blankWidth,type:docx.WidthType.DXA},
         borders:{
@@ -1322,37 +935,26 @@ async function createDocx(){
         },
         children:[paragraph([],{after:0})]
       })
-    );
+    ];
 
     for(let n=3;n<5;n++){
       const x=adv[n]||"";
-
       secondRow.push(
         new docx.TableCell({
           width:{size:cardWidth,type:docx.WidthType.DXA},
           shading:{fill:"FAFAFA"},
           margins:{top:110,bottom:110,left:100,right:100},
-          borders:{
-            top:thinBorder,
-            bottom:thinBorder,
-            left:thinBorder,
-            right:thinBorder
-          },
+          borders:{top:thinBorder,bottom:thinBorder,left:thinBorder,right:thinBorder},
           children:[
             paragraph([
               run("✓ ",{size:15,bold:true,color:ORANGE}),
               run(x,{size:14,bold:true})
-            ],{
-              alignment:docx.AlignmentType.CENTER,
-              after:0,
-              line:205
-            })
+            ],{alignment:docx.AlignmentType.CENTER,after:0,line:205})
           ]
         })
       );
     }
 
-    // Пустая правая шестая часть — симметрично левой
     secondRow.push(
       new docx.TableCell({
         width:{size:blankWidth,type:docx.WidthType.DXA},
@@ -1366,55 +968,190 @@ async function createDocx(){
       })
     );
 
-    advRows.push(
-      new docx.TableRow({
-        cantSplit:true,
-        children:secondRow
+    children.push(
+      new docx.Table({
+        width:{size:CONTENT_W,type:docx.WidthType.DXA},
+        columnWidths:[
+          blankWidth,
+          cardWidth,
+          cardWidth,
+          CONTENT_W-blankWidth-cardWidth-cardWidth
+        ],
+        rows:[new docx.TableRow({cantSplit:true,children:secondRow})],
+        borders:{
+          top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          insideHorizontal:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+          insideVertical:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
+        }
       })
     );
+  }
 
-    // Первый ряд: 3 равные карточки
-    const firstAdvantagesTable=new docx.Table({
-      width:{size:CONTENT_W,type:docx.WidthType.DXA},
-      columnWidths:[
-        Math.floor(CONTENT_W/3),
-        Math.floor(CONTENT_W/3),
-        CONTENT_W-2*Math.floor(CONTENT_W/3)
-      ],
-      rows:[advRows[0]],
-      borders:{
-        top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-        bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-        left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-        right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-        insideHorizontal:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-        insideVertical:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
+  function addDocxPageBlock(html,p){
+    const host=document.createElement("div");
+    host.innerHTML=html;
+
+    const desc=host.querySelector(".kp-description");
+    if(desc){
+      children.push(
+        paragraph([run(desc.textContent||"",{size:18})],{after:100,line:260})
+      );
+      return;
+    }
+
+    const specs=host.querySelector(".specs-table");
+    if(specs){
+      const rows=[...specs.querySelectorAll("tbody tr")].map(tr=>{
+        const cells=[...tr.querySelectorAll("td")];
+        return[cells[0]?.textContent?.trim()||"",cells[1]?.textContent?.trim()||""];
+      });
+      addDocxSpecsTable(rows);
+      return;
+    }
+
+    const note=host.querySelector(".kp-note");
+    if(note){
+      addDocxNote(note.textContent?.trim()||"");
+      return;
+    }
+
+    const video=host.querySelector("a.video-button");
+    if(video){
+      addDocxVideo(p.videoUrl);
+      return;
+    }
+
+    const priceBlock=host.querySelector(".price-block");
+    if(priceBlock){
+      [...priceBlock.querySelectorAll(".price-line")].forEach(line=>{
+        const isDiscount=line.classList.contains("discount");
+        children.push(
+          paragraph([
+            run(line.textContent||"",{
+              size:20,
+              bold:true,
+              color:isDiscount?RED:undefined
+            })
+          ],{after:isDiscount?80:55})
+        );
+      });
+      children.push(blank(80));
+      return;
+    }
+
+    const availability=host.querySelector(".availability");
+    if(availability){
+      const isOrder=availability.classList.contains("order");
+      children.push(
+        paragraph([
+          run(availability.textContent||"",{
+            size:17,
+            bold:true,
+            color:isOrder?"B96A00":GREEN
+          })
+        ],{after:70})
+      );
+      return;
+    }
+
+    const comment=host.querySelector(".price-comment");
+    if(comment){
+      children.push(
+        paragraph([
+          run(comment.textContent||"",{size:15,color:MUTED})
+        ],{after:110,line:220})
+      );
+    }
+  }
+
+  for(let i=0;i<state.products.length;i++){
+
+    const p=state.products[i];
+    const pages=await paginateProduct(p,i);
+
+    for(let pageIndex=0;pageIndex<pages.length;pageIndex++){
+
+      if(i>0 || pageIndex>0){
+        children.push(
+          new docx.Paragraph({
+            pageBreakBefore:true,
+            children:[]
+          })
+        );
       }
-    });
 
-    children.push(firstAdvantagesTable);
+      addDocxHeader(
+        pageIndex>0
+          ? `Продолжение предложения — оборудование №${i+1}`
+          : ""
+      );
 
-    // Второй ряд: две карточки одинаковой ширины строго по центру
-    const centeredAdvantagesTable=new docx.Table({
-      width:{size:CONTENT_W,type:docx.WidthType.DXA},
-      columnWidths:[
-        Math.floor(CONTENT_W/6),
-        Math.floor(CONTENT_W/3),
-        Math.floor(CONTENT_W/3),
-        CONTENT_W-Math.floor(CONTENT_W/6)-2*Math.floor(CONTENT_W/3)
-      ],
-      rows:[advRows[1]],
-      borders:{
-        top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-        bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-        left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-        right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-        insideHorizontal:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-        insideVertical:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
+      const pageBlocks=pages[pageIndex]||[];
+
+      if(pageIndex===0){
+
+        children.push(
+          paragraph([
+            run("Коммерческое предложение",{size:25,bold:true})
+          ],{after:70,line:270})
+        );
+
+        children.push(
+          paragraph([
+            run(p.productName||`Оборудование №${i+1}`,{size:22,bold:true})
+          ],{after:150,line:270})
+        );
+
+        const photoParagraphs=[];
+        for(const id of p.photoIds||[]){
+          const blob=await getPhoto(id).catch(()=>null);
+          if(!blob)continue;
+          const bytes=await blobToUint8Array(blob);
+          const size=getPhotoSize(p,id);
+          const px=Math.min(300,Math.max(120,Math.round(size*MM_TO_PX)));
+          photoParagraphs.push(
+            new docx.ImageRun({
+              data:bytes,
+              transformation:{width:px,height:px},
+              type:blob.type==="image/png"?"png":"jpg"
+            })
+          );
+        }
+
+        if(photoParagraphs.length){
+          children.push(
+            paragraph(photoParagraphs,{
+              alignment:docx.AlignmentType.CENTER,
+              after:140
+            })
+          );
+        }
       }
-    });
 
-    children.push(centeredAdvantagesTable);
+      for(const html of pageBlocks){
+        const host=document.createElement("div");
+        host.innerHTML=html;
+
+        if(
+          host.querySelector(".kp-title") ||
+          host.querySelector(".kp-product-name") ||
+          host.querySelector(".product-photo-grid")
+        ){
+          continue;
+        }
+
+        addDocxPageBlock(html,p);
+      }
+
+      // На первой странице оставляем нижний блок как в основной версии DOCX.
+      // На продолжениях он не дублируется, чтобы не вытеснять контент на следующий лист.
+      if(pageIndex===0){
+        addDocxAdvantages();
+      }
+    }
   }
 
   // =========================================================
