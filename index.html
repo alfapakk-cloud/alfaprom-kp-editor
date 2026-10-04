@@ -990,7 +990,28 @@ async function createDocx(){
     );
   }
 
-  function addDocxPageBlock(html,p){
+  function addDocxPageBlock(block,p){
+    // paginateProduct() хранит описание и характеристики как объекты,
+    // а остальные блоки — как HTML-строки. Обрабатываем оба формата.
+    if(block && typeof block==="object"){
+      if(block.type==="description"){
+        children.push(
+          paragraph([
+            run(String(block.text||""),{size:18})
+          ],{after:100,line:260})
+        );
+        return;
+      }
+
+      if(block.type==="specs"){
+        addDocxSpecsTable(Array.isArray(block.rows)?block.rows:[]);
+        return;
+      }
+
+      return;
+    }
+
+    const html=String(block||"");
     const host=document.createElement("div");
     host.innerHTML=html;
 
@@ -1131,7 +1152,13 @@ async function createDocx(){
         }
       }
 
-      for(const html of pageBlocks){
+      for(const block of pageBlocks){
+        if(block && typeof block==="object"){
+          addDocxPageBlock(block,p);
+          continue;
+        }
+
+        const html=String(block||"");
         const host=document.createElement("div");
         host.innerHTML=html;
 
@@ -1143,7 +1170,7 @@ async function createDocx(){
           continue;
         }
 
-        addDocxPageBlock(html,p);
+        addDocxPageBlock(block,p);
       }
 
       // На первой странице оставляем нижний блок как в основной версии DOCX.
