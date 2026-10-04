@@ -1304,15 +1304,16 @@ async function createDocx(){
       })
     );
 
-    // Второй ряд — две карточки по центру
+    // Второй ряд — две карточки строго по центру
     const secondRow=[];
 
-    const secondCellWidth=Math.floor(CONTENT_W/4);
+    const blankWidth=Math.floor(CONTENT_W/6);
+    const cardWidth=Math.floor(CONTENT_W/3);
 
-    // Пустая левая ячейка — центрирование двух карточек
+    // Пустая левая половина первой шестой части
     secondRow.push(
       new docx.TableCell({
-        width:{size:secondCellWidth,type:docx.WidthType.DXA},
+        width:{size:blankWidth,type:docx.WidthType.DXA},
         borders:{
           top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
           bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
@@ -1325,9 +1326,10 @@ async function createDocx(){
 
     for(let n=3;n<5;n++){
       const x=adv[n]||"";
+
       secondRow.push(
         new docx.TableCell({
-          width:{size:secondCellWidth,type:docx.WidthType.DXA},
+          width:{size:cardWidth,type:docx.WidthType.DXA},
           shading:{fill:"FAFAFA"},
           margins:{top:110,bottom:110,left:100,right:100},
           borders:{
@@ -1350,13 +1352,10 @@ async function createDocx(){
       );
     }
 
-    // Пустая правая ячейка — симметричное центрирование
+    // Пустая правая шестая часть — симметрично левой
     secondRow.push(
       new docx.TableCell({
-        width:{
-          size:CONTENT_W-3*secondCellWidth,
-          type:docx.WidthType.DXA
-        },
+        width:{size:blankWidth,type:docx.WidthType.DXA},
         borders:{
           top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
           bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
