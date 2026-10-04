@@ -1373,53 +1373,48 @@ async function createDocx(){
       })
     );
 
-    children.push(
-      new docx.Table({
-        width:{size:CONTENT_W,type:docx.WidthType.DXA},
-        columnWidths:[
-          Math.floor(CONTENT_W/3),
-          Math.floor(CONTENT_W/3),
-          Math.floor(CONTENT_W/3)
-        ],
-        rows:[
-          advRows[0],
-          new docx.TableRow({
-            cantSplit:true,
-            children:[
-              new docx.TableCell({
-                width:{size:Math.floor(CONTENT_W/6),type:docx.WidthType.DXA},
-                borders:{
-                  top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-                  bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-                  left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-                  right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
-                },
-                children:[paragraph([],{after:0})]
-              }),
-              ...advRows[1].options.children,
-              new docx.TableCell({
-                width:{size:Math.floor(CONTENT_W/6),type:docx.WidthType.DXA},
-                borders:{
-                  top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-                  bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-                  left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-                  right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
-                },
-                children:[paragraph([],{after:0})]
-              })
-            ]
-          })
-        ],
-        borders:{
-          top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          insideHorizontal:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          insideVertical:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
-        }
-      })
-    );
+    // Первый ряд: 3 равные карточки
+    const firstAdvantagesTable=new docx.Table({
+      width:{size:CONTENT_W,type:docx.WidthType.DXA},
+      columnWidths:[
+        Math.floor(CONTENT_W/3),
+        Math.floor(CONTENT_W/3),
+        CONTENT_W-2*Math.floor(CONTENT_W/3)
+      ],
+      rows:[advRows[0]],
+      borders:{
+        top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+        bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+        left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+        right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+        insideHorizontal:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+        insideVertical:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
+      }
+    });
+
+    children.push(firstAdvantagesTable);
+
+    // Второй ряд: две карточки одинаковой ширины строго по центру
+    const centeredAdvantagesTable=new docx.Table({
+      width:{size:CONTENT_W,type:docx.WidthType.DXA},
+      columnWidths:[
+        Math.floor(CONTENT_W/6),
+        Math.floor(CONTENT_W/3),
+        Math.floor(CONTENT_W/3),
+        CONTENT_W-Math.floor(CONTENT_W/6)-2*Math.floor(CONTENT_W/3)
+      ],
+      rows:[advRows[1]],
+      borders:{
+        top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+        bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+        left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+        right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+        insideHorizontal:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+        insideVertical:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
+      }
+    });
+
+    children.push(centeredAdvantagesTable);
   }
 
   // =========================================================
