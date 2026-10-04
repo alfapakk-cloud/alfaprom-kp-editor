@@ -1110,7 +1110,7 @@ async function createDocx(){
           : ""
       );
 
-      const pageBlocks=pages[pageIndex]||[];
+      const pageHtml=String(pages[pageIndex]||"");
 
       if(pageIndex===0){
 
@@ -1152,36 +1152,24 @@ async function createDocx(){
         }
       }
 
-      for(const block of pageBlocks){
-        // Объектные блоки (описание/характеристики) передаём напрямую.
-        if(block && typeof block==="object"){
-          addDocxPageBlock(block,p);
-          continue;
-        }
-
-        const html=String(block||"");
+      // paginateProduct() возвращает готовую HTML-страницу целиком.
+      // Заголовок и фото уже добавляются выше в DOCX, поэтому из HTML
+      // извлекаем только содержимое после них, сохраняя порядок блоков.
+      if(pageHtml){
         const host=document.createElement("div");
-        host.innerHTML=html;
+        host.innerHTML=pageHtml;
 
-        // Важно: pageBlocks содержит HTML всей страницы превью.
-        // Нельзя отбрасывать такой блок целиком из-за заголовка/фото:
-        // после них внутри находятся описание, характеристики, цена и т.д.
-        // Извлекаем только информационные блоки, которые реально нужны DOCX.
+        const contentRoot=host.querySelector(".kp-content")||host;
         const contentNodes=[
-          ...host.querySelectorAll(
+          ...contentRoot.querySelectorAll(
             ".kp-description, .specs-table, .kp-note, .video-button, .price-block, .availability, .price-comment"
           )
         ];
 
-        if(contentNodes.length){
-          for(const node of contentNodes){
-            const wrapper=document.createElement("div");
-            wrapper.appendChild(node.cloneNode(true));
-            addDocxPageBlock(wrapper.innerHTML,p);
-          }
-        }else{
-          // Совместимость с отдельными HTML-блоками без контейнера страницы.
-          addDocxPageBlock(block,p);
+        for(const node of contentNodes){
+          const wrapper=document.createElement("div");
+          wrapper.appendChild(node.cloneNode(true));
+          addDocxPageBlock(wrapper.innerHTML,p);
         }
       }
 
