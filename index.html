@@ -664,8 +664,8 @@ async function createDocx(){
 
   function makeDocxHeader(){
     // В шапке DOCX не используем таблицу для горизонтального позиционирования.
-    // Word стабильно переразмещал табличные колонки Header, из-за чего контакты
-    // могли уходить под логотип. Используем правый tab-stop от левого поля.
+    // Логотип и телефон остаются в одной строке, а телефон уходит на правый
+    // tab-stop. Важно: здесь должен быть настоящий символ TAB, а не текст "\\t".
     const RIGHT_TAB=CONTENT_W;
 
     const phoneText="8\u00A0(800)\u00A0200-29-23";
@@ -679,7 +679,7 @@ async function createDocx(){
             type:logoType
           })
         : run("АЛЬФАПРОМ",{size:25,bold:true,color:ORANGE}),
-      new docx.TextRun({text:"\\t",font:"Arial",size:17}),
+      new docx.TextRun({text:"\t",font:"Arial",size:17}),
       run(phoneText,{size:17,bold:true,color:TEXT})
     ],{
       tabStops:[{
@@ -694,7 +694,7 @@ async function createDocx(){
     });
 
     const siteParagraph=paragraph([
-      new docx.TextRun({text:"\\t",font:"Arial",size:14}),
+      new docx.TextRun({text:"\t",font:"Arial",size:14}),
       new docx.ExternalHyperlink({
         link:"https://alfaprom.org",
         children:[
