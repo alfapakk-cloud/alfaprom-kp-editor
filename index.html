@@ -120,10 +120,10 @@ async function getPhotoDataUrl(id){const b=await getPhoto(id);if(!b)return"";ret
 async function getProductPhotosData(p){const out=[];for(const id of p.photoIds||[]){try{const dataUrl=await getPhotoDataUrl(id);if(dataUrl)out.push({photoId:id,dataUrl})}catch(e){}}return out}
 function blockHtml(p,index,photos){const blocks=[];blocks.push(`<div class="kp-title">Коммерческое предложение</div>`);blocks.push(`<div class="kp-product-name">${escapeHtml(p.productName||`Оборудование №${index+1}`)}</div>`);if(photos.length){ensurePhotoPositions(p);let photoBottom=24;const photoHtml=photos.map((ph,i)=>{const s=getPhotoSize(p,ph.photoId);const pos=getPhotoPosition(p,ph.photoId);photoBottom=Math.max(photoBottom,pos.y+s+1.5);return`<div class="product-photo-frame" style="position:absolute;left:${pos.x}mm;top:${pos.y}mm;width:${s}mm;height:${s}mm"><img src="${ph.dataUrl}" alt="Оборудование ${i+1}"></div>`}).join("");blocks.push(`<div class="product-photo-grid" style="position:relative;height:${Math.max(24,photoBottom)}mm">${photoHtml}</div>`)}if(p.description.trim())blocks.push({type:"description",text:p.description});const rows=parseSpecs(p.specsText);if(rows.length)blocks.push({type:"specs",rows});if(p.note.trim())blocks.push(`<div class="kp-note">${escapeHtml(p.note)}</div>`);if(p.videoUrl.trim())blocks.push(`<a class="video-button" href="${escapeAttr(p.videoUrl)}" target="_blank" rel="noopener">Смотреть видео оборудования</a>`);const price=formatPrice(p.price,p.currency),disc=formatPrice(p.discountPrice,p.currency);if(price||disc)blocks.push(`<div class="price-block">${price?`<div class="price-line">Цена: ${price}</div>`:""}${disc?`<div class="price-line discount">Цена со скидкой: ${disc}</div>`:""}</div>`);blocks.push(`<div class="availability ${p.status==="order"?"order":"available"}">${p.status==="order"?"Под заказ":"В наличии"}</div>`);if(p.priceComment.trim())blocks.push(`<div class="price-comment">${escapeHtml(p.priceComment)}</div>`);return blocks}
 function specsTableHtml(rows){return`<table class="specs-table"><thead><tr><th colspan="2">Характеристики</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${escapeHtml(String(r[0]??""))}</td><td>${escapeHtml(String(r[1]??""))}</td></tr>`).join("")}</tbody></table>`}
-async function measureHtmlHeight(html){const test=document.createElement("div");test.style.cssText="position:absolute;left:-100000px;top:0;visibility:hidden;width:180mm;box-sizing:border-box;";test.innerHTML=html;document.body.appendChild(test);await new Promise(r=>requestAnimationFrame(r));const h=test.getBoundingClientRect().height;test.remove();return h}
-async function fitDescriptionChunk(text,available){const words=String(text||"").split(/(\s+)/);let best="",candidate="";for(let i=0;i<words.length;i++){const next=candidate+words[i];const h=await measureHtmlHeight(`<div class="kp-description">${escapeHtml(next)}</div>`);if(h<=available+0.5||!candidate){candidate=next;best=next}else break}return best.trimEnd()}
+async function measureHtmlHeight(html){const test=document.createElement("div");test.style.cssText="position:absolute;left:-100000px;top:0;visibility:hidden;width:180mm;box-sizing:border-box;";test.innerHTML=html;document.body.appendChild(test);const h=test.getBoundingClientRect().height;test.remove();return h}
+async function fitDescriptionChunk(text,available){const source=String(text||"");if(!source)return"";const words=source.split(/(\s+)/);let lo=1,hi=words.length,best="";while(lo<=hi){const mid=(lo+hi)>>1;const candidate=words.slice(0,mid).join("");const h=await measureHtmlHeight(`<div class="kp-description">${escapeHtml(candidate)}</div>`);if(h<=available+0.5||!best){if(h<=available+0.5){best=candidate;lo=mid+1}else{hi=mid-1}}else hi=mid-1}return best.trimEnd()}
 async function splitDescription(text,available){let rest=String(text||"").trim();const chunks=[];while(rest){const chunk=await fitDescriptionChunk(rest,available);if(!chunk)break;chunks.push(`<div class="kp-description">${escapeHtml(chunk)}</div>`);rest=rest.slice(chunk.length).trimStart()}return{chunks,rest}}
-async function fitSpecsRows(rows,available){let count=0;for(let i=1;i<=rows.length;i++){const html=specsTableHtml(rows.slice(0,i));const h=await measureHtmlHeight(html);if(h<=available+0.5||i===1)count=i;else break}return count}
+async function fitSpecsRows(rows,available){if(!rows.length)return 0;let lo=1,hi=rows.length,best=0;while(lo<=hi){const mid=(lo+hi)>>1;const html=specsTableHtml(rows.slice(0,mid));const h=await measureHtmlHeight(html);if(h<=available+0.5||mid===1){if(h<=available+0.5){best=mid;lo=mid+1}else hi=mid-1}else hi=mid-1}return best}
 function headerHtml(){return`<div class="kp-header"><img class="kp-logo" src="${LOGO_DATA}" alt="АЛЬФАПРОМ"><div class="kp-header-right"><div class="kp-header-phone">8 (800) 200-29-23</div><a class="kp-header-site" href="https://alfaprom.org" target="_blank">alfaprom.org</a></div></div>`}
 function footerHtml(){return`<div class="kp-footer"><div class="footer-left">АЛЬФАПРОМ<br>Оборудование для пищевого производства и упаковки</div><div class="footer-right">${state.managerName.trim()?`<div class="footer-manager">${escapeHtml(state.managerName)}</div>`:""}${state.managerPhone.trim()?`<div>${escapeHtml(state.managerPhone)}</div>`:""}<div>8 (800) 200-29-23</div><div>alfaprom.org</div></div></div>`}
 function advantagesHtml(){return`<div class="advantages"><div class="advantages-title">Почему мы?</div><div class="advantages-grid">${DEFAULT_ADVANTAGES.map(x=>`<div class="advantage">${escapeHtml(x)}</div>`).join("")}</div></div>`}
@@ -265,7 +265,36 @@ async function paginateProduct(p,index){
 async function buildAllPages(){const all=[];for(let i=0;i<state.products.length;i++){const pages=await paginateProduct(state.products[i],i);all.push(...pages)}return all}
 function getA4SizePx(){const d=document.createElement("div");d.style.cssText="position:absolute;visibility:hidden;width:210mm;height:297mm";document.body.appendChild(d);const r={width:d.getBoundingClientRect().width,height:d.getBoundingClientRect().height};d.remove();return r}
 function fitPreviewPages(){const scroll=document.getElementById("previewScroll"),shells=document.querySelectorAll(".preview-page-shell");if(!scroll||!shells.length)return;const a4=getA4SizePx(),scale=Math.min(Math.max(100,scroll.clientWidth-40)/a4.width,Math.max(100,scroll.clientHeight-40)/a4.height);shells.forEach(s=>{s.style.width=a4.width*scale+"px";s.style.height=a4.height*scale+"px";const p=s.querySelector(".preview-page-scaled");if(p)p.style.transform=`scale(${scale})`})}
-let renderToken=0;async function renderPreview(){const token=++renderToken,c=document.getElementById("previewPages");c.innerHTML="";const pages=await buildAllPages();if(token!==renderToken)return;for(const html of pages){const shell=document.createElement("div");shell.className="preview-page-shell";const page=document.createElement("div");page.className="preview-page-scaled";page.innerHTML=html;shell.appendChild(page);c.appendChild(shell)}fitPreviewPages()}
+let renderToken=0,renderTimer=0,renderRunning=false,renderQueued=false;
+async function renderPreviewNow(){
+  const token=++renderToken,c=document.getElementById("previewPages");
+  const pages=await buildAllPages();
+  if(token!==renderToken)return;
+  c.innerHTML="";
+  for(const html of pages){
+    const shell=document.createElement("div");
+    shell.className="preview-page-shell";
+    const page=document.createElement("div");
+    page.className="preview-page-scaled";
+    page.innerHTML=html;
+    shell.appendChild(page);
+    c.appendChild(shell)
+  }
+  fitPreviewPages()
+}
+function renderPreview(){
+  clearTimeout(renderTimer);
+  renderTimer=setTimeout(async()=>{
+    renderQueued=true;
+    if(renderRunning)return;
+    renderRunning=true;
+    while(renderQueued){
+      renderQueued=false;
+      await renderPreviewNow()
+    }
+    renderRunning=false
+  },80)
+}
 const managerName=document.getElementById("managerName"),managerPhone=document.getElementById("managerPhone");managerName.oninput=()=>{state.managerName=managerName.value;saveState();renderPreview()};managerPhone.oninput=()=>{state.managerPhone=managerPhone.value;saveState();renderPreview()};
 document.getElementById("addProductBtn").onclick=()=>{state.products.push(createProduct());saveState();renderProductsEditor();renderPreview();setTimeout(()=>document.querySelectorAll(".product-editor-card").at(-1)?.scrollIntoView({behavior:"smooth",block:"start"}),50)};
 document.getElementById("resetBtn").onclick=async()=>{if(!confirm("Сбросить текущее коммерческое предложение?"))return;for(const p of state.products)for(const id of p.photoIds||[])await deletePhoto(id).catch(()=>{});state.products=[createProduct()];state.managerName="";state.managerPhone="";saveState();managerName.value="";managerPhone.value="";renderProductsEditor();renderPreview()};
