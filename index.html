@@ -666,7 +666,7 @@ async function createDocx(){
     // В шапке DOCX не используем таблицу для горизонтального позиционирования.
     // Логотип и телефон остаются в одной строке, а телефон уходит на правый
     // tab-stop. Важно: здесь должен быть настоящий символ TAB, а не текст "\\t".
-    const RIGHT_TAB=CONTENT_W;
+    const RIGHT_TAB=CONTENT_W+454;
 
     const phoneText="8\u00A0(800)\u00A0200-29-23";
     const siteText="alfaprom\u2060.\u2060org";
@@ -687,7 +687,7 @@ async function createDocx(){
         position:RIGHT_TAB
       }],
       alignment:docx.AlignmentType.LEFT,
-      before:-70,
+      before:-524,
       after:0,
       line:240,
       keepLines:true,
@@ -708,7 +708,7 @@ async function createDocx(){
         position:RIGHT_TAB
       }],
       alignment:docx.AlignmentType.LEFT,
-      before:-70,
+      before:-524,
       after:0,
       line:220,
       keepLines:true
@@ -979,7 +979,7 @@ async function createDocx(){
         children.push(
           paragraph([
             run(String(block.text||""),{size:18})
-          ],{after:100,line:260})
+          ],{after:0,line:260})
         );
         return;
       }
@@ -999,7 +999,7 @@ async function createDocx(){
     const desc=host.querySelector(".kp-description");
     if(desc){
       children.push(
-        paragraph([run(desc.textContent||"",{size:18})],{after:100,line:260})
+        paragraph([run(desc.textContent||"",{size:18})],{after:0,line:260})
       );
       return;
     }
