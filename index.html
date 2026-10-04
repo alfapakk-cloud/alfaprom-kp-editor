@@ -599,8 +599,13 @@ async function createDocx(){
   }
 
   function paragraph(children=[],opts={}){
-    return new docx.Paragraph({
+    const p=new docx.Paragraph({
       alignment:opts.alignment,
+      keepLines:!!opts.keepLines,
+      keepNext:!!opts.keepNext,
+      pageBreakBefore:!!opts.pageBreakBefore,
+      widowControl:opts.widowControl===undefined?true:!!opts.widowControl,
+      border:opts.border,
       spacing:{
         before:opts.before||0,
         after:opts.after||0,
@@ -608,6 +613,7 @@ async function createDocx(){
       },
       children
     });
+    return p;
   }
 
   function blank(after=80){
@@ -666,24 +672,24 @@ async function createDocx(){
       layout:docx.TableLayoutType.FIXED,
       rows:[new docx.TableRow({
         cantSplit:true,
+        height:{value:520,type:docx.HeightRule.EXACT},
         children:[
           new docx.TableCell({
             width:{size:headerLeftW,type:docx.WidthType.DXA},
-            margins:{top:20,bottom:40,left:0,right:80},
+            margins:{top:0,bottom:0,left:0,right:80},
             borders:{top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}},
             children:[paragraph([
               logoBytes
                 ? new docx.ImageRun({data:logoBytes,transformation:{width:185,height:50},type:logoType})
                 : run("АЛЬФАПРОМ",{size:25,bold:true,color:ORANGE})
-            ],{alignment:docx.AlignmentType.LEFT,after:0})]
+            ],{alignment:docx.AlignmentType.LEFT,after:0,keepLines:true})]
           }),
           new docx.TableCell({
             width:{size:headerRightW,type:docx.WidthType.DXA},
-            noWrap:true,
-            margins:{top:20,bottom:40,left:0,right:0},
+            margins:{top:0,bottom:0,left:0,right:0},
             borders:{top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}},
             children:[
-              paragraph([run("8 (800) 200-29-23",{size:17,bold:true,color:TEXT})],{alignment:docx.AlignmentType.RIGHT,after:5,keepLines:true,keepNext:true}),
+              paragraph([run("8 (800) 200-29-23",{size:17,bold:true,color:TEXT})],{alignment:docx.AlignmentType.RIGHT,after:4,keepLines:true,keepNext:true}),
               paragraph([run("alfaprom.org",{size:14,bold:true,color:ORANGE})],{alignment:docx.AlignmentType.RIGHT,after:0,keepLines:true})
             ]
           })
@@ -692,9 +698,24 @@ async function createDocx(){
       borders:{top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},insideHorizontal:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},insideVertical:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}}
     });
 
-    const orangeLine=paragraph([],{
-      before:0,after:0,
-      border:{bottom:{style:docx.BorderStyle.SINGLE,size:14,color:ORANGE,space:1}}
+    // Реальная полоса шапки: отдельная фиксированная строка, а не
+    // border Paragraph, который зависит от поведения Word.
+    const orangeLine=new docx.Table({
+      width:{size:CONTENT_W,type:docx.WidthType.DXA},
+      columnWidths:[CONTENT_W],
+      layout:docx.TableLayoutType.FIXED,
+      rows:[new docx.TableRow({
+        cantSplit:true,
+        height:{value:18,type:docx.HeightRule.EXACT},
+        children:[new docx.TableCell({
+          width:{size:CONTENT_W,type:docx.WidthType.DXA},
+          shading:{fill:ORANGE},
+          margins:{top:0,bottom:0,left:0,right:0},
+          borders:{top:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},bottom:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},left:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},right:{style:docx.BorderStyle.NONE,size:0,color:ORANGE}},
+          children:[paragraph([],{after:0,line:18})]
+        })]
+      })],
+      borders:{top:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},bottom:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},left:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},right:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},insideHorizontal:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},insideVertical:{style:docx.BorderStyle.NONE,size:0,color:ORANGE}}
     });
 
     return new docx.Header({children:[headerTable,orangeLine]});
@@ -836,46 +857,88 @@ async function createDocx(){
   }
 
   function addDocxAdvantages(){
-    children.push(paragraph([run("Почему мы?",{size:21,bold:true})],{alignment:docx.AlignmentType.CENTER,before:60,after:80}));
+    children.push(paragraph([run("Почему мы?",{size:21,bold:true})],{
+      alignment:docx.AlignmentType.CENTER,
+      before:60,
+      after:80,
+      keepLines:true,
+      keepNext:true
+    }));
+
     const adv=DEFAULT_ADVANTAGES||[];
-    const cardW=Math.floor(CONTENT_W/3);
-    const makeCard=(x,w)=>new docx.TableCell({
-      width:{size:w,type:docx.WidthType.DXA},
+    const colW=Math.floor(CONTENT_W/6);
+    const lastColW=CONTENT_W-colW*5;
+    const cardW=colW*2;
+    const borderNone={
+      top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+      bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+      left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
+      right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
+    };
+
+    const makeCard=(x)=>new docx.TableCell({
+      columnSpan:2,
+      width:{size:cardW,type:docx.WidthType.DXA},
       shading:{fill:"FAFAFA"},
       margins:{top:110,bottom:110,left:100,right:100},
       verticalAlign:docx.VerticalAlign.CENTER,
       borders:{top:thinBorder,bottom:thinBorder,left:thinBorder,right:thinBorder},
-      children:[paragraph([run("✓ ",{size:15,bold:true,color:ORANGE}),run(x,{size:14,bold:true})],{alignment:docx.AlignmentType.CENTER,after:0,line:205})]
+      children:[
+        paragraph([
+          run("✓ ",{size:15,bold:true,color:ORANGE}),
+          run(x,{size:14,bold:true})
+        ],{
+          alignment:docx.AlignmentType.CENTER,
+          after:0,
+          line:205,
+          keepLines:true
+        })
+      ]
     });
-    const empty=(w)=>new docx.TableCell({
+
+    const empty=(w,span=1)=>new docx.TableCell({
+      columnSpan:span,
       width:{size:w,type:docx.WidthType.DXA},
-      children:[paragraph([],{after:0})],
-      borders:{top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}}
+      children:[paragraph([],{after:0,line:18})],
+      borders:borderNone
     });
-    const topTable=new docx.Table({
+
+    // Единая 6-колоночная сетка = та же геометрия, что в превью:
+    // 3 карточки сверху и 2 карточки снизу по центру.
+    const advantagesTable=new docx.Table({
       width:{size:CONTENT_W,type:docx.WidthType.DXA},
-      columnWidths:[cardW,cardW,CONTENT_W-cardW*2],
+      columnWidths:[colW,colW,colW,colW,colW,lastColW],
       layout:docx.TableLayoutType.FIXED,
-      alignment:docx.AlignmentType.CENTER,
-      rows:[new docx.TableRow({cantSplit:true,children:[
-        makeCard(adv[0]||"",cardW),makeCard(adv[1]||"",cardW),makeCard(adv[2]||"",CONTENT_W-cardW*2)
-      ]})],
-      borders:{top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},insideHorizontal:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},insideVertical:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}}
+      rows:[
+        new docx.TableRow({
+          cantSplit:true,
+          children:[
+            makeCard(adv[0]||""),
+            makeCard(adv[1]||""),
+            makeCard(adv[2]||"")
+          ]
+        }),
+        new docx.TableRow({
+          cantSplit:true,
+          children:[
+            empty(colW),
+            makeCard(adv[3]||""),
+            makeCard(adv[4]||""),
+            empty(colW)
+          ]
+        })
+      ],
+      borders:{
+        top:borderNone.top,
+        bottom:borderNone.bottom,
+        left:borderNone.left,
+        right:borderNone.right,
+        insideHorizontal:borderNone.top,
+        insideVertical:borderNone.left
+      }
     });
-    children.push(topTable);
-    const gap=Math.floor((CONTENT_W-cardW*2)/2);
-    const rightGap=CONTENT_W-gap-cardW*2;
-    const bottomTable=new docx.Table({
-      width:{size:CONTENT_W,type:docx.WidthType.DXA},
-      columnWidths:[gap,cardW,cardW,rightGap],
-      layout:docx.TableLayoutType.FIXED,
-      alignment:docx.AlignmentType.CENTER,
-      rows:[new docx.TableRow({cantSplit:true,children:[
-        empty(gap),makeCard(adv[3]||"",cardW),makeCard(adv[4]||"",cardW),empty(rightGap)
-      ]})],
-      borders:{top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},insideHorizontal:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},insideVertical:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}}
-    });
-    children.push(bottomTable);
+
+    children.push(advantagesTable);
   }
   function addDocxPageBlock(block,p){
     // paginateProduct() хранит описание и характеристики как объекты,
@@ -1102,21 +1165,25 @@ async function createDocx(){
     });
   }
 
-  // Сформировать блок «Почему мы?» отдельно, чтобы он жил в footer первой страницы,
-  // а не мог переноситься Word-ом вместе с основным текстом.
+  // «Почему мы?» теперь является частью Body первой страницы.
+  // В Footer остаётся только фиксированная оранжевая контактная полоса.
   const savedChildren=children;
   children=[];
   addDocxAdvantages();
   const whyUsChildren=children;
   children=savedChildren;
 
-  function makeDocxFooter(includeWhyUs){
-    const footerChildren=[];
-    if(includeWhyUs){
-      footerChildren.push(...whyUsChildren);
-    }
-    footerChildren.push(makeOrangeFooterTable());
-    return new docx.Footer({children:footerChildren});
+  if(pageChildren.length){
+    pageChildren[0]=[
+      ...pageChildren[0],
+      ...whyUsChildren
+    ];
+  }
+
+  function makeDocxFooter(){
+    return new docx.Footer({
+      children:[makeOrangeFooterTable()]
+    });
   }
 
   // =========================================================
@@ -1129,7 +1196,7 @@ async function createDocx(){
       page:{
         size:{width:PAGE_W,height:PAGE_H},
         margin:{
-          top:1330,
+          top:1560,
           right:MR,
           bottom:index===0?2050:1050,
           left:ML,
@@ -1142,7 +1209,7 @@ async function createDocx(){
       default:makeDocxHeader()
     },
     footers:{
-      default:makeDocxFooter(index===0)
+      default:makeDocxFooter()
     },
     children:pageContent
   }));
@@ -1152,11 +1219,11 @@ async function createDocx(){
       properties:{
         page:{
           size:{width:PAGE_W,height:PAGE_H},
-          margin:{top:1330,right:MR,bottom:1050,left:ML,header:250,footer:300}
+          margin:{top:1560,right:MR,bottom:1050,left:ML,header:250,footer:300}
         }
       },
       headers:{default:makeDocxHeader()},
-      footers:{default:makeDocxFooter(false)},
+      footers:{default:makeDocxFooter()},
       children:[]
     });
   }
