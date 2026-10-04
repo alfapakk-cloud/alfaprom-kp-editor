@@ -674,13 +674,13 @@ async function createDocx(){
       );
     }
 
-    const headerLeftW=Math.round(CONTENT_W*.60);
+    const headerLeftW=Math.round(CONTENT_W*.58);
     const headerRightW=CONTENT_W-headerLeftW;
 
     headerCells.push(
       new docx.TableCell({
         width:{size:headerLeftW,type:docx.WidthType.DXA},
-        margins:{top:30,bottom:90,left:0,right:0},
+        margins:{top:30,bottom:90,left:0,right:80},
         borders:{
           top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
           bottom:{style:docx.BorderStyle.SINGLE,size:10,color:ORANGE},
@@ -872,12 +872,15 @@ async function createDocx(){
 
     const adv=DEFAULT_ADVANTAGES||[];
 
+    const advCol=Math.floor(CONTENT_W/3);
+    const advLastCol=CONTENT_W-advCol*2;
     const firstRow=[];
     for(let n=0;n<3;n++){
       const x=adv[n]||"";
+      const cellW=n===2?advLastCol:advCol;
       firstRow.push(
         new docx.TableCell({
-          width:{size:Math.floor(CONTENT_W/3),type:docx.WidthType.DXA},
+          width:{size:cellW,type:docx.WidthType.DXA},
           shading:{fill:"FAFAFA"},
           margins:{top:110,bottom:110,left:100,right:100},
           borders:{top:thinBorder,bottom:thinBorder,left:thinBorder,right:thinBorder},
@@ -913,6 +916,7 @@ async function createDocx(){
 
     const blankWidth=Math.floor(CONTENT_W/6);
     const cardWidth=Math.floor(CONTENT_W/3);
+    const secondLastWidth=CONTENT_W-blankWidth-cardWidth-cardWidth;
     const secondRow=[
       new docx.TableCell({
         width:{size:blankWidth,type:docx.WidthType.DXA},
@@ -964,7 +968,7 @@ async function createDocx(){
           blankWidth,
           cardWidth,
           cardWidth,
-          CONTENT_W-blankWidth-cardWidth-cardWidth
+          secondLastWidth
         ],
         rows:[new docx.TableRow({cantSplit:true,children:secondRow})],
         borders:{
@@ -1231,7 +1235,7 @@ async function createDocx(){
       page:{
         size:{width:PAGE_W,height:PAGE_H},
         margin:{
-          top:950,
+          top:1330,
           right:MR,
           bottom:index===0?2050:1050,
           left:ML,
@@ -1254,7 +1258,7 @@ async function createDocx(){
       properties:{
         page:{
           size:{width:PAGE_W,height:PAGE_H},
-          margin:{top:950,right:MR,bottom:1050,left:ML,header:250,footer:300}
+          margin:{top:1330,right:MR,bottom:1050,left:ML,header:250,footer:300}
         }
       },
       headers:{default:makeDocxHeader()},
