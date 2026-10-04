@@ -702,8 +702,8 @@ async function createDocx(){
           right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
         },
         children:[
-          paragraph([run("8 (800) 200-29-23",{size:17,bold:true,color:TEXT})],{alignment:docx.AlignmentType.RIGHT,after:15}),
-          paragraph([run("alfaprom.org",{size:14,bold:true,color:ORANGE})],{alignment:docx.AlignmentType.RIGHT,after:0})
+          paragraph([run("8 (800) 200-29-23",{size:17,bold:true,color:TEXT,break:false})],{alignment:docx.AlignmentType.RIGHT,after:15,keepNext:true}),
+          paragraph([run("alfaprom.org",{size:14,bold:true,color:ORANGE,break:false})],{alignment:docx.AlignmentType.RIGHT,after:0,keepLines:true})
         ]
       })
     );
@@ -864,123 +864,32 @@ async function createDocx(){
   }
 
   function addDocxAdvantages(){
-    children.push(
-      paragraph([
-        run("Почему мы?",{size:21,bold:true})
-      ],{before:60,after:80})
-    );
-
+    children.push(paragraph([run("Почему мы?",{size:21,bold:true})],{alignment:docx.AlignmentType.CENTER,before:60,after:80}));
     const adv=DEFAULT_ADVANTAGES||[];
-
-    const advCol=Math.floor(CONTENT_W/3);
-    const advLastCol=CONTENT_W-advCol*2;
-    const firstRow=[];
-    for(let n=0;n<3;n++){
-      const x=adv[n]||"";
-      const cellW=n===2?advLastCol:advCol;
-      firstRow.push(
-        new docx.TableCell({
-          width:{size:cellW,type:docx.WidthType.DXA},
-          shading:{fill:"FAFAFA"},
-          margins:{top:110,bottom:110,left:100,right:100},
-          borders:{top:thinBorder,bottom:thinBorder,left:thinBorder,right:thinBorder},
-          children:[
-            paragraph([
-              run("✓ ",{size:15,bold:true,color:ORANGE}),
-              run(x,{size:14,bold:true})
-            ],{alignment:docx.AlignmentType.CENTER,after:0,line:205})
-          ]
-        })
-      );
-    }
-
-    children.push(
-      new docx.Table({
-        width:{size:CONTENT_W,type:docx.WidthType.DXA},
-        columnWidths:[
-          Math.floor(CONTENT_W/3),
-          Math.floor(CONTENT_W/3),
-          CONTENT_W-2*Math.floor(CONTENT_W/3)
-        ],
-        rows:[new docx.TableRow({cantSplit:true,children:firstRow})],
-        borders:{
-          top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          insideHorizontal:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          insideVertical:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
-        }
-      })
-    );
-
-    const blankWidth=Math.floor(CONTENT_W/6);
-    const cardWidth=Math.floor(CONTENT_W/3);
-    const secondLastWidth=CONTENT_W-blankWidth-cardWidth-cardWidth;
-    const secondRow=[
-      new docx.TableCell({
-        width:{size:blankWidth,type:docx.WidthType.DXA},
-        borders:{
-          top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
-        },
-        children:[paragraph([],{after:0})]
-      })
-    ];
-
-    for(let n=3;n<5;n++){
-      const x=adv[n]||"";
-      secondRow.push(
-        new docx.TableCell({
-          width:{size:cardWidth,type:docx.WidthType.DXA},
-          shading:{fill:"FAFAFA"},
-          margins:{top:110,bottom:110,left:100,right:100},
-          borders:{top:thinBorder,bottom:thinBorder,left:thinBorder,right:thinBorder},
-          children:[
-            paragraph([
-              run("✓ ",{size:15,bold:true,color:ORANGE}),
-              run(x,{size:14,bold:true})
-            ],{alignment:docx.AlignmentType.CENTER,after:0,line:205})
-          ]
-        })
-      );
-    }
-
-    secondRow.push(
-      new docx.TableCell({
-        width:{size:blankWidth,type:docx.WidthType.DXA},
-        borders:{
-          top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
-        },
-        children:[paragraph([],{after:0})]
-      })
-    );
-
-    children.push(
-      new docx.Table({
-        width:{size:CONTENT_W,type:docx.WidthType.DXA},
-        columnWidths:[
-          blankWidth,
-          cardWidth,
-          cardWidth,
-          secondLastWidth
-        ],
-        rows:[new docx.TableRow({cantSplit:true,children:secondRow})],
-        borders:{
-          top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          insideHorizontal:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-          insideVertical:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
-        }
-      })
-    );
+    const cardW=Math.floor(CONTENT_W/3);
+    const lastW=CONTENT_W-cardW*2;
+    const makeCard=(x,w)=>new docx.TableCell({
+      width:{size:w,type:docx.WidthType.DXA},shading:{fill:"FAFAFA"},
+      margins:{top:110,bottom:110,left:100,right:100},
+      borders:{top:thinBorder,bottom:thinBorder,left:thinBorder,right:thinBorder},
+      children:[paragraph([run("✓ ",{size:15,bold:true,color:ORANGE}),run(x,{size:14,bold:true})],{alignment:docx.AlignmentType.CENTER,after:0,line:205})]
+    });
+    children.push(new docx.Table({
+      width:{size:CONTENT_W,type:docx.WidthType.DXA},columnWidths:[cardW,cardW,lastW],
+      rows:[new docx.TableRow({cantSplit:true,children:[makeCard(adv[0]||"",cardW),makeCard(adv[1]||"",cardW),makeCard(adv[2]||"",lastW)]})],
+      borders:{top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},insideHorizontal:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},insideVertical:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}}
+    }));
+    const gap=Math.floor((CONTENT_W-cardW*2)/2);
+    const rightGap=CONTENT_W-gap-cardW*2;
+    children.push(new docx.Table({
+      width:{size:CONTENT_W,type:docx.WidthType.DXA},columnWidths:[gap,cardW,cardW,rightGap],
+      rows:[new docx.TableRow({cantSplit:true,children:[
+        new docx.TableCell({width:{size:gap,type:docx.WidthType.DXA},children:[paragraph([],{after:0})],borders:{top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}}}),
+        makeCard(adv[3]||"",cardW),makeCard(adv[4]||"",cardW),
+        new docx.TableCell({width:{size:rightGap,type:docx.WidthType.DXA},children:[paragraph([],{after:0})],borders:{top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}}})
+      ]})],
+      borders:{top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},insideHorizontal:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},insideVertical:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}}
+    }));
   }
 
   function addDocxPageBlock(block,p){
@@ -1235,7 +1144,7 @@ async function createDocx(){
       page:{
         size:{width:PAGE_W,height:PAGE_H},
         margin:{
-          top:1330,
+          top:1750,
           right:MR,
           bottom:index===0?2050:1050,
           left:ML,
@@ -1258,7 +1167,7 @@ async function createDocx(){
       properties:{
         page:{
           size:{width:PAGE_W,height:PAGE_H},
-          margin:{top:1330,right:MR,bottom:1050,left:ML,header:250,footer:300}
+          margin:{top:1750,right:MR,bottom:1050,left:ML,header:250,footer:300}
         }
       },
       headers:{default:makeDocxHeader()},
