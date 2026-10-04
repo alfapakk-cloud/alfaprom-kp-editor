@@ -118,8 +118,12 @@ async function renderEditorPhotos(p){const grid=document.querySelector(`[data-ph
 function applyPhotoCropPreview(p,id,container,img){
  const crop=getPhotoCrop(p,id);
  const applied=crop.applied===true;
- const x=Math.min(89,crop.left+crop.right);
- const y=Math.min(89,crop.top+crop.bottom);
+ const left=Math.max(0,Math.min(45,Number(crop.left)||0));
+ const top=Math.max(0,Math.min(45,Number(crop.top)||0));
+ const right=Math.max(0,Math.min(45,Number(crop.right)||0));
+ const bottom=Math.max(0,Math.min(45,Number(crop.bottom)||0));
+ const width=Math.max(10,100-left-right);
+ const height=Math.max(10,100-top-bottom);
  container.style.position="relative";
  container.style.overflow="hidden";
  container.style.boxSizing="border-box";
@@ -131,15 +135,67 @@ function applyPhotoCropPreview(p,id,container,img){
  if(window){
    window.style.position="absolute";
    window.style.overflow="hidden";
-   window.style.left=applied?"0":crop.left+"%";
-   window.style.top=applied?"0":crop.top+"%";
-   window.style.width=applied?"100%":(100-x)+"%";
-   window.style.height=applied?"100%":(100-y)+"%";
+   window.style.left=applied?"0":left+"%";
+   window.style.top=applied?"0":top+"%";
+   window.style.width=applied?"100%":width+"%";
+   window.style.height=applied?"100%":height+"%";
  }
  syncPhotoCropBorder(container)
 }
-function syncPhotoEditorFrame(p,item,id){const size=getPhotoSize(p,id);const crop=getPhotoCrop(p,id);const applied=crop.applied===true;const x=Math.min(89,crop.left+crop.right);const y=Math.min(89,crop.top+crop.bottom);const w=size*(1-(applied?x:0)/100);const h=size*(1-(applied?y:0)/100);item.style.width=w+"mm";const drop=item.querySelector(".photo-drop");const preview=item.querySelector(".photo-crop-preview");const img=preview?.querySelector("img");const window=preview?.querySelector(".photo-crop-window");if(drop){drop.style.width=w+"mm";drop.style.height=h+"mm"}const label=item.querySelector(".photo-size-label");if(label)label.textContent=applied?("Размер в КП: "+Math.round(w*10)/10+" × "+Math.round(h*10)/10+" мм"):("Размер в КП: "+size+" × "+size+" мм");if(preview){if(applied){preview.style.width=size+"mm";preview.style.height=size+"mm";preview.style.left=(-size*crop.left/100)+"mm";preview.style.top=(-size*crop.top/100)+"mm";preview.style.position="absolute";preview.classList.remove("photo-crop-editing");preview.classList.add("photo-crop-applied")}else{preview.style.width=size+"mm";preview.style.height=size+"mm";preview.style.left="0";preview.style.top="0";preview.style.position="relative";preview.classList.remove("photo-crop-applied")}if(img)applyPhotoCropPreview(p,id,preview,img);if(window)window.style.boxSizing="border-box";updatePhotoCropHandles(p,id,preview)}refreshPhotoEditorGrid(p,item.parentElement)}
-function syncPhotoCropBorder(preview){const border=preview.querySelector(".photo-crop-border");const window=preview.querySelector(".photo-crop-window");if(!border||!window)return;border.style.left=window.style.left||"0";border.style.top=window.style.top||"0";border.style.width=window.style.width||"100%";border.style.height=window.style.height||"100%";border.style.display=preview.classList.contains("photo-crop-editing")?"block":"none";border.style.visibility=preview.classList.contains("photo-crop-editing")?"visible":"hidden"}
+function syncPhotoEditorFrame(p,item,id){
+ const size=getPhotoSize(p,id);
+ const crop=getPhotoCrop(p,id);
+ const applied=crop.applied===true;
+ const left=Math.max(0,Math.min(45,Number(crop.left)||0));
+ const top=Math.max(0,Math.min(45,Number(crop.top)||0));
+ const right=Math.max(0,Math.min(45,Number(crop.right)||0));
+ const bottom=Math.max(0,Math.min(45,Number(crop.bottom)||0));
+ const widthPct=Math.max(10,100-left-right);
+ const heightPct=Math.max(10,100-top-bottom);
+ const w=size*widthPct/100;
+ const h=size*heightPct/100;
+ item.style.width=w+"mm";
+ const drop=item.querySelector(".photo-drop");
+ const preview=item.querySelector(".photo-crop-preview");
+ const img=preview?.querySelector("img");
+ const window=preview?.querySelector(".photo-crop-window");
+ if(drop){drop.style.width=w+"mm";drop.style.height=h+"mm"}
+ const label=item.querySelector(".photo-size-label");
+ if(label)label.textContent=applied?("Размер в КП: "+Math.round(w*10)/10+" × "+Math.round(h*10)/10+" мм"):("Размер в КП: "+size+" × "+size+" мм");
+ if(preview){
+   if(applied){
+     preview.style.width=size+"mm";
+     preview.style.height=size+"mm";
+     preview.style.left=(-size*left/100)+"mm";
+     preview.style.top=(-size*top/100)+"mm";
+     preview.style.position="absolute";
+     preview.classList.remove("photo-crop-editing");
+     preview.classList.add("photo-crop-applied")
+   }else{
+     preview.style.width=size+"mm";
+     preview.style.height=size+"mm";
+     preview.style.left="0";
+     preview.style.top="0";
+     preview.style.position="relative";
+     preview.classList.remove("photo-crop-applied")
+   }
+   if(img)applyPhotoCropPreview(p,id,preview,img);
+   if(window)window.style.boxSizing="border-box";
+   updatePhotoCropHandles(p,id,preview)
+ }
+ refreshPhotoEditorGrid(p,item.parentElement)
+}
+function syncPhotoCropBorder(preview){
+ const border=preview.querySelector(".photo-crop-border");
+ const window=preview.querySelector(".photo-crop-window");
+ if(!border||!window)return;
+ border.style.left=window.style.left||"0";
+ border.style.top=window.style.top||"0";
+ border.style.width=window.style.width||"100%";
+ border.style.height=window.style.height||"100%";
+ border.style.display=preview.classList.contains("photo-crop-editing")?"block":"none";
+ border.style.visibility=preview.classList.contains("photo-crop-editing")?"visible":"hidden"
+}
 function updatePhotoCropHandles(p,id,preview){const crop=getPhotoCrop(p,id);const left=preview.querySelector('[data-crop-handle="left"]'),right=preview.querySelector('[data-crop-handle="right"]'),top=preview.querySelector('[data-crop-handle="top"]'),bottom=preview.querySelector('[data-crop-handle="bottom"]');const edge=v=>Math.max(0,Math.min(100,Number(v)||0));const rect=preview.getBoundingClientRect();const ox=rect.width?4/rect.width*100:0;const oy=rect.height?4/rect.height*100:0;if(left){const v=Math.min(100,edge(crop.left)+ox);left.style.left=v+"%";left.style.top="50%";left.style.right="auto";left.style.bottom="auto";left.style.transform="translate(-50%,-50%)"}if(right){const v=Math.max(0,100-edge(crop.right)-ox);right.style.left=v+"%";right.style.right="auto";right.style.top="50%";right.style.bottom="auto";right.style.transform="translate(-50%,-50%)"}if(top){const v=Math.min(100,edge(crop.top)+oy);top.style.left="50%";top.style.top=v+"%";top.style.right="auto";top.style.bottom="auto";top.style.transform="translate(-50%,-50%)"}if(bottom){const v=Math.max(0,100-edge(crop.bottom)-oy);bottom.style.left="50%";bottom.style.top=v+"%";bottom.style.right="auto";bottom.style.bottom="auto";bottom.style.transform="translate(-50%,-50%)"}[left,right,top,bottom].forEach(h=>{if(h){h.style.display="block";h.style.visibility="visible";h.style.opacity="1"}});syncPhotoCropBorder(preview)}
 function bindPhotoCropControls(p,item){
  const preview=item.querySelector(".photo-crop-preview");
