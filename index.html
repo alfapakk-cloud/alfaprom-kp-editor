@@ -1096,19 +1096,27 @@ async function createDocx(){
     for(let pageIndex=0;pageIndex<pages.length;pageIndex++){
 
       if(i>0 || pageIndex>0){
-        children.push(
-          new docx.Paragraph({
-            pageBreakBefore:true,
-            children:[]
-          })
+        // Разрыв ставим непосредственно перед шапкой нового листа.
+        // pageBreakBefore у самой первой строки шапки гарантирует,
+        // что шапка не окажется внизу предыдущей страницы.
+        addDocxHeader(
+          pageIndex>0
+            ? `Продолжение предложения — оборудование №${i+1}`
+            : ""
         );
-      }
 
-      addDocxHeader(
-        pageIndex>0
-          ? `Продолжение предложения — оборудование №${i+1}`
-          : ""
-      );
+        if(children.length){
+          const headerStart=children.length-1;
+          const headerBlock=children[headerStart];
+
+          if(headerBlock && headerBlock.options){
+            headerBlock.options.pageBreakBefore=true;
+            headerBlock.options.keepNext=true;
+          }
+        }
+      }else{
+        addDocxHeader("");
+      }
 
       const pageHtml=String(pages[pageIndex]||"");
 
