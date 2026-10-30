@@ -10,8 +10,8 @@
 .topbar{height:62px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:15px;padding:0 18px;background:#fff;border-bottom:2px solid var(--orange)}.topbar-title{font-size:18px;font-weight:700}.toolbar{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid #d3d6da;background:#fff;border-radius:8px;padding:9px 14px;font-weight:600;transition:.15s}.btn:hover{border-color:var(--orange)}.btn-primary{background:var(--orange);border-color:var(--orange);color:#fff}.btn-danger{color:#b42318}
 .layout{flex:1;min-height:0;display:grid;grid-template-columns:50% 50%}.editor{min-width:0;overflow:auto;padding:20px;background:#f7f8fa;border-right:1px solid #ddd}.editor-section{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px}.editor-section h2{margin:0 0 16px;font-size:18px}.field{margin-bottom:14px}.field:last-child{margin-bottom:0}.field label{display:block;margin-bottom:6px;font-size:13px;font-weight:700;color:#40444a}input[type=text],input[type=tel],input[type=number],input[type=url],textarea,select{width:100%;border:1px solid #cfd3d8;border-radius:8px;padding:10px 11px;background:#fff;color:var(--text);outline:none}input:focus,textarea:focus,select:focus{border-color:var(--orange)}textarea{min-height:90px;resize:vertical;line-height:1.45}.specs-textarea{min-height:170px}.two-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}.status-buttons{display:flex;gap:8px}.status-button{flex:1;border:1px solid #d3d6da;background:#fff;border-radius:8px;padding:9px;font-weight:600}.status-button.active{border-color:var(--orange);box-shadow:0 0 0 1px var(--orange) inset}.status-button[data-status=available].active{color:var(--green)}.status-button[data-status=order].active{color:#b96a00}
 .product-editor-card{background:#fff;border:1px solid #d7dbe0;border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 2px 7px rgba(0,0,0,.035)}.product-editor-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}.product-editor-title{font-size:18px;font-weight:800}.product-number{color:var(--orange)}.remove-product-btn{border:1px solid #e0c9c6;background:#fff;color:#b42318;border-radius:7px;padding:7px 10px;font-size:12px;font-weight:700}.add-product-btn{width:100%;border:1px dashed var(--orange);background:#fff8f0;color:#c86400;border-radius:9px;padding:12px;font-weight:700;margin-bottom:16px}
-.photo-editor{margin-bottom:14px}.photo-editor-grid{position:relative;min-height:24mm;width:100%;overflow:visible}.photo-editor-grid.photo-grid-dragging{min-height:120mm}.photo-editor-item{position:absolute;min-width:0;z-index:1}.photo-editor-item.photo-dragging{z-index:20;filter:drop-shadow(0 4px 8px rgba(0,0,0,.16))}.photo-editor-item.photo-drag-over{outline:2px dashed var(--orange);outline-offset:3px}.photo-drop{width:260px;height:260px;border:2px dashed #cfd3d8;border-radius:10px;display:flex;align-items:center;justify-content:center;text-align:center;background:#fafafa;overflow:hidden;position:relative;transition:border-color .15s,background .15s,box-shadow .15s;cursor:grab}.photo-drop:active{cursor:grabbing}.photo-drop:hover,.photo-drop.dragover{border-color:var(--orange);background:#fffaf5}.photo-drop.has-image{border-style:solid;border-color:#d7d9dc;background:#fff}.photo-drop img{width:100%;height:100%;object-fit:contain;display:block;padding:8px;pointer-events:none}.photo-crop-preview{width:100%;height:100%;overflow:hidden;position:relative;touch-action:none}.photo-crop-window{position:absolute;overflow:hidden;box-sizing:border-box;z-index:2}.photo-crop-editing .photo-crop-window{border:0;box-shadow:0 0 0 9999px rgba(255,255,255,.58)}.photo-crop-applied .photo-crop-window{border:0;box-shadow:none}.photo-crop-border{position:absolute;z-index:90;display:none;border:1px solid #ff8100;box-sizing:border-box;pointer-events:none}.photo-crop-editing .photo-crop-border,.photo-crop-dragging .photo-crop-border{display:block}.photo-crop-handle{margin:0!important}.photo-crop-undo{position:absolute;z-index:30;right:6px;bottom:36px;border:1px solid #d7d9dc;background:#fff;color:#555;border-radius:6px;padding:5px 8px;font-size:11px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.18)}
-.photo-crop-apply{position:absolute;z-index:30;right:6px;bottom:6px;border:1px solid #fff;background:#ff8100;color:#fff;border-radius:6px;padding:5px 8px;font-size:11px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25)}.photo-crop-preview img{position:absolute;max-width:none;max-height:none;object-fit:contain;padding:0;pointer-events:none}.photo-crop-handle{position:absolute;z-index:100;background:#ff8100;border:0;box-shadow:none;border-radius:0;display:block;visibility:visible;opacity:1;pointer-events:auto;box-sizing:border-box}.photo-crop-handle-top,.photo-crop-handle-bottom{width:42px;height:4px;left:0;cursor:ns-resize}.photo-crop-handle-left,.photo-crop-handle-right{width:4px;height:42px;top:0;cursor:ew-resize}.photo-crop-preview.photo-crop-dragging .photo-crop-window{border:0!important;box-shadow:0 0 0 9999px rgba(255,255,255,.58)}.photo-placeholder{color:#73777d;font-size:13px;line-height:1.5;padding:20px}.photo-item-remove{position:relative;z-index:20;margin-top:6px;width:100%;pointer-events:auto;border:1px solid #e0c9c6;background:#fff;color:#b42318;border-radius:7px;padding:6px 8px;font-size:12px}.photo-size-label{margin-top:5px;text-align:center;font-size:11px;color:#777}.photo-resize-handle{position:absolute;right:5px;bottom:5px;width:24px;height:24px;border-radius:6px;background:rgba(255,129,0,.96);border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.28);cursor:nwse-resize;z-index:5}.photo-resize-handle:after{content:"";position:absolute;right:4px;bottom:4px;width:7px;height:7px;border-right:2px solid #fff;border-bottom:2px solid #fff}.photo-actions{margin-top:8px;padding-top:4px;display:flex;gap:8px;position:relative;z-index:2}.small-btn{border:1px solid #d3d6da;background:#fff;border-radius:7px;padding:7px 10px;font-size:12px}.file-input{display:none}
+.photo-editor{margin-bottom:14px}.photo-editor-grid{position:relative;min-height:24mm;width:100%;overflow:visible}.photo-editor-grid.photo-grid-dragging{min-height:120mm}.photo-editor-item{position:absolute;min-width:0;z-index:1}.photo-editor-item.photo-dragging{z-index:20;filter:drop-shadow(0 4px 8px rgba(0,0,0,.16))}.photo-editor-item.photo-drag-over{outline:2px dashed var(--orange);outline-offset:3px}.photo-drop{width:260px;height:260px;border:2px dashed #cfd3d8;border-radius:10px;display:flex;align-items:center;justify-content:center;text-align:center;background:#fafafa;overflow:hidden;position:relative;transition:border-color .15s,background .15s,box-shadow .15s;cursor:grab}.photo-drop:active{cursor:grabbing}.photo-drop:hover,.photo-drop.dragover{border-color:var(--orange);background:#fffaf5}.photo-drop.has-image{border-style:solid;border-color:#d7d9dc;background:#fff}.photo-drop img{width:100%;height:100%;object-fit:contain;display:block;padding:8px;pointer-events:none}.photo-crop-preview{width:100%;height:100%;overflow:hidden;position:relative;touch-action:none}.photo-crop-window{position:absolute;overflow:hidden;box-sizing:border-box;z-index:2}.photo-crop-editing .photo-crop-window{border:1px solid #ff8100;box-shadow:0 0 0 9999px rgba(255,129,0,.42)}.photo-crop-applied .photo-crop-window{border:0;box-shadow:none}.photo-crop-border{position:absolute;z-index:90;display:none;border:1px solid #ff8100;box-sizing:border-box;pointer-events:none}.photo-crop-editing .photo-crop-border,.photo-crop-dragging .photo-crop-border{display:block}.photo-crop-handle{margin:0!important}.photo-crop-undo{position:absolute;z-index:30;right:6px;bottom:36px;border:1px solid #d7d9dc;background:#fff;color:#555;border-radius:6px;padding:5px 8px;font-size:11px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.photo-crop-apply{position:absolute;z-index:30;left:6px;bottom:6px;border:1px solid #fff;background:#ff8100;color:#fff;border-radius:6px;padding:5px 8px;font-size:11px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25)}.photo-crop-preview img{position:absolute;max-width:none;max-height:none;object-fit:contain;padding:0;pointer-events:none}.photo-crop-handle{position:absolute;z-index:100;background:#ff8100;border:0;box-shadow:0 0 0 2px rgba(255,255,255,.72);border-radius:4px;display:block;visibility:visible;opacity:1;pointer-events:auto;box-sizing:border-box;touch-action:none}.photo-crop-handle-top,.photo-crop-handle-bottom{width:64px;height:14px;left:0;cursor:ns-resize}.photo-crop-handle-left,.photo-crop-handle-right{width:14px;height:64px;top:0;cursor:ew-resize}.photo-crop-preview.photo-crop-dragging .photo-crop-window{border:1px solid #ff8100!important;box-shadow:0 0 0 9999px rgba(255,129,0,.42)}.photo-placeholder{color:#73777d;font-size:13px;line-height:1.5;padding:20px}.photo-item-remove{position:relative;z-index:20;margin-top:6px;width:100%;pointer-events:auto;border:1px solid #e0c9c6;background:#fff;color:#b42318;border-radius:7px;padding:6px 8px;font-size:12px}.photo-size-label{margin-top:5px;text-align:center;font-size:11px;color:#777}.photo-resize-handle{position:absolute;right:5px;bottom:5px;width:24px;height:24px;border-radius:6px;background:rgba(255,129,0,.96);border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.28);cursor:nwse-resize;z-index:5}.photo-resize-handle:after{content:"";position:absolute;right:4px;bottom:4px;width:7px;height:7px;border-right:2px solid #fff;border-bottom:2px solid #fff}.photo-actions{margin-top:8px;padding-top:4px;display:flex;gap:8px;position:relative;z-index:2}.small-btn{border:1px solid #d3d6da;background:#fff;border-radius:7px;padding:7px 10px;font-size:12px}.file-input{display:none}
 .preview-side{min-width:0;min-height:0;display:flex;flex-direction:column;background:#e8eaed}.preview-title{flex:none;height:48px;display:flex;align-items:center;padding:0 18px;background:#fff;border-bottom:1px solid #d7d9dc;font-size:16px;font-weight:700}.preview-scroll{flex:1;min-height:0;overflow:auto;padding:20px}.preview-pages{display:flex;flex-direction:column;align-items:center;gap:20px}.preview-page-shell{position:relative;flex:none}.preview-page-scaled{position:absolute;left:0;top:0;transform-origin:top left}
 .kp-page{width:210mm;height:297mm;background:#fff;position:relative;box-shadow:0 3px 15px rgba(0,0,0,.14);display:flex;flex-direction:column;overflow:hidden;flex:none}.kp-content{flex:1;min-height:0;padding:7mm 15mm 6mm;overflow:hidden;display:flex;flex-direction:column}
 .kp-page.has-bottom .kp-content{padding-bottom:0}
@@ -51,9 +51,15 @@
   padding-top:5mm;
 }.advantage:nth-child(5){grid-column:4 / span 2}
 .kp-footer{flex:none;height:18mm;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:8mm;padding:3.5mm 15mm}.footer-left{font-size:9px;font-weight:700;line-height:1.3}.footer-right{text-align:right;font-size:9px;line-height:1.35}.footer-manager{font-weight:800}.page-continuation{font-size:9px;color:#777;margin-bottom:2mm}
+/* редактор и подвал */
+.photo-editor-grid{background-image:linear-gradient(to right,rgba(255,129,0,.18) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,129,0,.18) 1px,transparent 1px);background-size:5mm 5mm;border:1px solid #ffe2c2;border-radius:8px}
+.kp-footer{min-height:18mm;height:auto;gap:6mm}.footer-left,.footer-right{flex:1}.footer-rating{display:flex;align-items:center;justify-content:center;gap:2.2mm;min-width:48mm;padding:1.4mm 2.2mm;border-radius:7mm;background:#fff;color:#202124;text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,.18)}.footer-rating:hover{transform:translateY(-.3mm)}.rating-star{font-size:10mm;line-height:1;color:#ffbf16;text-shadow:0 1px 0 #d98f00}.rating-copy{display:flex;flex-direction:column;align-items:flex-start;line-height:1}.rating-yandex{font-size:10px;font-weight:900;letter-spacing:-.2px}.rating-yandex b{color:#e31d1c}.rating-score{font-size:14px;font-weight:900}.rating-stars{font-size:8px;letter-spacing:.4px;color:#ffad00}.rating-caption{font-size:6px;color:#666;margin-top:1px}.rich-toolbar{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 7px}.rich-toolbar button{min-width:30px;border:1px solid #d3d6da;background:#fff;border-radius:6px;padding:5px 7px;font-weight:700}.rich-toolbar button:hover{border-color:var(--orange);color:#c86400}.rich-editor{min-height:110px;width:100%;border:1px solid #cfd3d8;border-radius:8px;padding:10px 11px;background:#fff;line-height:1.45;outline:none}.rich-editor:focus{border-color:var(--orange)}.rich-editor:empty:before{content:attr(data-placeholder);color:#73777d;pointer-events:none}.kp-description{white-space:normal}.kp-description p{margin:0 0 2.5mm}.kp-description p:last-child{margin-bottom:0}.price-area{break-inside:avoid;page-break-inside:avoid}
+.price-vat{font-size:10.5px;color:#666;font-weight:700;margin:-1mm 0 1.5mm}
+.photo-editor{overflow-x:auto;padding-bottom:3px}.photo-editor-grid{width:180mm;max-width:none;background-image:linear-gradient(to right,rgba(255,129,0,.18) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,129,0,.18) 1px,transparent 1px),linear-gradient(to right,transparent calc(50% - .5px),rgba(255,129,0,.75) calc(50% - .5px),rgba(255,129,0,.75) calc(50% + .5px),transparent calc(50% + .5px));background-size:5mm 5mm,5mm 5mm,100% 100%;background-position:0 0,0 0,0 0}.photo-crop-mask{position:absolute;z-index:50;display:none;pointer-events:none;background:rgba(255,129,0,.42)}.photo-crop-editing .photo-crop-mask{display:block}.kp-footer{position:relative;display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box}.footer-rating{position:absolute;left:calc(50% + 1.6mm);top:50%;transform:translate(-50%,-50%);margin:0}.footer-rating:hover{transform:translate(-50%,calc(-50% - .3mm))}.footer-left{flex:0 1 48mm}.footer-right{flex:0 1 48mm}.rich-toolbar button[data-rich^="justify"]{display:inline-flex;align-items:center;justify-content:center}.align-icon{display:grid;gap:2px;width:16px}.align-icon i{display:block;height:2px;background:currentColor;border-radius:2px}.align-left i:nth-child(2){margin-right:auto}.align-center i:nth-child(2){margin-inline:auto}.align-right i:nth-child(2){margin-left:auto}
 /* measurement / PDF */
 #pdfMeasure{position:absolute;left:-100000px;top:0;width:210mm;visibility:hidden;pointer-events:none}.pdf-render-root{width:210mm;background:#fff}.pdf-render-root .kp-page{box-shadow:none}.pdf-render-root .preview-page-shell{display:block!important}
 @media(max-width:900px){.layout{grid-template-columns:1fr}.editor{border-right:0}.preview-side{min-height:800px}.two-cols{grid-template-columns:1fr}.topbar{height:auto;min-height:62px;padding:10px 14px}.topbar-title{font-size:15px}}
+.footer-rating>.rating-star,.footer-rating>.rating-copy{transform:translateY(-1mm)}
 </style>
 </head>
 <body>
@@ -145,10 +151,11 @@ function applyPhotoCropPreview(p,id,container,img){
  container.style.overflow="hidden";
  container.style.boxSizing="border-box";
  const window=container.querySelector(".photo-crop-window");
- img.style.width="100%";
- img.style.height="100%";
- img.style.left="0";
- img.style.top="0";
+ const size=getPhotoSize(p,id);
+ img.style.width=applied?size+"mm":"100%";
+ img.style.height=applied?size+"mm":"100%";
+ img.style.left=applied?(-size*left/100)+"mm":"0";
+ img.style.top=applied?(-size*top/100)+"mm":"0";
  if(window){
    window.style.position="absolute";
    window.style.overflow="hidden";
@@ -181,11 +188,11 @@ function syncPhotoEditorFrame(p,item,id){
  if(label)label.textContent=applied?("Размер в КП: "+Math.round(w*10)/10+" × "+Math.round(h*10)/10+" мм"):("Размер в КП: "+size+" × "+size+" мм");
  if(preview){
    if(applied){
-     preview.style.width=size+"mm";
-     preview.style.height=size+"mm";
-     preview.style.left=(-size*left/100)+"mm";
-     preview.style.top=(-size*top/100)+"mm";
-     preview.style.position="absolute";
+     preview.style.width=w+"mm";
+     preview.style.height=h+"mm";
+     preview.style.left="0";
+     preview.style.top="0";
+     preview.style.position="relative";
      preview.classList.remove("photo-crop-editing");
      preview.classList.add("photo-crop-applied")
    }else{
@@ -317,7 +324,7 @@ async function paginateProduct(p,index){
         '<div class="measureBlocks"></div>'+
       '</div>'+
       '<div class="kp-bottom"><div class="kp-footer-stack">'+
-        (firstPage?advantagesHtml():"")+
+        advantagesHtml()+
         footerHtml()+
       '</div></div>';
     document.body.appendChild(page);
@@ -390,6 +397,9 @@ async function paginateProduct(p,index){
         const available=pageIndex===0?firstAvailable:nextAvailable;
         const room=Math.max(0,available-currentHeight);
         let count=await fitSpecsRows(remaining,room);
+        // Не оставляем на странице одинокую строку таблицы, если следующая
+        // страница может начать таблицу аккуратным блоком.
+        if(count===1&&remaining.length>1&&current.length){pushPage();continue}
         if(count<1){
           if(current.length){pushPage();continue}
           count=await fitSpecsRows(remaining,available);
@@ -515,6 +525,21 @@ async function downloadPDF(){
         undefined,
         "MEDIUM"
       );
+
+      const ratingLink=pageElements[i].querySelector(".footer-rating");
+      if(ratingLink){
+        const pageRect=pageElements[i].getBoundingClientRect();
+        const ratingRect=ratingLink.getBoundingClientRect();
+        const scaleX=210/pageRect.width;
+        const scaleY=297/pageRect.height;
+        pdf.link(
+          (ratingRect.left-pageRect.left)*scaleX,
+          (ratingRect.top-pageRect.top)*scaleY,
+          ratingRect.width*scaleX,
+          ratingRect.height*scaleY,
+          {url:YANDEX_RATING_URL}
+        );
+      }
     }
 
     const filename=safeFileName(
@@ -599,6 +624,18 @@ async function createDocx(){
     });
   }
 
+  async function ratingBadgePng(){
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="840" height="270" viewBox="0 0 840 270"><rect x="0" y="0" width="840" height="270" rx="135" fill="#fff"/><polygon points="178,42 203,105 270,110 217,150 234,216 178,177 122,216 139,150 86,110 153,105" fill="#ffc21a" stroke="#ec9b00" stroke-width="4"/><text x="322" y="116" font-family="Arial,sans-serif" font-size="52" font-weight="700" fill="#202124"><tspan fill="#e31d1c">Я</tspan>ндекс 4.9</text><text x="325" y="160" font-family="Arial,sans-serif" font-size="38" fill="#ffad00">★★★★★</text><text x="325" y="197" font-family="Arial,sans-serif" font-size="24" fill="#666">Рейтинг на Яндекс Картах</text></svg>`;
+    const url=URL.createObjectURL(new Blob([svg],{type:"image/svg+xml"}));
+    try{
+      const image=await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=url});
+      const canvas=document.createElement("canvas");canvas.width=840;canvas.height=270;
+      canvas.getContext("2d").drawImage(image,0,0);
+      const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+      return blobToUint8Array(blob);
+    }finally{URL.revokeObjectURL(url)}
+  }
+
   function paragraph(children=[],opts={}){
     const p=new docx.Paragraph({
       alignment:opts.alignment,
@@ -672,7 +709,7 @@ async function createDocx(){
     const RIGHT_TAB=CONTENT_W;
 
     const phoneText="8\u00A0(800)\u00A0200-29-23";
-    const siteText="alfaprom\u2060.\u2060org";
+    const siteText="alfaprom.org";
 
     const phoneParagraph=paragraph([
       logoBytes
@@ -828,7 +865,7 @@ async function createDocx(){
             children:[
               new docx.TableCell({
                 width:{size:CONTENT_W,type:docx.WidthType.DXA},
-                shading:{fill:"F5F6F7"},
+                shading:{fill:"FFFFFF"},
                 margins:{top:100,bottom:100,left:140,right:140},
                 borders:{top:thinBorder,bottom:thinBorder,left:thinBorder,right:thinBorder},
                 children:[
@@ -890,89 +927,29 @@ async function createDocx(){
     children.push(blank(100));
   }
 
-  function addDocxAdvantages(){
-    children.push(paragraph([run("Почему мы?",{size:21,bold:true})],{
-      alignment:docx.AlignmentType.CENTER,
-      before:60,
-      after:80,
-      keepLines:true,
-      keepNext:true
-    }));
+  async function advantageCardPng(text){
+    const safe=String(text||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const words=safe.split(/\s+/);const lines=[];let line="";
+    for(const word of words){const next=(line?line+" ":"")+word;if(next.length>31&&line){lines.push(line);line=word}else line=next;}
+    if(line)lines.push(line);
+    const textRows=lines.slice(0,3).map((x,index)=>'<text x="320" y="'+(88+index*32)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="24" font-weight="700" fill="#202124">'+x+'</text>').join("");
+    const svg='<svg xmlns="http://www.w3.org/2000/svg" width="640" height="196" viewBox="0 0 640 196"><rect x="3" y="13" width="634" height="170" rx="25" fill="#fff" stroke="#e0e3e7" stroke-width="3"/><circle cx="38" cy="44" r="17" fill="#fff" stroke="#ff8100" stroke-width="3"/><text x="38" y="52" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="700" fill="#ff8100">✓</text>'+textRows+'</svg>';
+    const url=URL.createObjectURL(new Blob([svg],{type:"image/svg+xml"}));
+    try{const image=await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=url});const canvas=document.createElement("canvas");canvas.width=640;canvas.height=196;canvas.getContext("2d").drawImage(image,0,0);const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));return blobToUint8Array(blob)}finally{URL.revokeObjectURL(url)}
+  }
 
+  async function addDocxAdvantages(){
+    children.push(paragraph([run("━━━━━━━━",{size:19,bold:true,color:ORANGE}),run("   Почему мы?   ",{size:24,bold:true}),run("━━━━━━━━",{size:19,bold:true,color:ORANGE})],{alignment:docx.AlignmentType.CENTER,before:80,after:115,keepLines:true,keepNext:true}));
     const adv=DEFAULT_ADVANTAGES||[];
-    const colW=Math.floor(CONTENT_W/6);
-    const lastColW=CONTENT_W-colW*5;
-    const cardW=colW*2;
-    const borderNone={
-      top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-      bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-      left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},
-      right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}
-    };
-
-    const makeCard=(x)=>new docx.TableCell({
-      columnSpan:2,
-      width:{size:cardW,type:docx.WidthType.DXA},
-      shading:{fill:"FAFAFA"},
-      margins:{top:110,bottom:110,left:100,right:100},
-      verticalAlign:docx.VerticalAlign.CENTER,
-      borders:{top:thinBorder,bottom:thinBorder,left:thinBorder,right:thinBorder},
-      children:[
-        paragraph([
-          run("✓ ",{size:15,bold:true,color:ORANGE}),
-          run(x,{size:14,bold:true})
-        ],{
-          alignment:docx.AlignmentType.CENTER,
-          after:0,
-          line:205,
-          keepLines:true
-        })
-      ]
-    });
-
-    const empty=(w,span=1)=>new docx.TableCell({
-      columnSpan:span,
-      width:{size:w,type:docx.WidthType.DXA},
-      children:[paragraph([],{after:0,line:18})],
-      borders:borderNone
-    });
-
-    // Единая 6-колоночная сетка = та же геометрия, что в превью:
-    // 3 карточки сверху и 2 карточки снизу по центру.
-    const advantagesTable=new docx.Table({
-      width:{size:CONTENT_W,type:docx.WidthType.DXA},
-      columnWidths:[colW,colW,colW,colW,colW,lastColW],
-      layout:docx.TableLayoutType.FIXED,
-      rows:[
-        new docx.TableRow({
-          cantSplit:true,
-          children:[
-            makeCard(adv[0]||""),
-            makeCard(adv[1]||""),
-            makeCard(adv[2]||"")
-          ]
-        }),
-        new docx.TableRow({
-          cantSplit:true,
-          children:[
-            empty(colW),
-            makeCard(adv[3]||""),
-            makeCard(adv[4]||""),
-            empty(colW)
-          ]
-        })
-      ],
-      borders:{
-        top:borderNone.top,
-        bottom:borderNone.bottom,
-        left:borderNone.left,
-        right:borderNone.right,
-        insideHorizontal:borderNone.top,
-        insideVertical:borderNone.left
-      }
-    });
-
-    children.push(advantagesTable);
+    const noBorder={top:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},bottom:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},left:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"},right:{style:docx.BorderStyle.NONE,size:0,color:"FFFFFF"}};
+    const card=async(text,width)=>new docx.TableCell({width:{size:width,type:docx.WidthType.DXA},borders:noBorder,margins:{top:0,bottom:0,left:0,right:0},children:[paragraph([new docx.ImageRun({data:await advantageCardPng(text),type:"png",transformation:{width:215,height:66}})],{alignment:docx.AlignmentType.CENTER,after:0})]});
+    const gap=(width)=>new docx.TableCell({width:{size:width,type:docx.WidthType.DXA},borders:noBorder,children:[paragraph([],{after:0,line:18})]});
+    const gapW=180,cardW=Math.floor((CONTENT_W-gapW*2)/3);
+    children.push(new docx.Table({width:{size:CONTENT_W,type:docx.WidthType.DXA},columnWidths:[cardW,gapW,cardW,gapW,CONTENT_W-cardW*2-gapW*2],rows:[new docx.TableRow({cantSplit:true,children:[await card(adv[0]||"",cardW),gap(gapW),await card(adv[1]||"",cardW),gap(gapW),await card(adv[2]||"",CONTENT_W-cardW*2-gapW*2)]})],borders:{top:noBorder.top,bottom:noBorder.bottom,left:noBorder.left,right:noBorder.right,insideHorizontal:noBorder.top,insideVertical:noBorder.left}}));
+    children.push(blank(105));
+    const sideW=Math.floor(CONTENT_W*.15),twoGap=200,twoW=Math.floor((CONTENT_W-sideW*2-twoGap)/2);
+    children.push(new docx.Table({width:{size:CONTENT_W,type:docx.WidthType.DXA},columnWidths:[sideW,twoW,twoGap,twoW,CONTENT_W-sideW-twoW*2-twoGap],rows:[new docx.TableRow({cantSplit:true,children:[gap(sideW),await card(adv[3]||"",twoW),gap(twoGap),await card(adv[4]||"",twoW),gap(CONTENT_W-sideW-twoW*2-twoGap)]})],borders:{top:noBorder.top,bottom:noBorder.bottom,left:noBorder.left,right:noBorder.right,insideHorizontal:noBorder.top,insideVertical:noBorder.left}}));
+    children.push(blank(140));
   }
   function addDocxPageBlock(block,p){
     // paginateProduct() хранит описание и характеристики как объекты,
@@ -1062,6 +1039,12 @@ async function createDocx(){
       return;
     }
 
+    const vat=host.querySelector(".price-vat");
+    if(vat){
+      children.push(paragraph([run(vat.textContent||"",{size:14,bold:true,color:MUTED})],{after:90,line:220}));
+      return;
+    }
+
     const comment=host.querySelector(".price-comment");
     if(comment){
       children.push(
@@ -1139,7 +1122,7 @@ async function createDocx(){
         const contentRoot=host.querySelector(".kp-content")||host;
         const contentNodes=[
           ...contentRoot.querySelectorAll(
-            ".kp-description, .specs-table, .kp-note, .video-button, .price-block, .availability, .price-comment"
+            ".kp-description, .specs-table, .kp-note, .video-button, .price-block, .price-vat, .availability, .price-comment"
           )
         ];
 
@@ -1161,36 +1144,54 @@ async function createDocx(){
   // =========================================================
 
   const footerLeft=[
-    paragraph([run("АЛЬФАПРОМ",{size:15,bold:true,color:"FFFFFF"})],{after:10}),
-    paragraph([run("Оборудование для пищевого производства и упаковки",{size:11,bold:true,color:"FFFFFF"})],{after:0,line:190})
+    paragraph([run("АЛЬФАПРОМ",{size:26,bold:true,color:"FFFFFF"})],{after:18,line:220}),
+    paragraph([run("Оборудование для пищевого производства и упаковки",{size:18,bold:true,color:"FFFFFF"})],{after:0,line:210})
+  ];
+
+  const footerRating=[
+    paragraph([new docx.ImageRun({data:await ratingBadgePng(),type:"png",transformation:{width:180,height:54}})],{alignment:docx.AlignmentType.CENTER,after:0}),
+    paragraph([new docx.ExternalHyperlink({
+      link:YANDEX_RATING_URL,
+      children:[run("Открыть рейтинг на Яндекс Картах",{size:11,color:"666666",underline:{type:docx.UnderlineType.SINGLE}})]
+    })],{alignment:docx.AlignmentType.CENTER,after:0,line:150})
   ];
 
   const footerRight=[];
   if(state.managerName.trim()){
-    footerRight.push(paragraph([run(state.managerName,{size:12,bold:true,color:"FFFFFF"})],{alignment:docx.AlignmentType.RIGHT,after:5}));
+    footerRight.push(paragraph([run(state.managerName,{size:20,bold:true,color:"FFFFFF"})],{alignment:docx.AlignmentType.RIGHT,after:8,line:220}));
   }
   if(state.managerPhone.trim()){
-    footerRight.push(paragraph([run(state.managerPhone,{size:11,color:"FFFFFF"})],{alignment:docx.AlignmentType.RIGHT,after:3}));
+    footerRight.push(paragraph([run(state.managerPhone,{size:18,color:"FFFFFF"})],{alignment:docx.AlignmentType.RIGHT,after:5,line:210}));
   }
-  footerRight.push(paragraph([run("8 (800) 200-29-23",{size:11,color:"FFFFFF"})],{alignment:docx.AlignmentType.RIGHT,after:3}));
-  footerRight.push(paragraph([run("alfaprom.org",{size:11,bold:true,color:"FFFFFF"})],{alignment:docx.AlignmentType.RIGHT,after:0}));
+  footerRight.push(paragraph([run("8 (800) 200-29-23",{size:18,color:"FFFFFF"})],{alignment:docx.AlignmentType.RIGHT,after:5,line:210}));
+  footerRight.push(paragraph([new docx.ExternalHyperlink({link:"https://alfaprom.org",children:[run("alfaprom.org",{size:18,bold:true,color:"FFFFFF",underline:{type:docx.UnderlineType.SINGLE}})]})],{alignment:docx.AlignmentType.RIGHT,after:0,line:210}));
 
   function makeOrangeFooterTable(){
-    const leftW=Math.round(CONTENT_W*.62);
-    const rightW=CONTENT_W-leftW;
+    const FOOTER_W=PAGE_W;
+    const leftW=Math.round(FOOTER_W*.35);
+    const ratingW=Math.round(FOOTER_W*.38);
+    const rightW=FOOTER_W-leftW-ratingW;
     return new docx.Table({
-      width:{size:CONTENT_W,type:docx.WidthType.DXA},
-      columnWidths:[leftW,rightW],
-      rows:[new docx.TableRow({cantSplit:true,children:[
+      width:{size:FOOTER_W,type:docx.WidthType.DXA},
+      indent:{size:-ML,type:docx.WidthType.DXA},
+      columnWidths:[leftW,ratingW,rightW],
+      rows:[new docx.TableRow({cantSplit:true,height:{value:1050,rule:docx.HeightRule.ATLEAST},children:[
         new docx.TableCell({
           width:{size:leftW,type:docx.WidthType.DXA},shading:{fill:ORANGE},
-          margins:{top:100,bottom:100,left:0,right:100},
+          margins:{top:60,bottom:60,left:240,right:120},
           borders:{top:{style:docx.BorderStyle.SINGLE,size:10,color:ORANGE},bottom:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},left:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},right:{style:docx.BorderStyle.NONE,size:0,color:ORANGE}},
           children:footerLeft
         }),
         new docx.TableCell({
+          width:{size:ratingW,type:docx.WidthType.DXA},shading:{fill:ORANGE},
+          verticalAlign:docx.VerticalAlign.CENTER,
+          margins:{top:0,bottom:0,left:0,right:0},
+          borders:{top:{style:docx.BorderStyle.SINGLE,size:10,color:ORANGE},bottom:{style:docx.BorderStyle.SINGLE,size:10,color:ORANGE},left:{style:docx.BorderStyle.SINGLE,size:10,color:ORANGE},right:{style:docx.BorderStyle.SINGLE,size:10,color:ORANGE}},
+          children:footerRating
+        }),
+        new docx.TableCell({
           width:{size:rightW,type:docx.WidthType.DXA},shading:{fill:ORANGE},
-          margins:{top:100,bottom:100,left:100,right:0},
+          margins:{top:60,bottom:60,left:120,right:240},
           borders:{top:{style:docx.BorderStyle.SINGLE,size:10,color:ORANGE},bottom:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},left:{style:docx.BorderStyle.NONE,size:0,color:ORANGE},right:{style:docx.BorderStyle.NONE,size:0,color:ORANGE}},
           children:footerRight
         })
@@ -1203,7 +1204,7 @@ async function createDocx(){
   // В Footer остаётся только фиксированная оранжевая контактная полоса.
   const savedChildren=children;
   children=[];
-  addDocxAdvantages();
+  await addDocxAdvantages();
   const whyUsChildren=children;
   children=savedChildren;
 
@@ -1235,7 +1236,7 @@ async function createDocx(){
           bottom:index===0?2050:1050,
           left:ML,
           header:250,
-          footer:300
+          footer:0
         }
       }
     },
@@ -1253,7 +1254,7 @@ async function createDocx(){
       properties:{
         page:{
           size:{width:PAGE_W,height:PAGE_H},
-          margin:{top:1560,right:MR,bottom:1050,left:ML,header:250,footer:300}
+          margin:{top:1560,right:MR,bottom:1050,left:ML,header:250,footer:0}
         }
       },
       headers:{default:makeDocxHeader()},
@@ -1322,7 +1323,41 @@ async function downloadDOCX(){
 
   }
 }async function init(){try{await openDB()}catch(e){console.error("IndexedDB error",e)}loadState();managerName.value=state.managerName;managerPhone.value=state.managerPhone;renderProductsEditor();await renderPreview();requestAnimationFrame(fitPreviewPages)}
+// Дополнения редактора: новые поля сохраняются вместе с текущим КП.
+const YANDEX_RATING_URL="https://yandex.ru/maps/org/alfaprom/122892393204/?indoorLevel=1&ll=50.191992%2C53.223436&z=16";
+function createProduct(){return{id:"product_"+Date.now()+"_"+Math.random().toString(36).slice(2),productName:"",description:"",note:"",price:"",discountPrice:"",currency:"RUB",vatMode:"with",status:"available",priceComment:"",specsText:"",videoUrl:"",photoIds:[],photoSizes:{},photoPositions:{},photoCrops:{}}}
+function setPhotoPosition(p,id,x,y){const size=getPhotoSize(p,id),maxX=Math.max(0,PHOTO_CANVAS_W_MM-size),centerX=maxX/2,snap=v=>Math.round(v/5)*5;let nextX=Math.max(0,Math.min(maxX,snap(Number(x)||0)));if(Math.abs(nextX-centerX)<=3)nextX=centerX;ensurePhotoPositions(p);p.photoPositions[id]={x:nextX,y:Math.max(0,snap(Number(y)||0))}}
+function descriptionHtml(value){const raw=String(value||"");if(!raw)return"";if(!/<[a-z][\s\S]*>/i.test(raw))return"<p>"+escapeHtml(raw).replace(/\r?\n/g,"<br>")+"</p>";const host=document.createElement("div");host.innerHTML=raw;const allowed=new Set(["P","DIV","BR","B","STRONG","I","EM","U","S","STRIKE"]);host.querySelectorAll("*").forEach(el=>{if(!allowed.has(el.tagName)){el.replaceWith(...el.childNodes);return}const align=el.style.textAlign;[...el.attributes].forEach(a=>el.removeAttribute(a.name));if(align&&["left","right","center"].includes(align))el.style.textAlign=align});return host.innerHTML}
+function footerHtml(){return`<div class="kp-footer"><div class="footer-left">АЛЬФАПРОМ<br>Оборудование для пищевого производства и упаковки</div><a class="footer-rating" href="${YANDEX_RATING_URL}" target="_blank" rel="noopener" title="Посмотреть рейтинг на Яндекс Картах"><span class="rating-star">★</span><span class="rating-copy"><span class="rating-yandex"><b>Я</b>ндекс <span class="rating-score">4.9</span></span><span class="rating-stars">★★★★★</span><span class="rating-caption">Рейтинг на Яндекс Картах</span></span></a><div class="footer-right">${state.managerName.trim()?`<div class="footer-manager">${escapeHtml(state.managerName)}</div>`:""}${state.managerPhone.trim()?`<div>${escapeHtml(state.managerPhone)}</div>`:""}<div>8 (800) 200-29-23</div><div>alfaprom.org</div></div></div>`}
+const baseRenderProductsEditor=renderProductsEditor;
+renderProductsEditor=function(){baseRenderProductsEditor();document.querySelectorAll(".product-editor-card").forEach(card=>{const p=state.products.find(x=>x.id===card.dataset.productId);if(!p)return;p.vatMode=p.vatMode==="without"?"without":"with";const oldDescription=card.querySelector('textarea[data-field="description"]');if(oldDescription){const field=oldDescription.closest(".field");field.innerHTML=`<label>Описание</label><div class="rich-toolbar" aria-label="Форматирование описания"><button type="button" data-rich="bold" title="Жирный"><b>Ж</b></button><button type="button" data-rich="italic" title="Курсив"><i>К</i></button><button type="button" data-rich="underline" title="Подчёркнутый"><u>Ч</u></button><button type="button" data-rich="strikeThrough" title="Зачёркнутый"><s>З</s></button><button type="button" data-rich="justifyLeft" title="По левому краю">≡</button><button type="button" data-rich="justifyCenter" title="По центру">≡</button><button type="button" data-rich="justifyRight" title="По правому краю">≡</button></div><div class="rich-editor" contenteditable="true" data-rich-editor="${p.id}" data-placeholder="Описание оборудования..."></div>`;const editor=field.querySelector(".rich-editor");editor.innerHTML=descriptionHtml(p.description);const sync=()=>{p.description=descriptionHtml(editor.innerHTML);saveState();renderPreview()};editor.oninput=sync;editor.onpaste=e=>{e.preventDefault();document.execCommand("insertText",false,e.clipboardData.getData("text/plain"));sync()};field.querySelectorAll("[data-rich]").forEach(button=>button.onclick=()=>{editor.focus();document.execCommand(button.dataset.rich,false,null);sync()})}const comment=card.querySelector('[data-field="priceComment"]')?.closest(".field");if(comment&&!card.querySelector("[data-vat-mode]")){comment.insertAdjacentHTML("beforebegin",`<div class="field"><label>Налогообложение</label><div class="status-buttons"><button type="button" class="status-button ${p.vatMode==="with"?"active":""}" data-vat-mode="with">С НДС</button><button type="button" class="status-button ${p.vatMode==="without"?"active":""}" data-vat-mode="without">Без НДС</button></div></div>`);card.querySelectorAll("[data-vat-mode]").forEach(button=>button.onclick=()=>{p.vatMode=button.dataset.vatMode;saveState();renderProductsEditor();renderPreview()})}})};
+const baseBlockHtml=blockHtml;
+blockHtml=function(p,index,photos){return baseBlockHtml(p,index,photos).flatMap(block=>{if(block&&typeof block==="object"&&block.type==="description")return descriptionHtml(p.description)?[`<div class="kp-description">${descriptionHtml(p.description)}</div>`]:[];if(typeof block==="string"&&block.includes('class="price-block"'))return[block,`<div class="price-vat">${p.vatMode==="without"?"Цена без НДС":"Цена с НДС"}</div>`];return[block]})};
 document.getElementById("downloadPdfBtn").onclick=downloadPDF;document.getElementById("downloadDocxBtn").onclick=downloadDOCX;init();
+
+// DOCX формируется только нативными текстом и таблицами: так Word сохраняет
+// редактируемость документа и корректно открывает файл.
+document.getElementById("downloadDocxBtn").onclick=downloadDOCX;
+const renderWithNativeAlignmentIcons=renderProductsEditor;
+renderProductsEditor=function(){let adjusted=false;state.products.forEach(p=>(p.photoIds||[]).forEach(id=>{const pos=getPhotoPosition(p,id),size=getPhotoSize(p,id),center=(PHOTO_CANVAS_W_MM-size)/2;if(Math.abs(pos.x-center)<=3&&pos.x!==center){setPhotoPosition(p,id,center,pos.y);adjusted=true}}));if(adjusted)saveState();renderWithNativeAlignmentIcons();const icon={justifyLeft:"align-left",justifyCenter:"align-center",justifyRight:"align-right"};document.querySelectorAll("[data-rich]").forEach(button=>{const cls=icon[button.dataset.rich];if(cls)button.innerHTML=`<span class="align-icon ${cls}" aria-hidden="true"><i></i><i></i><i></i></span>`})};
+const baseSyncPhotoCropBorder=syncPhotoCropBorder;
+syncPhotoCropBorder=function(preview){baseSyncPhotoCropBorder(preview);const editing=preview.classList.contains("photo-crop-editing");const crop=getPhotoCrop(state.products.find(p=>(p.photoIds||[]).includes(preview.closest(".photo-editor-item")?.dataset.photoId))||{},preview.closest(".photo-editor-item")?.dataset.photoId);const values={top:Math.max(0,Math.min(45,Number(crop.top)||0)),bottom:Math.max(0,Math.min(45,Number(crop.bottom)||0)),left:Math.max(0,Math.min(45,Number(crop.left)||0)),right:Math.max(0,Math.min(45,Number(crop.right)||0))};const ensure=side=>{let el=preview.querySelector(`.photo-crop-mask-${side}`);if(!el){el=document.createElement("div");el.className=`photo-crop-mask photo-crop-mask-${side}`;preview.appendChild(el)}return el};const top=ensure("top"),bottom=ensure("bottom"),left=ensure("left"),right=ensure("right"),middle=Math.max(0,100-values.top-values.bottom);Object.assign(top.style,{left:"0",top:"0",width:"100%",height:values.top+"%",display:editing?"block":"none"});Object.assign(bottom.style,{left:"0",bottom:"0",width:"100%",height:values.bottom+"%",display:editing?"block":"none"});Object.assign(left.style,{left:"0",top:values.top+"%",width:values.left+"%",height:middle+"%",display:editing?"block":"none"});Object.assign(right.style,{right:"0",top:values.top+"%",width:values.right+"%",height:middle+"%",display:editing?"block":"none"})};
+const baseUpdatePhotoCropHandles=updatePhotoCropHandles;
+updatePhotoCropHandles=function(p,id,preview){baseUpdatePhotoCropHandles(p,id,preview);if(!getPhotoCrop(p,id).applied)return;const left=preview.querySelector('[data-crop-handle="left"]'),right=preview.querySelector('[data-crop-handle="right"]'),top=preview.querySelector('[data-crop-handle="top"]'),bottom=preview.querySelector('[data-crop-handle="bottom"]');if(left)left.style.left="0";if(right)right.style.left="100%";if(top)top.style.top="0";if(bottom)bottom.style.top="100%"};
+const blockHtmlWithCroppedPreview=blockHtml;
+blockHtml=function(...args){return blockHtmlWithCroppedPreview(...args).map(block=>{if(typeof block!=="string"||!block.includes("product-photo-frame"))return block;return block.replace(/class="photo-crop-preview" style="width:[^"]+;height:[^"]+;flex:none"/g,'class="photo-crop-preview" style="width:100%;height:100%;flex:none;position:relative;overflow:hidden"').replace(/(<img[^>]+style=")width:([^;]+);height:([^;]+);left:([^;]+);top:([^"]+)(")/g,'$1position:absolute;max-width:none;padding:0;width:$2;height:$3;left:$4;top:$5$6')})};
+const rawGetPhotoCrop=getPhotoCrop;
+getPhotoCrop=function(p,id){const crop=rawGetPhotoCrop(p,id);const base=p.photoCrops?.[id]?.base;if(base&&typeof base==="object")crop.base={top:Number(base.top)||0,bottom:Number(base.bottom)||0,left:Number(base.left)||0,right:Number(base.right)||0};return crop};
+function effectivePhotoCrop(p,id){const crop=getPhotoCrop(p,id),base=crop.base;if(!base)return crop;const w=Math.max(1,100-base.left-base.right),h=Math.max(1,100-base.top-base.bottom);return{left:base.left+crop.left*w/100,right:base.right+crop.right*w/100,top:base.top+crop.top*h/100,bottom:base.bottom+crop.bottom*h/100,applied:crop.applied}}
+setPhotoCrop=function(p,id,side,value){ensurePhotoCrops(p);const crop=getPhotoCrop(p,id);let v=Math.max(0,Math.min(45,Number(value)||0));const opposite=side==="top"?"bottom":side==="bottom"?"top":side==="left"?"right":"left";v=Math.min(v,89-crop[opposite]);p.photoCrops[id]={top:side==="top"?v:crop.top,bottom:side==="bottom"?v:crop.bottom,left:side==="left"?v:crop.left,right:side==="right"?v:crop.right,applied:crop.applied===true,...(crop.base?{base:crop.base}:{})};return p.photoCrops[id]};
+const basicApplyPhotoCropPreview=applyPhotoCropPreview;
+applyPhotoCropPreview=function(p,id,container,img){const raw=getPhotoCrop(p,id),crop=effectivePhotoCrop(p,id),size=getPhotoSize(p,id),hasBase=!!raw.base,local=raw;const left=crop.left,top=crop.top,right=crop.right,bottom=crop.bottom,w=size*(100-left-right)/100,h=size*(100-top-bottom)/100;container.style.position="relative";container.style.overflow="hidden";container.style.boxSizing="border-box";if(hasBase&&!raw.applied){container.style.width=w+"mm";container.style.height=h+"mm"}img.style.width=size+"mm";img.style.height=size+"mm";img.style.left=(-size*left/100)+"mm";img.style.top=(-size*top/100)+"mm";const window=container.querySelector(".photo-crop-window");if(window){window.style.position="absolute";window.style.overflow="hidden";window.style.left=raw.applied?"0":local.left+"%";window.style.top=raw.applied?"0":local.top+"%";window.style.width=raw.applied?"100%":Math.max(10,100-local.left-local.right)+"%";window.style.height=raw.applied?"100%":Math.max(10,100-local.top-local.bottom)+"%"}syncPhotoCropBorder(container)};
+const basicSyncPhotoEditorFrame=syncPhotoEditorFrame;
+syncPhotoEditorFrame=function(p,item,id){const raw=getPhotoCrop(p,id),crop=effectivePhotoCrop(p,id),size=getPhotoSize(p,id),w=size*(100-crop.left-crop.right)/100,h=size*(100-crop.top-crop.bottom)/100;item.style.width=w+"mm";const drop=item.querySelector(".photo-drop"),preview=item.querySelector(".photo-crop-preview"),img=preview?.querySelector("img"),label=item.querySelector(".photo-size-label");if(drop){drop.style.width=w+"mm";drop.style.height=h+"mm"}if(label)label.textContent=(raw.applied?"Размер в КП: ":"Размер в КП: ")+Math.round(w*10)/10+" × "+Math.round(h*10)/10+" мм";if(preview){preview.style.width=w+"mm";preview.style.height=h+"mm";preview.style.left="0";preview.style.top="0";preview.style.position="relative";if(raw.applied)preview.classList.add("photo-crop-applied");else preview.classList.remove("photo-crop-applied");if(img)applyPhotoCropPreview(p,id,preview,img);updatePhotoCropHandles(p,id,preview)}refreshPhotoEditorGrid(p,item.parentElement)};
+const nestedCropControls=bindPhotoCropControls;
+bindPhotoCropControls=function(p,item){nestedCropControls(p,item);const id=item.dataset.photoId,button=item.querySelector(".photo-crop-apply"),undo=item.querySelector(".photo-crop-undo"),preview=item.querySelector(".photo-crop-preview");if(button)button.onclick=e=>{e.preventDefault();e.stopPropagation();const final=effectivePhotoCrop(p,id);p.photoCrops[id]={top:0,bottom:0,left:0,right:0,applied:true,base:{top:final.top,bottom:final.bottom,left:final.left,right:final.right}};button.style.display="none";if(undo)undo.style.display="block";preview.classList.remove("photo-crop-editing");preview.classList.add("photo-crop-applied");syncPhotoEditorFrame(p,item,id);saveState();renderPreview()};if(undo)undo.onclick=e=>{e.preventDefault();e.stopPropagation();p.photoCrops[id]={top:0,bottom:0,left:0,right:0,applied:false};button.style.display="none";undo.style.display="none";preview.classList.remove("photo-crop-editing","photo-crop-applied");syncPhotoEditorFrame(p,item,id);saveState();renderPreview()}};
+const blockHtmlWithNestedCrops=blockHtml;
+blockHtml=function(p,index,photos){const blocks=blockHtmlWithNestedCrops(p,index,photos);const gridIndex=blocks.findIndex(block=>typeof block==="string"&&block.includes("product-photo-grid"));if(gridIndex<0)return blocks;ensurePhotoPositions(p);let bottom=24;const html=photos.map((photo,i)=>{const size=getPhotoSize(p,photo.photoId),pos=getPhotoPosition(p,photo.photoId),crop=effectivePhotoCrop(p,photo.photoId),w=size*(100-crop.left-crop.right)/100,h=size*(100-crop.top-crop.bottom)/100;bottom=Math.max(bottom,pos.y+h+1.5);return`<div class="product-photo-frame" style="position:absolute;left:${pos.x}mm;top:${pos.y}mm;width:${w}mm;height:${h}mm"><div class="photo-crop-preview" style="width:100%;height:100%;flex:none;position:relative;overflow:hidden"><img src="${photo.dataUrl}" alt="Оборудование ${i+1}" style="position:absolute;max-width:none;padding:0;width:${size}mm;height:${size}mm;left:${-size*crop.left/100}mm;top:${-size*crop.top/100}mm"></div></div>`}).join("");blocks[gridIndex]=`<div class="product-photo-grid" style="position:relative;height:${Math.max(24,bottom)}mm">${html}</div>`;return blocks};
 </script>
 </body>
 </html>
