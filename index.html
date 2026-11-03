@@ -678,6 +678,22 @@ async function createDocx(){
     }
   }
 
+  // Для Word все пользовательские фото приводим к PNG. Так в DOCX не попадают WebP/HEIC и другие форматы, которые разные версии Word открывают по-разному.
+  async function imageBlobToPngBytes(blob){
+    try{
+      const url=URL.createObjectURL(blob);
+      try{
+        const image=await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=url});
+        const canvas=document.createElement("canvas");
+        canvas.width=image.naturalWidth||image.width;canvas.height=image.naturalHeight||image.height;
+        canvas.getContext("2d").drawImage(image,0,0,canvas.width,canvas.height);
+        const png=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+        if(!png)throw new Error("PNG conversion failed");
+        return await blobToUint8Array(png);
+      }finally{URL.revokeObjectURL(url)}
+    }catch(e){console.warn("Не удалось привести фото к PNG:",e);return null}
+  }
+
   // =========================================================
   // ЛОГОТИП
   // =========================================================
@@ -722,14 +738,14 @@ async function createDocx(){
           })
         : run("АЛЬФАПРОМ",{size:25,bold:true,color:ORANGE}),
       new docx.TextRun({text:"\t",font:"Arial",size:17}),
-      run(phoneText,{size:17,bold:true,color:TEXT,position:46})
+      run(phoneText,{size:17,bold:true,color:TEXT})
     ],{
       tabStops:[{
         type:docx.TabStopType.RIGHT,
         position:RIGHT_TAB
       }],
       alignment:docx.AlignmentType.LEFT,
-      indent:{right:-454},
+      indent:{right:0},
       after:0,
       line:240,
       keepLines:true,
@@ -738,19 +754,14 @@ async function createDocx(){
 
     const siteParagraph=paragraph([
       new docx.TextRun({text:"\t",font:"Arial",size:14}),
-      new docx.ExternalHyperlink({
-        link:"https://alfaprom.org",
-        children:[
-          run(siteText,{size:14,bold:true,color:ORANGE,underline:{type:docx.UnderlineType.SINGLE},position:46})
-        ]
-      })
+      run(siteText,{size:14,bold:true,color:ORANGE,underline:{type:docx.UnderlineType.SINGLE}})
     ],{
       tabStops:[{
         type:docx.TabStopType.RIGHT,
         position:RIGHT_TAB
       }],
       alignment:docx.AlignmentType.LEFT,
-      indent:{right:-454},
+      indent:{right:0},
       after:0,
       line:220,
       keepLines:true
@@ -903,13 +914,8 @@ async function createDocx(){
                 },
                 children:[
                   paragraph([
-                    new docx.ExternalHyperlink({
-                      link:url,
-                      children:[
-                        run("▶ ",{size:16,bold:true,color:ORANGE}),
-                        run("Смотреть видео оборудования",{size:16,bold:true,color:"FFFFFF"})
-                      ]
-                    })
+                    run("▶ ",{size:16,bold:true,color:ORANGE}),
+                    run("Смотреть видео оборудования",{size:16,bold:true,color:"FFFFFF"})
                   ],{alignment:docx.AlignmentType.LEFT,after:0})
                 ]
               })
@@ -1092,14 +1098,15 @@ async function createDocx(){
         for(const id of p.photoIds||[]){
           const blob=await getPhoto(id).catch(()=>null);
           if(!blob)continue;
-          const bytes=await blobToUint8Array(blob);
+          const bytes=await imageBlobToPngBytes(blob);
+          if(!bytes)continue;
           const size=getPhotoSize(p,id);
           const px=Math.min(300,Math.max(120,Math.round(size*MM_TO_PX)));
           photoParagraphs.push(
             new docx.ImageRun({
               data:bytes,
               transformation:{width:px,height:px},
-              type:blob.type==="image/png"?"png":"jpg"
+              type:"png"
             })
           );
         }
@@ -1152,10 +1159,7 @@ async function createDocx(){
 
   const footerRating=[
     paragraph([new docx.ImageRun({data:await ratingBadgePng(),type:"png",transformation:{width:180,height:54}})],{alignment:docx.AlignmentType.CENTER,after:0}),
-    paragraph([new docx.ExternalHyperlink({
-      link:YANDEX_RATING_URL,
-      children:[run("Открыть рейтинг на Яндекс Картах",{size:11,color:"666666",underline:{type:docx.UnderlineType.SINGLE}})]
-    })],{alignment:docx.AlignmentType.CENTER,after:0,line:150})
+    paragraph([run("Рейтинг на Яндекс Картах",{size:11,color:"666666"})],{alignment:docx.AlignmentType.CENTER,after:0,line:150})
   ];
 
   const footerRight=[];
@@ -1166,16 +1170,15 @@ async function createDocx(){
     footerRight.push(paragraph([run(state.managerPhone,{size:18,color:"FFFFFF"})],{alignment:docx.AlignmentType.RIGHT,after:5,line:210}));
   }
   footerRight.push(paragraph([run("8 (800) 200-29-23",{size:18,color:"FFFFFF"})],{alignment:docx.AlignmentType.RIGHT,after:5,line:210}));
-  footerRight.push(paragraph([new docx.ExternalHyperlink({link:"https://alfaprom.org",children:[run("alfaprom.org",{size:18,bold:true,color:"FFFFFF",underline:{type:docx.UnderlineType.SINGLE}})]})],{alignment:docx.AlignmentType.RIGHT,after:0,line:210}));
+  footerRight.push(paragraph([run("alfaprom.org",{size:18,bold:true,color:"FFFFFF"})],{alignment:docx.AlignmentType.RIGHT,after:0,line:210}));
 
   function makeOrangeFooterTable(){
-    const FOOTER_W=PAGE_W;
+    const FOOTER_W=CONTENT_W;
     const leftW=Math.round(FOOTER_W*.35);
     const ratingW=Math.round(FOOTER_W*.38);
     const rightW=FOOTER_W-leftW-ratingW;
     return new docx.Table({
       width:{size:FOOTER_W,type:docx.WidthType.DXA},
-      indent:{size:-ML,type:docx.WidthType.DXA},
       columnWidths:[leftW,ratingW,rightW],
       rows:[new docx.TableRow({cantSplit:true,height:{value:1050,rule:docx.HeightRule.ATLEAST},children:[
         new docx.TableCell({
@@ -1238,7 +1241,7 @@ async function createDocx(){
           bottom:index===0?2050:1050,
           left:ML,
           header:250,
-          footer:0
+          footer:250
         }
       }
     },
@@ -1256,7 +1259,7 @@ async function createDocx(){
       properties:{
         page:{
           size:{width:PAGE_W,height:PAGE_H},
-          margin:{top:1560,right:MR,bottom:1050,left:ML,header:250,footer:0}
+          margin:{top:1560,right:MR,bottom:1050,left:ML,header:250,footer:250}
         }
       },
       headers:{default:makeDocxHeader()},
