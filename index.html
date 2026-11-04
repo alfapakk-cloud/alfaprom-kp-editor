@@ -403,6 +403,18 @@ async function paginateProduct(p,index){
         const chunk=await fitDescriptionOnPage(rest,current,pageIndex===0);
         if(!chunk){
           if(current.length){
+            // После фото браузер иногда недооценивает свободную область.
+            // Кладём консервативный фрагмент на первую страницу, чтобы не
+            // появлялся пустой лист; остаток продолжается на следующей.
+            if(pageIndex===0){
+              const limit=Math.min(rest.length,360);
+              const breakAt=rest.lastIndexOf(" ",limit);
+              const forced=rest.slice(0,breakAt>40?breakAt:limit).trimEnd();
+              current.push('<div class="kp-description">'+escapeHtml(forced)+'</div>');
+              rest=rest.slice(forced.length).trimStart();
+              pushPage();
+              continue;
+            }
             pushPage();
             continue;
           }
