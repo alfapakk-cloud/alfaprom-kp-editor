@@ -1040,6 +1040,35 @@ async function createDocx(){
     try{const image=await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=url});const canvas=document.createElement("canvas");canvas.width=640;canvas.height=196;canvas.getContext("2d").drawImage(image,0,0);const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));return blobToUint8Array(blob)}finally{URL.revokeObjectURL(url)}
   }
 
+  async function whyUsBlockPng(){
+    const adv=DEFAULT_ADVANTAGES||[];
+    const esc=value=>String(value||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const wrap=(value,max=29)=>{
+      const lines=[];let line="";
+      for(const word of esc(value).split(/\s+/)){
+        const next=line?line+" "+word:word;
+        if(next.length>max&&line){lines.push(line);line=word}else line=next;
+      }
+      if(line)lines.push(line);
+      return lines.slice(0,3);
+    };
+    const card=(x,y,width,text)=>{
+      const lines=wrap(text);
+      const textY=y+52-(lines.length-1)*12;
+      const label=lines.map((line,index)=>'<text x="'+(x+width/2)+'" y="'+(textY+index*24)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="19" font-weight="700" fill="#202124">'+line+'</text>').join("");
+      return '<rect x="'+x+'" y="'+y+'" width="'+width+'" height="106" rx="19" fill="#fff" stroke="#e0e3e7" stroke-width="3"/><circle cx="'+(x+25)+'" cy="'+(y+23)+'" r="12" fill="#fff" stroke="#ff8100" stroke-width="2.5"/><text x="'+(x+25)+'" y="'+(y+29)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#ff8100">✓</text>'+label;
+    };
+    const svg='<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="365" viewBox="0 0 1280 365"><rect width="1280" height="365" fill="#fff"/><path d="M265 37h150M865 37h150" stroke="#ff8100" stroke-width="9" stroke-linecap="round"/><text x="640" y="47" text-anchor="middle" font-family="Arial,sans-serif" font-size="31" font-weight="900" fill="#202124">Почему мы?</text>'+card(20,82,390,adv[0])+card(445,82,390,adv[1])+card(870,82,390,adv[2])+card(230,226,390,adv[3])+card(660,226,390,adv[4])+'</svg>';
+    const url=URL.createObjectURL(new Blob([svg],{type:"image/svg+xml"}));
+    try{
+      const image=await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=url});
+      const canvas=document.createElement("canvas");canvas.width=1280;canvas.height=365;
+      canvas.getContext("2d").drawImage(image,0,0);
+      const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+      return blobToUint8Array(blob);
+    }finally{URL.revokeObjectURL(url)}
+  }
+
   async function addDocxAdvantages(){
     children.push(paragraph([run("━━━━━━━━",{size:19,bold:true,color:ORANGE}),run("   Почему мы?   ",{size:24,bold:true}),run("━━━━━━━━",{size:19,bold:true,color:ORANGE})],{alignment:docx.AlignmentType.CENTER,before:80,after:115,keepLines:true,keepNext:true}));
     const adv=DEFAULT_ADVANTAGES||[];
@@ -1299,18 +1328,18 @@ async function createDocx(){
     });
   }
 
-  // «Почему мы?» — постоянная часть нижнего колонтитула.
-  // Один и тот же footer используется всеми секциями, поэтому блок повторяется
-  // на каждой странице и не может быть перенесён Word отдельно от подвала.
-  const savedChildren=children;
-  children=[];
-  await addDocxAdvantages();
-  const whyUsChildren=children;
-  children=savedChildren;
-
+  // «Почему мы?» — единый растрированный блок в колонтитуле.
+  // Word не может разорвать его между страницами.
+  const whyUsFooterImage=await whyUsBlockPng();
   const sharedDocxFooter=new docx.Footer({
     children:[
-      ...whyUsChildren,
+      paragraph([
+        new docx.ImageRun({
+          data:whyUsFooterImage,
+          type:"png",
+          transformation:{width:610,height:174}
+        })
+      ],{alignment:docx.AlignmentType.CENTER,after:0,line:174,keepLines:true}),
       makeOrangeFooterTable()
     ]
   });
@@ -1331,7 +1360,7 @@ async function createDocx(){
         margin:{
           top:1560,
           right:MR,
-          bottom:4500,
+          bottom:4700,
           left:ML,
           header:250,
           footer:250
