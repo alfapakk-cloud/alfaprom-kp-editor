@@ -1193,14 +1193,6 @@ async function createDocx(){
 
     for(let pageIndex=0;pageIndex<pages.length;pageIndex++){
 
-      if(pageIndex>0){
-        children.push(
-          paragraph([
-            run(`Продолжение предложения — оборудование №${i+1}`,{size:12,color:MUTED,bold:true})
-          ],{after:100,line:220})
-        );
-      }
-
       const pageHtml=String(pages[pageIndex]||"");
 
       if(pageIndex===0){
@@ -1352,9 +1344,12 @@ async function createDocx(){
   // ДОКУМЕНТ — ОДНА SECTION НА КАЖДУЮ СТРАНИЦУ
   // =========================================================
 
-  const sections=pageChildren.map((pageContent,index)=>({
+  // DOCX не повторяет искусственные границы предпросмотра:
+  // Word сам переносит текст и строки таблиц в рамках одной непрерывной секции.
+  // Это исключает пустые страницы, появлявшиеся после переноса одной строки.
+  const docxChildren=pageChildren.flat();
+  const sections=[{
     properties:{
-      type:docx.SectionType.NEXT_PAGE,
       page:{
         size:{width:PAGE_W,height:PAGE_H},
         margin:{
@@ -1373,22 +1368,8 @@ async function createDocx(){
     footers:{
       default:makeDocxFooter()
     },
-    children:pageContent
-  }));
-
-  if(!sections.length){
-    sections.push({
-      properties:{
-        page:{
-          size:{width:PAGE_W,height:PAGE_H},
-          margin:{top:1560,right:MR,bottom:1050,left:ML,header:250,footer:250}
-        }
-      },
-      headers:{default:makeDocxHeader()},
-      footers:{default:makeDocxFooter()},
-      children:[]
-    });
-  }
+    children:docxChildren
+  }];
 
   const doc=new docx.Document({
     styles:{
