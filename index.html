@@ -406,7 +406,7 @@ async function paginateProduct(p,index){
             // После фото браузер иногда недооценивает свободную область.
             // Кладём консервативный фрагмент на первую страницу, чтобы не
             // появлялся пустой лист; остаток продолжается на следующей.
-            if(pageIndex===0){
+            if(pageIndex===0 || current.some(html=>html.includes("product-photo-grid"))){
               const limit=Math.min(rest.length,360);
               const breakAt=rest.lastIndexOf(" ",limit);
               const forced=rest.slice(0,breakAt>40?breakAt:limit).trimEnd();
