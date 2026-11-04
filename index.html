@@ -406,7 +406,9 @@ async function paginateProduct(p,index){
     }
 
     if(block.type==="description"){
-      let rest=String(block.text||"").trim();
+      const descriptionHost=document.createElement("div");
+      descriptionHost.innerHTML=String(block.text||"");
+      let rest=(descriptionHost.textContent||"").trim();
       if(photoIntro&&rest.startsWith(photoIntro)){
         rest=rest.slice(photoIntro.length).trimStart();
       }
