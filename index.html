@@ -320,6 +320,13 @@ async function paginateProduct(p,index){
     const breakAt=introSource.lastIndexOf(" ",limit);
     photoIntro=introSource.slice(0,breakAt>40?breakAt:limit).trimEnd();
   }
+  // Вступление следует непосредственно за фотографиями, а не после остатка текста.
+  if(photoIntro){
+    const photoBlockIndex=blocks.findIndex(block=>typeof block==="string"&&block.includes("product-photo-grid"));
+    if(photoBlockIndex>=0){
+      blocks[photoBlockIndex]+='<div class="kp-description photo-description">'+escapeHtml(photoIntro)+'</div>';
+    }
+  }
 
   // Проверяем не условную сумму высот, а фактическую собранную страницу.
   // В расчёт сразу входят фотографии, отступы, «Почему мы» и нижний подвал.
@@ -472,15 +479,6 @@ async function paginateProduct(p,index){
 
   if(current.length)pages.push(current);
   if(!pages.length)pages.push([]);
-
-  // Вставляем вступительный фрагмент в уже выбранную страницу с фотографиями.
-  // Это исключает появление пустого пространства между фото и блоком «Почему мы».
-  if(photoIntro){
-    const photoPage=pages.find(arr=>arr.some(html=>String(html).includes("product-photo-grid")));
-    if(photoPage){
-      photoPage.push('<div class="kp-description photo-description">'+escapeHtml(photoIntro)+'</div>');
-    }
-  }
 
   return pages.map((arr,i)=>makePage(arr,index,i>0,true));
 }
