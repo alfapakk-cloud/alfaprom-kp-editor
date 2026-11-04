@@ -1299,25 +1299,24 @@ async function createDocx(){
     });
   }
 
-  // «Почему мы?» теперь является частью Body первой страницы.
-  // В Footer остаётся только фиксированная оранжевая контактная полоса.
+  // «Почему мы?» — постоянная часть нижнего колонтитула.
+  // Один и тот же footer используется всеми секциями, поэтому блок повторяется
+  // на каждой странице и не может быть перенесён Word отдельно от подвала.
   const savedChildren=children;
   children=[];
   await addDocxAdvantages();
   const whyUsChildren=children;
   children=savedChildren;
 
-  if(pageChildren.length){
-    pageChildren[0]=[
-      ...pageChildren[0],
-      ...whyUsChildren
-    ];
-  }
+  const sharedDocxFooter=new docx.Footer({
+    children:[
+      ...whyUsChildren,
+      makeOrangeFooterTable()
+    ]
+  });
 
   function makeDocxFooter(){
-    return new docx.Footer({
-      children:[makeOrangeFooterTable()]
-    });
+    return sharedDocxFooter;
   }
 
   // =========================================================
@@ -1332,7 +1331,7 @@ async function createDocx(){
         margin:{
           top:1560,
           right:MR,
-          bottom:index===0?2050:1050,
+          bottom:4500,
           left:ML,
           header:250,
           footer:250
