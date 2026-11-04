@@ -17,6 +17,7 @@
 .preview-side{min-width:0;min-height:0;display:flex;flex-direction:column;background:#e8eaed}.preview-title{flex:none;height:48px;display:flex;align-items:center;padding:0 18px;background:#fff;border-bottom:1px solid #d7d9dc;font-size:16px;font-weight:700}.preview-scroll{flex:1;min-height:0;overflow:auto;padding:20px}.preview-pages{display:flex;flex-direction:column;align-items:center;gap:20px}.preview-page-shell{position:relative;flex:none}.preview-page-scaled{position:absolute;left:0;top:0;transform-origin:top left}
 .kp-page{width:210mm;height:297mm;background:#fff;position:relative;box-shadow:0 3px 15px rgba(0,0,0,.14);display:flex;flex-direction:column;overflow:hidden;flex:none}.kp-content{flex:1;min-height:0;padding:7mm 15mm 6mm;overflow:hidden;display:flex;flex-direction:column}
 .kp-page.has-bottom .kp-content{padding-bottom:0}
+.kp-content>*{flex:none}.measureBlocks{flex:none}
 .kp-page.has-bottom .kp-bottom{
   position:absolute;
   left:0;
@@ -336,9 +337,12 @@ async function paginateProduct(p,index){
     const holder=page.querySelector(".measureBlocks");
     const last=holder.lastElementChild;
     const bottom=page.querySelector(".kp-bottom").getBoundingClientRect().top;
-    const lastBottom=last?last.getBoundingClientRect().bottom:holder.getBoundingClientRect().top;
+    const holderRect=holder.getBoundingClientRect();
+    const lastBottom=last?last.getBoundingClientRect().bottom:holderRect.top;
+    // scrollHeight не зависит от flex-сжатия: это фактическая высота текста.
+    const contentBottom=Math.max(lastBottom,holderRect.top+holder.scrollHeight);
     page.remove();
-    return lastBottom<=bottom+.5;
+    return contentBottom<=bottom+.5;
   }
 
   async function fitDescriptionOnPage(text,content,firstPage){
