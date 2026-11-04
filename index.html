@@ -309,12 +309,16 @@ function makePage(content,index,continuation=false,withAdvantages=false){
 async function paginateProduct(p,index){
   const photos=await getProductPhotosData(p);
   const blocks=blockHtml(p,index,photos);
+  // Одинаково приводим описание к тексту и для первого фрагмента у фото,
+  // и для остатка ниже: в редакторе описание хранится как HTML.
+  const introHost=document.createElement("div");
+  introHost.innerHTML=String(p.description||"");
+  const introSource=(introHost.textContent||"").trim();
   let photoIntro="";
-  if(photos.length&&String(p.description||"").trim()){
-    const text=String(p.description).trim();
-    const limit=Math.min(text.length,360);
-    const breakAt=text.lastIndexOf(" ",limit);
-    photoIntro=text.slice(0,breakAt>40?breakAt:limit).trimEnd();
+  if(photos.length&&introSource){
+    const limit=Math.min(introSource.length,360);
+    const breakAt=introSource.lastIndexOf(" ",limit);
+    photoIntro=introSource.slice(0,breakAt>40?breakAt:limit).trimEnd();
   }
 
   // Проверяем не условную сумму высот, а фактическую собранную страницу.
