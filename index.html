@@ -277,17 +277,7 @@ function bindProductEditorEvents(){document.querySelectorAll(".product-editor-ca
 async function handlePhotos(p,files){const valid=files.filter(f=>f?.type?.startsWith("image/"));if(!valid.length){alert("Можно загружать только изображения.");return}const ids=[];try{for(const f of valid){const id=await savePhoto(await preparePhoto(f));ids.push(id);p.photoSizes[id]=DEFAULT_PHOTO_SIZE_MM}p.photoIds.push(...ids);saveState();renderProductsEditor();renderPreview()}catch(e){for(const id of ids)await deletePhoto(id).catch(()=>{});alert("Не удалось сохранить фотографию.\n\n"+(e.message||"Попробуйте выбрать изображение ещё раз."))}}
 async function getPhotoDataUrl(id){const b=await getPhoto(id);if(!b)return"";return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(b)})}
 async function getProductPhotosData(p){const out=[];for(const id of p.photoIds||[]){try{const dataUrl=await getPhotoDataUrl(id);if(dataUrl)out.push({photoId:id,dataUrl})}catch(e){}}return out}
-function blockHtml(p,index,photos){const blocks=[];blocks.push(`<div class="kp-title">Коммерческое предложение</div>`);blocks.push(`<div class="kp-product-name">${escapeHtml(p.productName||`Оборудование №${index+1}`)}</div>`);if(photos.length){ensurePhotoPositions(p);let photoBottom=24;const photoHtml=photos.map((ph,i)=>{const s=getPhotoSize(p,ph.photoId);const pos=getPhotoPosition(p,ph.photoId);const crop=getPhotoCrop(p,ph.photoId);const applied=crop.applied===true;const x=applied?Math.min(89,crop.left+crop.right):0;const y=applied?Math.min(89,crop.top+crop.bottom):0;const frameW=s*(1-x/100);const frameH=s*(1-y/100);photoBottom=Math.max(photoBottom,pos.y+frameH+1.5);const imgLeft=applied?-(s*crop.left/100):0;const imgTop=applied?-(s*crop.top/100):0;return`<div class="product-photo-frame" style="position:absolute;left:${pos.x}mm;top:${pos.y}mm;width:${frameW}mm;height:${frameH}mm"><div class="photo-crop-preview" style="width:${s}mm;height:${s}mm;flex:none"><img src="${ph.dataUrl}" alt="Оборудование ${i+1}" style="width:${s}mm;height:${s}mm;left:${imgLeft}mm;top:${imgTop}mm"></div></div>`}).join("");blocks.push(`<div class="product-photo-grid" style="position:relative;height:${Math.max(24,photoBottom)}mm">${photoHtml}</div>`)}let descriptionText=String(p.description||"").trim();
-if(descriptionText&&photos.length){
-  // Начало описания выводим вместе с фотосеткой: так первый лист всегда
-  // заполняется текстом после изображений, а не остаётся пустым.
-  const limit=Math.min(descriptionText.length,360);
-  const breakAt=descriptionText.lastIndexOf(" ",limit);
-  const intro=descriptionText.slice(0,breakAt>40?breakAt:limit).trimEnd();
-  blocks[blocks.length-1]+='<div class="kp-description photo-description">'+escapeHtml(intro)+'</div>';
-  descriptionText=descriptionText.slice(intro.length).trimStart();
-}
-if(descriptionText)blocks.push({type:"description",text:descriptionText});const rows=parseSpecs(p.specsText);if(rows.length)blocks.push({type:"specs",rows});if(p.note.trim())blocks.push(`<div class="kp-note">${escapeHtml(p.note)}</div>`);if(p.videoUrl.trim())blocks.push(`<a class="video-button" href="${escapeAttr(p.videoUrl)}" target="_blank" rel="noopener">Смотреть видео оборудования</a>`);const price=formatPrice(p.price,p.currency),disc=formatPrice(p.discountPrice,p.currency);if(price||disc)blocks.push(`<div class="price-block">${price?`<div class="price-line">Цена: ${price}</div>`:""}${disc?`<div class="price-line discount">Цена со скидкой: ${disc}</div>`:""}</div>`);blocks.push(`<div class="availability ${p.status==="order"?"order":"available"}">${p.status==="order"?"Под заказ":"В наличии"}</div>`);if(p.priceComment.trim())blocks.push(`<div class="price-comment">${escapeHtml(p.priceComment)}</div>`);return blocks}
+function blockHtml(p,index,photos){const blocks=[];blocks.push(`<div class="kp-title">Коммерческое предложение</div>`);blocks.push(`<div class="kp-product-name">${escapeHtml(p.productName||`Оборудование №${index+1}`)}</div>`);if(photos.length){ensurePhotoPositions(p);let photoBottom=24;const photoHtml=photos.map((ph,i)=>{const s=getPhotoSize(p,ph.photoId);const pos=getPhotoPosition(p,ph.photoId);const crop=getPhotoCrop(p,ph.photoId);const applied=crop.applied===true;const x=applied?Math.min(89,crop.left+crop.right):0;const y=applied?Math.min(89,crop.top+crop.bottom):0;const frameW=s*(1-x/100);const frameH=s*(1-y/100);photoBottom=Math.max(photoBottom,pos.y+frameH+1.5);const imgLeft=applied?-(s*crop.left/100):0;const imgTop=applied?-(s*crop.top/100):0;return`<div class="product-photo-frame" style="position:absolute;left:${pos.x}mm;top:${pos.y}mm;width:${frameW}mm;height:${frameH}mm"><div class="photo-crop-preview" style="width:${s}mm;height:${s}mm;flex:none"><img src="${ph.dataUrl}" alt="Оборудование ${i+1}" style="width:${s}mm;height:${s}mm;left:${imgLeft}mm;top:${imgTop}mm"></div></div>`}).join("");blocks.push(`<div class="product-photo-grid" style="position:relative;height:${Math.max(24,photoBottom)}mm">${photoHtml}</div>`)}if(p.description.trim())blocks.push({type:"description",text:p.description});const rows=parseSpecs(p.specsText);if(rows.length)blocks.push({type:"specs",rows});if(p.note.trim())blocks.push(`<div class="kp-note">${escapeHtml(p.note)}</div>`);if(p.videoUrl.trim())blocks.push(`<a class="video-button" href="${escapeAttr(p.videoUrl)}" target="_blank" rel="noopener">Смотреть видео оборудования</a>`);const price=formatPrice(p.price,p.currency),disc=formatPrice(p.discountPrice,p.currency);if(price||disc)blocks.push(`<div class="price-block">${price?`<div class="price-line">Цена: ${price}</div>`:""}${disc?`<div class="price-line discount">Цена со скидкой: ${disc}</div>`:""}</div>`);blocks.push(`<div class="availability ${p.status==="order"?"order":"available"}">${p.status==="order"?"Под заказ":"В наличии"}</div>`);if(p.priceComment.trim())blocks.push(`<div class="price-comment">${escapeHtml(p.priceComment)}</div>`);return blocks}
 function specsTableHtml(rows){return`<table class="specs-table"><thead><tr><th colspan="2">Характеристики</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${escapeHtml(String(r[0]??""))}</td><td>${escapeHtml(String(r[1]??""))}</td></tr>`).join("")}</tbody></table>`}
 async function measureHtmlHeight(html){const test=document.createElement("div");test.style.cssText="position:absolute;left:-100000px;top:0;visibility:hidden;width:180mm;box-sizing:border-box;";test.innerHTML=html;document.body.appendChild(test);const h=test.getBoundingClientRect().height;test.remove();return h}
 async function fitDescriptionChunk(text,available){const source=String(text||"");if(!source)return"";const words=source.split(/(\s+)/);let lo=1,hi=words.length,best="";while(lo<=hi){const mid=(lo+hi)>>1;const candidate=words.slice(0,mid).join("");const h=await measureHtmlHeight(`<div class="kp-description">${escapeHtml(candidate)}</div>`);if(h<=available+0.5||!best){if(h<=available+0.5){best=candidate;lo=mid+1}else{hi=mid-1}}else hi=mid-1}return best.trimEnd()}
@@ -319,6 +309,13 @@ function makePage(content,index,continuation=false,withAdvantages=false){
 async function paginateProduct(p,index){
   const photos=await getProductPhotosData(p);
   const blocks=blockHtml(p,index,photos);
+  let photoIntro="";
+  if(photos.length&&String(p.description||"").trim()){
+    const text=String(p.description).trim();
+    const limit=Math.min(text.length,360);
+    const breakAt=text.lastIndexOf(" ",limit);
+    photoIntro=text.slice(0,breakAt>40?breakAt:limit).trimEnd();
+  }
 
   // Проверяем не условную сумму высот, а фактическую собранную страницу.
   // В расчёт сразу входят фотографии, отступы, «Почему мы» и нижний подвал.
@@ -410,6 +407,9 @@ async function paginateProduct(p,index){
 
     if(block.type==="description"){
       let rest=String(block.text||"").trim();
+      if(photoIntro&&rest.startsWith(photoIntro)){
+        rest=rest.slice(photoIntro.length).trimStart();
+      }
       while(rest){
         const chunk=await fitDescriptionOnPage(rest,current,pageIndex===0);
         if(!chunk){
@@ -466,6 +466,15 @@ async function paginateProduct(p,index){
 
   if(current.length)pages.push(current);
   if(!pages.length)pages.push([]);
+
+  // Вставляем вступительный фрагмент в уже выбранную страницу с фотографиями.
+  // Это исключает появление пустого пространства между фото и блоком «Почему мы».
+  if(photoIntro){
+    const photoPage=pages.find(arr=>arr.some(html=>String(html).includes("product-photo-grid")));
+    if(photoPage){
+      photoPage.push('<div class="kp-description photo-description">'+escapeHtml(photoIntro)+'</div>');
+    }
+  }
 
   return pages.map((arr,i)=>makePage(arr,index,i>0,true));
 }
