@@ -346,9 +346,7 @@ async function paginateProduct(p,index){
   const blocks=blockHtml(p,index,photos);
   // Одинаково приводим описание к тексту и для первого фрагмента у фото,
   // и для остатка ниже: в редакторе описание хранится как HTML.
-  const introHost=document.createElement("div");
-  introHost.innerHTML=String(p.description||"");
-  const introSource=(introHost.textContent||"").trim();
+  const introSource=descriptionTextWithLists(p.description);
   let photoIntro="";
   if(photos.length&&introSource){
     const limit=Math.min(introSource.length,360);
@@ -452,9 +450,7 @@ async function paginateProduct(p,index){
     }
 
     if(block.type==="description"){
-      const descriptionHost=document.createElement("div");
-      descriptionHost.innerHTML=String(block.text||"");
-      let rest=(descriptionHost.textContent||"").trim();
+      let rest=descriptionTextWithLists(block.text);
       if(photoIntro&&rest.startsWith(photoIntro)){
         rest=rest.slice(photoIntro.length).trimStart();
       }
@@ -1233,11 +1229,9 @@ async function createDocx(){
     for(const block of docxBlocks){
       if(typeof block==="string"&&block.includes("product-photo-grid"))continue;
       if(block&&typeof block==="object"&&block.type==="description"){
-        const holder=document.createElement("div");
-        holder.innerHTML=String(block.text||"");
         children.push(
           paragraph([
-            run(holder.textContent||"",{size:18})
+            run(descriptionTextWithLists(block.text),{size:18})
           ],{after:0,line:260})
         );
         continue;
@@ -1421,10 +1415,19 @@ async function downloadDOCX(){
 const YANDEX_RATING_URL="https://yandex.ru/maps/org/alfaprom/122892393204/?indoorLevel=1&ll=50.191992%2C53.223436&z=16";
 function createProduct(){return{id:"product_"+Date.now()+"_"+Math.random().toString(36).slice(2),productName:"",description:"",note:"",price:"",discountPrice:"",currency:"RUB",vatMode:"with",status:"available",priceComment:"",specsText:"",videoUrl:"",photoIds:[],photoSizes:{},photoPositions:{},photoCrops:{}}}
 function setPhotoPosition(p,id,x,y){const size=getPhotoSize(p,id),maxX=Math.max(0,PHOTO_CANVAS_W_MM-size),centerX=maxX/2,snap=v=>Math.round(v/5)*5;let nextX=Math.max(0,Math.min(maxX,snap(Number(x)||0)));if(Math.abs(nextX-centerX)<=3)nextX=centerX;ensurePhotoPositions(p);p.photoPositions[id]={x:nextX,y:Math.max(0,snap(Number(y)||0))}}
-function descriptionHtml(value){const raw=String(value||"");if(!raw)return"";if(!/<[a-z][\s\S]*>/i.test(raw))return"<p>"+escapeHtml(raw).replace(/\r?\n/g,"<br>")+"</p>";const host=document.createElement("div");host.innerHTML=raw;const allowed=new Set(["P","DIV","BR","B","STRONG","I","EM","U","S","STRIKE"]);host.querySelectorAll("*").forEach(el=>{if(!allowed.has(el.tagName)){el.replaceWith(...el.childNodes);return}const align=el.style.textAlign;[...el.attributes].forEach(a=>el.removeAttribute(a.name));if(align&&["left","right","center"].includes(align))el.style.textAlign=align});return host.innerHTML}
+function descriptionHtml(value){const raw=String(value||"");if(!raw)return"";if(!/<[a-z][\s\S]*>/i.test(raw))return"<p>"+escapeHtml(raw).replace(/\r?\n/g,"<br>")+"</p>";const host=document.createElement("div");host.innerHTML=raw;const allowed=new Set(["P","DIV","BR","B","STRONG","I","EM","U","S","STRIKE","UL","OL","LI"]);host.querySelectorAll("*").forEach(el=>{if(!allowed.has(el.tagName)){el.replaceWith(...el.childNodes);return}const align=el.style.textAlign;[...el.attributes].forEach(a=>el.removeAttribute(a.name));if(align&&["left","right","center"].includes(align))el.style.textAlign=align});return host.innerHTML}
+function descriptionTextWithLists(value){
+  const host=document.createElement("div");
+  host.innerHTML=String(value||"");
+  host.querySelectorAll("ol").forEach(list=>[...list.children].filter(item=>item.tagName==="LI").forEach((item,index)=>item.insertBefore(document.createTextNode((index+1)+". "),item.firstChild)));
+  host.querySelectorAll("ul").forEach(list=>[...list.children].filter(item=>item.tagName==="LI").forEach(item=>item.insertBefore(document.createTextNode("• "),item.firstChild)));
+  host.querySelectorAll("li").forEach(item=>item.appendChild(document.createTextNode("\n")));
+  host.querySelectorAll("p,div").forEach(item=>item.appendChild(document.createTextNode("\n")));
+  return (host.textContent||"").replace(/\n{3,}/g,"\n\n").trim();
+}
 function footerHtml(){return`<div class="kp-footer"><div class="footer-left">АЛЬФАПРОМ<br>Оборудование для пищевого производства и упаковки</div><a class="footer-rating" href="${YANDEX_RATING_URL}" target="_blank" rel="noopener" title="Посмотреть рейтинг на Яндекс Картах"><span class="rating-star">★</span><span class="rating-copy"><span class="rating-yandex"><b>Я</b>ндекс <span class="rating-score">4.9</span></span><span class="rating-stars">★★★★★</span><span class="rating-caption">Рейтинг на Яндекс Картах</span></span></a><div class="footer-right">${state.managerName.trim()?`<div class="footer-manager">${escapeHtml(state.managerName)}</div>`:""}${state.managerPhone.trim()?`<div>${escapeHtml(state.managerPhone)}</div>`:""}<div>8 (800) 200-29-23</div><div>alfaprom.org</div></div></div>`}
 const baseRenderProductsEditor=renderProductsEditor;
-renderProductsEditor=function(){baseRenderProductsEditor();document.querySelectorAll(".product-editor-card").forEach(card=>{const p=state.products.find(x=>x.id===card.dataset.productId);if(!p)return;p.vatMode=p.vatMode==="without"?"without":"with";const oldDescription=card.querySelector('textarea[data-field="description"]');if(oldDescription){const field=oldDescription.closest(".field");field.innerHTML=`<label>Описание</label><div class="rich-toolbar" aria-label="Форматирование описания"><button type="button" data-rich="bold" title="Жирный"><b>Ж</b></button><button type="button" data-rich="italic" title="Курсив"><i>К</i></button><button type="button" data-rich="underline" title="Подчёркнутый"><u>Ч</u></button><button type="button" data-rich="strikeThrough" title="Зачёркнутый"><s>З</s></button><button type="button" data-rich="justifyLeft" title="По левому краю">≡</button><button type="button" data-rich="justifyCenter" title="По центру">≡</button><button type="button" data-rich="justifyRight" title="По правому краю">≡</button></div><div class="rich-editor" contenteditable="true" data-rich-editor="${p.id}" data-placeholder="Описание оборудования..."></div>`;const editor=field.querySelector(".rich-editor");editor.innerHTML=descriptionHtml(p.description);const sync=()=>{p.description=descriptionHtml(editor.innerHTML);saveState();renderPreview()};editor.oninput=sync;editor.onpaste=e=>{e.preventDefault();document.execCommand("insertText",false,e.clipboardData.getData("text/plain"));sync()};field.querySelectorAll("[data-rich]").forEach(button=>button.onclick=()=>{editor.focus();document.execCommand(button.dataset.rich,false,null);sync()})}const comment=card.querySelector('[data-field="priceComment"]')?.closest(".field");if(comment&&!card.querySelector("[data-vat-mode]")){comment.insertAdjacentHTML("beforebegin",`<div class="field"><label>Налогообложение</label><div class="status-buttons"><button type="button" class="status-button ${p.vatMode==="with"?"active":""}" data-vat-mode="with">С НДС</button><button type="button" class="status-button ${p.vatMode==="without"?"active":""}" data-vat-mode="without">Без НДС</button></div></div>`);card.querySelectorAll("[data-vat-mode]").forEach(button=>button.onclick=()=>{p.vatMode=button.dataset.vatMode;saveState();renderProductsEditor();renderPreview()})}})};
+renderProductsEditor=function(){baseRenderProductsEditor();document.querySelectorAll(".product-editor-card").forEach(card=>{const p=state.products.find(x=>x.id===card.dataset.productId);if(!p)return;p.vatMode=p.vatMode==="without"?"without":"with";const oldDescription=card.querySelector('textarea[data-field="description"]');if(oldDescription){const field=oldDescription.closest(".field");field.innerHTML=`<label>Описание</label><div class="rich-toolbar" aria-label="Форматирование описания"><button type="button" data-rich="bold" title="Жирный"><b>Ж</b></button><button type="button" data-rich="italic" title="Курсив"><i>К</i></button><button type="button" data-rich="underline" title="Подчёркнутый"><u>Ч</u></button><button type="button" data-rich="strikeThrough" title="Зачёркнутый"><s>З</s></button><button type="button" data-rich="insertUnorderedList" title="Маркированный список">•≡</button><button type="button" data-rich="insertOrderedList" title="Нумерованный список">1≡</button><button type="button" data-rich="justifyLeft" title="По левому краю">≡</button><button type="button" data-rich="justifyCenter" title="По центру">≡</button><button type="button" data-rich="justifyRight" title="По правому краю">≡</button></div><div class="rich-editor" contenteditable="true" data-rich-editor="${p.id}" data-placeholder="Описание оборудования..."></div>`;const editor=field.querySelector(".rich-editor");editor.innerHTML=descriptionHtml(p.description);const sync=()=>{p.description=descriptionHtml(editor.innerHTML);saveState();renderPreview()};editor.oninput=sync;editor.onpaste=e=>{e.preventDefault();document.execCommand("insertText",false,e.clipboardData.getData("text/plain"));sync()};field.querySelectorAll("[data-rich]").forEach(button=>button.onclick=()=>{editor.focus();document.execCommand(button.dataset.rich,false,null);sync()})}const comment=card.querySelector('[data-field="priceComment"]')?.closest(".field");if(comment&&!card.querySelector("[data-vat-mode]")){comment.insertAdjacentHTML("beforebegin",`<div class="field"><label>Налогообложение</label><div class="status-buttons"><button type="button" class="status-button ${p.vatMode==="with"?"active":""}" data-vat-mode="with">С НДС</button><button type="button" class="status-button ${p.vatMode==="without"?"active":""}" data-vat-mode="without">Без НДС</button></div></div>`);card.querySelectorAll("[data-vat-mode]").forEach(button=>button.onclick=()=>{p.vatMode=button.dataset.vatMode;saveState();renderProductsEditor();renderPreview()})}})};
 const baseBlockHtml=blockHtml;
 blockHtml=function(p,index,photos){return baseBlockHtml(p,index,photos).flatMap(block=>{if(block&&typeof block==="object"&&block.type==="description")return descriptionHtml(p.description)?[{type:"description",text:descriptionHtml(p.description)}]:[];if(typeof block==="string"&&block.includes('class="price-block"'))return[block,`<div class="price-vat">${p.vatMode==="without"?"Цена без НДС":"Цена с НДС"}</div>`];return[block]})};
 document.getElementById("downloadPdfBtn").onclick=downloadPDF;document.getElementById("downloadDocxBtn").onclick=downloadDOCX;init();
