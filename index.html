@@ -902,6 +902,7 @@ async function createDocx(){
     const tableRows=[
       new docx.TableRow({
         cantSplit:true,
+        tableHeader:true,
         children:[
           new docx.TableCell({
             columnSpan:2,
@@ -1186,81 +1187,66 @@ async function createDocx(){
     }
   }
 
+  // DOCX строится из исходных блоков товара, а не из уже нарезанного
+  // предпросмотра. Поэтому характеристики остаются одной таблицей.
   for(let i=0;i<state.products.length;i++){
-
     const p=state.products[i];
-    const pages=await paginateProduct(p,i);
 
-    for(let pageIndex=0;pageIndex<pages.length;pageIndex++){
+    children.push(
+      paragraph([
+        run("Коммерческое предложение",{size:25,bold:true})
+      ],{after:70,line:270})
+    );
+    children.push(
+      paragraph([
+        run(p.productName||`Оборудование №${i+1}`,{size:22,bold:true})
+      ],{after:150,line:270})
+    );
 
-      const pageHtml=String(pages[pageIndex]||"");
-
-      if(pageIndex===0){
-
-        children.push(
-          paragraph([
-            run("Коммерческое предложение",{size:25,bold:true})
-          ],{after:70,line:270})
-        );
-
-        children.push(
-          paragraph([
-            run(p.productName||`Оборудование №${i+1}`,{size:22,bold:true})
-          ],{after:150,line:270})
-        );
-
-        const photoParagraphs=[];
-        for(const id of p.photoIds||[]){
-          const blob=await getPhoto(id).catch(()=>null);
-          if(!blob)continue;
-          const bytes=await imageBlobToPngBytes(blob);
-          if(!bytes)continue;
-          const size=getPhotoSize(p,id);
-          const px=Math.min(300,Math.max(120,Math.round(size*MM_TO_PX)));
-          photoParagraphs.push(
-            new docx.ImageRun({
-              data:bytes,
-              transformation:{width:px,height:px},
-              type:"png"
-            })
-          );
-        }
-
-        if(photoParagraphs.length){
-          children.push(
-            paragraph(photoParagraphs,{
-              alignment:docx.AlignmentType.CENTER,
-              after:140
-            })
-          );
-        }
-      }
-
-      // paginateProduct() возвращает готовую HTML-страницу целиком.
-      // Заголовок и фото уже добавляются выше в DOCX, поэтому из HTML
-      // извлекаем только содержимое после них, сохраняя порядок блоков.
-      if(pageHtml){
-        const host=document.createElement("div");
-        host.innerHTML=pageHtml;
-
-        const contentRoot=host.querySelector(".kp-content")||host;
-        const contentNodes=[
-          ...contentRoot.querySelectorAll(
-            ".kp-description, .specs-table, .kp-note, .video-button, .price-block, .price-vat, .availability, .price-comment"
-          )
-        ];
-
-        for(const node of contentNodes){
-          const wrapper=document.createElement("div");
-          wrapper.appendChild(node.cloneNode(true));
-          addDocxPageBlock(wrapper.innerHTML,p);
-        }
-      }
-
-      // Фиксируем содержимое этой страницы в отдельной секции DOCX.
-      pageChildren.push(children);
-      children=[];
+    const photoParagraphs=[];
+    for(const id of p.photoIds||[]){
+      const blob=await getPhoto(id).catch(()=>null);
+      if(!blob)continue;
+      const bytes=await imageBlobToPngBytes(blob);
+      if(!bytes)continue;
+      const size=getPhotoSize(p,id);
+      const px=Math.min(300,Math.max(120,Math.round(size*MM_TO_PX)));
+      photoParagraphs.push(
+        new docx.ImageRun({
+          data:bytes,
+          transformation:{width:px,height:px},
+          type:"png"
+        })
+      );
     }
+    if(photoParagraphs.length){
+      children.push(
+        paragraph(photoParagraphs,{
+          alignment:docx.AlignmentType.CENTER,
+          after:140
+        })
+      );
+    }
+
+    // Передаём в Word полные логические блоки товара.
+    const docxBlocks=blockHtml(p,i,[]);
+    for(const block of docxBlocks){
+      if(typeof block==="string"&&block.includes("product-photo-grid"))continue;
+      if(block&&typeof block==="object"&&block.type==="description"){
+        const holder=document.createElement("div");
+        holder.innerHTML=String(block.text||"");
+        children.push(
+          paragraph([
+            run(holder.textContent||"",{size:18})
+          ],{after:0,line:260})
+        );
+        continue;
+      }
+      addDocxPageBlock(block,p);
+    }
+
+    pageChildren.push(children);
+    children=[];
   }
 
   // =========================================================
