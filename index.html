@@ -309,7 +309,9 @@ async function paginateProduct(p,index){
   const photos=await getProductPhotosData(p);
   const blocks=blockHtml(p,index,photos);
 
-  async function measureAvailable(firstPage){
+  // Проверяем не условную сумму высот, а фактическую собранную страницу.
+  // В расчёт сразу входят фотографии, отступы, «Почему мы» и нижний подвал.
+  async function fitsOnPage(content,firstPage){
     const page=document.createElement("div");
     page.className="kp-page has-bottom";
     page.style.position="absolute";
@@ -323,7 +325,7 @@ async function paginateProduct(p,index){
         (!firstPage
           ? '<div class="page-continuation">Продолжение предложения — оборудование №'+(index+1)+'</div>'
           : '')+
-        '<div class="measureBlocks"></div>'+
+        '<div class="measureBlocks">'+content.join("")+'</div>'+
       '</div>'+
       '<div class="kp-bottom"><div class="kp-footer-stack">'+
         advantagesHtml()+
@@ -331,34 +333,58 @@ async function paginateProduct(p,index){
       '</div></div>';
     document.body.appendChild(page);
     await new Promise(r=>requestAnimationFrame(r));
-    const header=page.querySelector(".kp-header");
-    const bottom=page.querySelector(".kp-bottom");
-    const contentTop=header.getBoundingClientRect().bottom;
-    const available=Math.max(0,bottom.getBoundingClientRect().top-contentTop);
+    const holder=page.querySelector(".measureBlocks");
+    const last=holder.lastElementChild;
+    const bottom=page.querySelector(".kp-bottom").getBoundingClientRect().top;
+    const lastBottom=last?last.getBoundingClientRect().bottom:holder.getBoundingClientRect().top;
     page.remove();
-    return available;
+    return lastBottom<=bottom+.5;
   }
 
-  const firstAvailable=await measureAvailable(true);
-  const nextAvailable=await measureAvailable(false);
+  async function fitDescriptionOnPage(text,content,firstPage){
+    const words=String(text||"").split(/(\s+)/);
+    let lo=1,hi=words.length,best="";
+    while(lo<=hi){
+      const mid=(lo+hi)>>1;
+      const candidate=words.slice(0,mid).join("").trimEnd();
+      if(!candidate){lo=mid+1;continue}
+      const html='<div class="kp-description">'+escapeHtml(candidate)+'</div>';
+      if(await fitsOnPage([...content,html],firstPage)){
+        best=candidate;
+        lo=mid+1;
+      }else hi=mid-1;
+    }
+    return best;
+  }
+
+  async function fitSpecsOnPage(rows,content,firstPage){
+    let lo=1,hi=rows.length,best=0;
+    while(lo<=hi){
+      const mid=(lo+hi)>>1;
+      if(await fitsOnPage([...content,specsTableHtml(rows.slice(0,mid))],firstPage)){
+        best=mid;
+        lo=mid+1;
+      }else hi=mid-1;
+    }
+    return best;
+  }
+
   const pages=[];
   let current=[];
-  let currentHeight=0;
   let pageIndex=0;
 
   const pushPage=()=>{
     if(current.length)pages.push(current);
     current=[];
-    currentHeight=0;
     pageIndex++;
   };
 
   const addHtml=async html=>{
-    const available=pageIndex===0?firstAvailable:nextAvailable;
-    const h=await measureHtmlHeight(html);
-    if(current.length&&currentHeight+h>available+0.5)pushPage();
+    const firstPage=pageIndex===0;
+    if(current.length && !(await fitsOnPage([...current,html],firstPage))){
+      pushPage();
+    }
     current.push(html);
-    currentHeight+=h;
   };
 
   for(const block of blocks){
@@ -370,24 +396,20 @@ async function paginateProduct(p,index){
     if(block.type==="description"){
       let rest=String(block.text||"").trim();
       while(rest){
-        const available=pageIndex===0?firstAvailable:nextAvailable;
-        const chunk=await fitDescriptionChunk(rest,Math.max(0,available-currentHeight));
+        const chunk=await fitDescriptionOnPage(rest,current,pageIndex===0);
         if(!chunk){
-          if(current.length)pushPage();
-          else{
-            const forced=await fitDescriptionChunk(rest,available);
-            if(!forced)break;
-            current.push('<div class="kp-description">'+escapeHtml(forced)+'</div>');
-            currentHeight=await measureHtmlHeight(current.at(-1));
-            rest=rest.slice(forced.length).trimStart();
+          if(current.length){
+            pushPage();
+            continue;
           }
+          // Защита от бесконечного цикла: при очень крупном первом слове
+          // помещаем его на страницу, а остальное продолжим далее.
+          const forced=rest.split(/\s+/)[0]||rest;
+          current.push('<div class="kp-description">'+escapeHtml(forced)+'</div>');
+          rest=rest.slice(forced.length).trimStart();
           continue;
         }
-        const html='<div class="kp-description">'+escapeHtml(chunk)+'</div>';
-        const h=await measureHtmlHeight(html);
-        if(current.length&&currentHeight+h>available+0.5){pushPage();continue}
-        current.push(html);
-        currentHeight+=h;
+        current.push('<div class="kp-description">'+escapeHtml(chunk)+'</div>');
         rest=rest.slice(chunk.length).trimStart();
       }
       continue;
@@ -396,25 +418,22 @@ async function paginateProduct(p,index){
     if(block.type==="specs"){
       let remaining=block.rows.slice();
       while(remaining.length){
-        const available=pageIndex===0?firstAvailable:nextAvailable;
-        const room=Math.max(0,available-currentHeight);
-        let count=await fitSpecsRows(remaining,room);
-        // Не оставляем на странице одинокую строку таблицы, если следующая
-        // страница может начать таблицу аккуратным блоком.
-        if(count===1&&remaining.length>1&&current.length){pushPage();continue}
-        if(count<1){
-          if(current.length){pushPage();continue}
-          count=await fitSpecsRows(remaining,available);
-          if(count<1)count=1;
+        let count=await fitSpecsOnPage(remaining,current,pageIndex===0);
+        // Не оставляем на предыдущей странице одну строку таблицы.
+        if(count===1 && remaining.length>1 && current.length){
+          pushPage();
+          continue;
         }
-        const html=specsTableHtml(remaining.slice(0,count));
-        const h=await measureHtmlHeight(html);
-        if(current.length&&currentHeight+h>available+0.5){pushPage();continue}
-        current.push(html);
-        currentHeight+=h;
+        if(!count){
+          if(current.length){
+            pushPage();
+            continue;
+          }
+          count=1;
+        }
+        current.push(specsTableHtml(remaining.slice(0,count)));
         remaining=remaining.slice(count);
       }
-      continue;
     }
   }
 
