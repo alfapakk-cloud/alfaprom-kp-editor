@@ -1,0 +1,10 @@
+{
+  "name": "alfaprom-kp-editor",
+  "private": true,
+  "scripts": {
+    "test": "node tests/pagination.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.65.0"
+  }
+}

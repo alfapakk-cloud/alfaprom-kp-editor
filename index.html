@@ -17,14 +17,9 @@
 .preview-side{min-width:0;min-height:0;display:flex;flex-direction:column;background:#e8eaed}.preview-title{flex:none;height:48px;display:flex;align-items:center;padding:0 18px;background:#fff;border-bottom:1px solid #d7d9dc;font-size:16px;font-weight:700}.preview-scroll{flex:1;min-height:0;overflow:auto;padding:20px}.preview-pages{display:flex;flex-direction:column;align-items:center;gap:20px}.preview-page-shell{position:relative;flex:none}.preview-page-scaled{position:absolute;left:0;top:0;transform-origin:top left}
 .kp-page{width:210mm;height:297mm;background:#fff;position:relative;box-shadow:0 3px 15px rgba(0,0,0,.14);display:flex;flex-direction:column;overflow:hidden;flex:none}.kp-content{flex:1;min-height:0;padding:7mm 15mm 6mm;overflow:hidden;display:flex;flex-direction:column}
 .kp-page.has-bottom .kp-content{padding-bottom:0}
-.kp-content>*{flex:none}.measureBlocks{flex:none}
+.kp-content>*{flex:none}
 .kp-page.has-bottom .kp-bottom{
-  position:absolute;
-  left:0;
-  right:0;
-  bottom:0;
   width:100%;
-  z-index:20;
   display:flex;
   flex-direction:column;
   flex:none;
@@ -175,7 +170,7 @@ async function renderEditorPhotos(p){const grid=document.querySelector(`[data-ph
  updatePhotoCropHandles(p,id,cropPreview);
  saveState();
  renderPreview()
-};cropUndoButton.onclick=e=>{e.preventDefault();e.stopPropagation();p.photoCrops[id]={top:0,bottom:0,left:0,right:0,applied:false};cropButton.style.display="none";cropUndoButton.style.display="none";cropPreview.classList.remove("photo-crop-editing","photo-crop-applied");syncPhotoEditorFrame(p,item,id);saveState();renderPreview()};bindPhotoResize(p,item);bindPhotoDrag(p,item);bindPhotoReorder(p,item)}catch(e){console.error(e)}remove.onclick=async e=>{e.preventDefault();e.stopPropagation();await deletePhoto(id).catch(()=>{});p.photoIds=p.photoIds.filter(x=>x!==id);delete p.photoSizes[id];delete p.photoPositions[id];saveState();renderProductsEditor();renderPreview()}}refreshPhotoEditorGrid(p,grid)}
+};cropUndoButton.onclick=e=>{e.preventDefault();e.stopPropagation();p.photoCrops[id]={top:0,bottom:0,left:0,right:0,applied:false};cropButton.style.display="none";cropUndoButton.style.display="none";cropPreview.classList.remove("photo-crop-editing","photo-crop-applied");syncPhotoEditorFrame(p,item,id);saveState();renderPreview()};bindPhotoResize(p,item);bindPhotoDrag(p,item)}catch(e){console.error(e)}remove.onclick=async e=>{e.preventDefault();e.stopPropagation();await deletePhoto(id).catch(()=>{});p.photoIds=p.photoIds.filter(x=>x!==id);delete p.photoSizes[id];delete p.photoPositions[id];saveState();renderProductsEditor();renderPreview()}}refreshPhotoEditorGrid(p,grid)}
 function applyPhotoCropPreview(p,id,container,img){
  const crop=getPhotoCrop(p,id);
  const applied=crop.applied===true;
@@ -344,56 +339,26 @@ function makePage(content,index,continuation=false,withAdvantages=false){
 async function paginateProduct(p,index){
   const photos=await getProductPhotosData(p);
   const blocks=blockHtml(p,index,photos);
-  // Одинаково приводим описание к тексту и для первого фрагмента у фото,
-  // и для остатка ниже: в редакторе описание хранится как HTML.
-  const introSource=descriptionTextWithLists(p.description);
-  let photoIntro="";
-  if(photos.length&&introSource){
-    const limit=Math.min(introSource.length,360);
-    const breakAt=introSource.lastIndexOf(" ",limit);
-    photoIntro=introSource.slice(0,breakAt>40?breakAt:limit).trimEnd();
-  }
-  // Вступление следует непосредственно за фотографиями, а не после остатка текста.
-  if(photoIntro){
-    const photoBlockIndex=blocks.findIndex(block=>typeof block==="string"&&block.includes("product-photo-grid"));
-    if(photoBlockIndex>=0){
-      blocks[photoBlockIndex]+='<div class="kp-description photo-description">'+escapeHtml(photoIntro)+'</div>';
-    }
-  }
-
   // Проверяем не условную сумму высот, а фактическую собранную страницу.
   // В расчёт сразу входят фотографии, отступы, «Почему мы» и нижний подвал.
   async function fitsOnPage(content,firstPage){
-    const page=document.createElement("div");
-    page.className="kp-page has-bottom";
+    const host=document.createElement("div");
+    host.innerHTML=makePage(content,index,!firstPage,true);
+    const page=host.firstElementChild;
     page.style.position="absolute";
     page.style.left="-100000px";
     page.style.top="0";
     page.style.visibility="hidden";
     page.style.boxShadow="none";
-    page.innerHTML=
-      '<div class="kp-content">'+
-        headerHtml()+
-        (!firstPage
-          ? '<div class="page-continuation">Продолжение предложения — оборудование №'+(index+1)+'</div>'
-          : '')+
-        '<div class="measureBlocks">'+content.join("")+'</div>'+
-      '</div>'+
-      '<div class="kp-bottom"><div class="kp-footer-stack">'+
-        advantagesHtml()+
-        footerHtml()+
-      '</div></div>';
     document.body.appendChild(page);
     await new Promise(r=>requestAnimationFrame(r));
-    const holder=page.querySelector(".measureBlocks");
+    const holder=page.querySelector(".kp-content");
     const last=holder.lastElementChild;
     const bottom=page.querySelector(".kp-bottom").getBoundingClientRect().top;
-    const holderRect=holder.getBoundingClientRect();
-    const lastBottom=last?last.getBoundingClientRect().bottom:holderRect.top;
-    // scrollHeight не зависит от flex-сжатия: это фактическая высота текста.
-    const contentBottom=Math.max(lastBottom,holderRect.top+holder.scrollHeight);
+    const lastBottom=last?last.getBoundingClientRect().bottom:0;
+    const fits=lastBottom<=bottom+.5 && holder.scrollHeight<=holder.clientHeight+1;
     page.remove();
-    return contentBottom<=bottom+.5;
+    return fits;
   }
 
   async function fitDescriptionOnPage(text,content,firstPage){
@@ -436,8 +401,27 @@ async function paginateProduct(p,index){
 
   const addHtml=async html=>{
     const firstPage=pageIndex===0;
-    const photoWithIntro=html.includes("photo-description");
-    if(current.length && !photoWithIntro && !(await fitsOnPage([...current,html],firstPage))){
+    // Слишком высокий фотомакет уменьшаем целиком, сохраняя расположение
+    // и обрезку снимков. Размеры и координаты в редакторе не меняются.
+    if(html.includes('class="product-photo-grid"') && !(await fitsOnPage([html],firstPage))){
+      const host=document.createElement("div");
+      host.innerHTML=html;
+      const grid=host.firstElementChild;
+      const height=parseFloat(grid.style.height);
+      const scaled=scale=>{
+        grid.style.transform=`scale(${scale})`;
+        grid.style.transformOrigin="top left";
+        return `<div class="product-photo-layout" style="height:${height*scale}mm">${grid.outerHTML}</div>`;
+      };
+      let lo=0,hi=1;
+      for(let i=0;i<14;i++){
+        const mid=(lo+hi)/2;
+        if(await fitsOnPage([...current,scaled(mid)],firstPage))lo=mid;
+        else hi=mid;
+      }
+      html=scaled(lo);
+    }
+    if(current.length && !(await fitsOnPage([...current,html],firstPage))){
       pushPage();
     }
     current.push(html);
@@ -451,25 +435,10 @@ async function paginateProduct(p,index){
 
     if(block.type==="description"){
       let rest=descriptionTextWithLists(block.text);
-      if(photoIntro&&rest.startsWith(photoIntro)){
-        rest=rest.slice(photoIntro.length).trimStart();
-      }
       while(rest){
         const chunk=await fitDescriptionOnPage(rest,current,pageIndex===0);
         if(!chunk){
           if(current.length){
-            // После фото браузер иногда недооценивает свободную область.
-            // Кладём консервативный фрагмент на первую страницу, чтобы не
-            // появлялся пустой лист; остаток продолжается на следующей.
-            if(pageIndex===0 || current.some(html=>html.includes("product-photo-grid"))){
-              const limit=Math.min(rest.length,360);
-              const breakAt=rest.lastIndexOf(" ",limit);
-              const forced=rest.slice(0,breakAt>40?breakAt:limit).trimEnd();
-              current.push('<div class="kp-description">'+escapeHtml(forced)+'</div>');
-              rest=rest.slice(forced.length).trimStart();
-              pushPage();
-              continue;
-            }
             pushPage();
             continue;
           }
@@ -547,7 +516,7 @@ function renderPreview(){
   },80)
 }
 const managerName=document.getElementById("managerName"),managerPhone=document.getElementById("managerPhone");managerName.oninput=()=>{state.managerName=managerName.value;saveState();renderPreview()};managerPhone.oninput=()=>{state.managerPhone=managerPhone.value;saveState();renderPreview()};
-document.getElementById("addProductBtn").onclick=()=>{state.products.push(createProduct());saveState();renderProductsEditor();renderPreview();setTimeout(()=>document.querySelectorAll(".product-editor-card").at(-1)?.scrollIntoView({behavior:"smooth",block:"start"}),50)};
+document.getElementById("addProductBtn").onclick=()=>{state.products.push(createProduct());saveState();renderProductsEditor();renderPreview();setTimeout(()=>[...document.querySelectorAll(".product-editor-card")].at(-1)?.scrollIntoView({behavior:"smooth",block:"start"}),50)};
 document.getElementById("resetBtn").onclick=async()=>{if(!confirm("Сбросить текущее коммерческое предложение?"))return;for(const p of state.products)for(const id of p.photoIds||[])await deletePhoto(id).catch(()=>{});state.products=[createProduct()];state.managerName="";state.managerPhone="";saveState();managerName.value="";managerPhone.value="";renderProductsEditor();renderPreview()};
 window.addEventListener("resize",fitPreviewPages);
 async function downloadPDF(){
@@ -594,6 +563,9 @@ async function downloadPDF(){
         useCORS:true,
         backgroundColor:"#fff",
         logging:false,
+        // Редактор не участвует в PDF: его временные blob-URL уже могут
+        // быть освобождены и не должны повторно загружаться при клонировании.
+        ignoreElements:element=>element.classList?.contains("app"),
         onclone:(clonedDoc)=>{
           clonedDoc
             .querySelectorAll('img[src^="blob:"]')
