@@ -11,5 +11,11 @@ layout, editing, local persistence, and actual PDF/DOCX downloads. They assert
 that content stays above the footer and that descriptions, rows and photos are
 preserved. All fixtures use a fresh browser context with generated images.
 
+Formatting checks click the actual toolbar buttons and verify computed styles
+in the preview. Long formatted paragraphs, continued list numbering, and long
+words are checked across page boundaries. PDF rendering is checked for bold
+description text; DOCX XML is checked for bold, italic, underline, strikeout and
+paragraph alignment.
+
 Set `TEST_ARTIFACTS_DIR` to save a screenshot and exported files. Optionally set
 `TEST_BASELINE_REF` to a Git revision to run the same checks against older HTML.
